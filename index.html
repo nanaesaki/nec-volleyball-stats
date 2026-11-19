@@ -32,9 +32,7 @@
       --radius: 20px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -239,13 +237,8 @@
       box-shadow: 0 6px 16px rgba(225, 29, 72, 0.1);
     }
 
-    .tab-panel {
-      display: none;
-    }
-
-    .tab-panel.active {
-      display: block;
-    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     .card {
       background: var(--bg-card);
@@ -395,13 +388,8 @@
       background: var(--bg-card-soft);
     }
 
-    tr.hirota-row {
-      background: #fffbeb;
-    }
-
-    tr.hirota-row td:first-child {
-      border-left: 4px solid #f59e0b;
-    }
+    tr.hirota-row { background: #fffbeb; }
+    tr.hirota-row td:first-child { border-left: 4px solid #f59e0b; }
 
     .comment-grid {
       display: grid;
@@ -427,20 +415,10 @@
       border-radius: 999px;
     }
 
-    .label-nec {
-      background: var(--accent-red-soft);
-      color: var(--accent-red);
-    }
+    .label-nec { background: var(--accent-red-soft); color: var(--accent-red); }
+    .label-opp { background: var(--accent-blue-soft); color: #0369a1; }
 
-    .label-opp {
-      background: var(--accent-blue-soft);
-      color: #0369a1;
-    }
-
-    .chart-box {
-      position: relative;
-      height: 280px;
-    }
+    .chart-box { position: relative; height: 280px; }
 
     .empty-state {
       text-align: center;
@@ -523,29 +501,17 @@
       display: inline-block;
     }
 
-    .pill-status.ok {
-      background: var(--accent-green-soft);
-      color: var(--accent-green);
-    }
-
-    .pill-status.warn {
-      background: var(--accent-gold-soft);
-      color: #b45309;
-    }
+    .pill-status.ok { background: var(--accent-green-soft); color: var(--accent-green); }
+    .pill-status.warn { background: var(--accent-gold-soft); color: #b45309; }
 
     @media (max-width: 640px) {
-      select {
-        min-width: 100%;
-      }
-      .brand-title {
-        font-size: 1.12rem;
-      }
+      select { min-width: 100%; }
+      .brand-title { font-size: 1.12rem; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Top Header -->
     <header class="top-bar">
       <div>
         <h1 class="brand-title">
@@ -568,13 +534,11 @@
       </div>
     </header>
 
-    <!-- Data Source Status -->
     <div id="dataSourceStatus" class="status-note">
       <div id="statusMainText">データソースを確認しています...</div>
       <div id="statusSubText" class="status-detail"></div>
     </div>
 
-    <!-- Mode Switch Tabs -->
     <div class="mode-tabs" role="tablist">
       <button id="tabSingleBtn" class="tab-btn active" type="button" role="tab" onclick="switchTab('single')">
         ① 1試合ごとの詳細分析
@@ -591,7 +555,6 @@
     <section id="panelSingle" class="tab-panel active">
       <div id="matchBanner" class="match-banner"></div>
 
-      <!-- #4 Hirota Focus KPIs -->
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">
@@ -603,7 +566,6 @@
         <div id="hirotaKpis" class="grid-4"></div>
       </div>
 
-      <!-- Team Comparison & Chart -->
       <div class="grid-2">
         <div class="card">
           <div class="card-header">
@@ -632,7 +594,6 @@
         </div>
       </div>
 
-      <!-- NEC Individual Players Table -->
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">NECレッドロケッツ川崎 選手別個人成績</h2>
@@ -658,7 +619,6 @@
         </div>
       </div>
 
-      <!-- Post-match Comments -->
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">試合後コメント（定性振り返り）</h2>
@@ -722,7 +682,7 @@
             <span>① 帳票PDF・Live Score URL・コメントのアップロード</span>
             <span class="badge badge-green">ブラウザで自動JSON化</span>
           </h2>
-          <span class="sub-caption">手元でダウンロードしたPDFをそのまま読み込めます</span>
+          <span class="sub-caption">PDFなしでもURLやコメント・試合ラベル入力だけでJSON作成できます</span>
         </div>
 
         <div class="form-grid">
@@ -730,14 +690,14 @@
             <label class="field-label" for="pdfBInput">B帳票 PDF（選手個人成績・チーム技術成績）</label>
             <input id="pdfBInput" type="file" accept="application/pdf,.pdf" />
             <div class="field-hint">※ 選択すると自動で座標解析し、選手別スタッツ・#4 廣田あい選手成績を抽出します</div>
-            <div id="pdfBStatus" class="pill-status">未選択</div>
+            <div id="pdfBStatus" class="pill-status">未選択（任意）</div>
           </div>
 
           <div class="upload-box">
             <label class="field-label" for="pdfAInput">A帳票 PDF（試合会場レポート・セットスコア・交代）</label>
             <input id="pdfAInput" type="file" accept="application/pdf,.pdf" />
             <div class="field-hint">※ 選択すると試合日・Match No.・セットスコア・セット時間を抽出します</div>
-            <div id="pdfAStatus" class="pill-status">未選択</div>
+            <div id="pdfAStatus" class="pill-status">未選択（任意）</div>
           </div>
         </div>
 
@@ -747,8 +707,8 @@
             <input id="liveScoreInput" type="text" placeholder="この試合のLive Score URLを入力してください" />
           </div>
           <div>
-            <label class="field-label" for="matchDateOverride">試合日・節ラベル（PDFから取れない場合の補助・任意）</label>
-            <input id="matchDateOverride" type="text" placeholder="例: 2026/11/14 第5節 GAME1" />
+            <label class="field-label" for="matchDateOverride">試合日・節ラベル（例: 2026/11/14 第5節 GAME1）</label>
+            <input id="matchDateOverride" type="text" placeholder="例: 2026/11/14 第5節 GAME1 vs 岡山シーガルズ" />
           </div>
         </div>
 
@@ -764,16 +724,16 @@
         </div>
 
         <div class="action-bar">
-          <button id="addMatchToDashboardBtn" class="btn btn-primary" type="button">
+          <button id="addMatchToDashboardBtn" class="btn btn-primary" type="button" onclick="handleCreateMatchJson()">
             ✓ 試合データを作成してダッシュボードに反映
           </button>
-          <button id="downloadMatchesJsonBtn" class="btn btn-soft" type="button">
+          <button id="downloadMatchesJsonBtn" class="btn btn-soft" type="button" onclick="handleDownloadMatchesJson()">
             ⬇ 蓄積用 matches.json をダウンロード
           </button>
-          <button id="copyMatchesJsonBtn" class="btn" type="button">
+          <button id="copyMatchesJsonBtn" class="btn" type="button" onclick="handleCopyMatchesJson()">
             📋 matches.json をコピー
           </button>
-          <button id="clearLocalDataBtn" class="btn" type="button">
+          <button id="clearLocalDataBtn" class="btn" type="button" onclick="handleClearLocalData()">
             🗑 ブラウザ一時保存をクリア
           </button>
         </div>
@@ -812,54 +772,26 @@
           ]
         },
         target_side: "away",
-        sources: {
-          form_a_url: "",
-          form_b_url: "",
-          live_score_url: ""
-        },
+        sources: { form_a_url: "", form_b_url: "", live_score_url: "" },
         comments: {
-          home: "岡山：3セットを通し、大きく全体が乱れる時間は少なかったですが、チーム力を一人ひとりが理解し、大事なポイントで技術力を発揮することを貫けませんでした。特に第3セット、リードする中で相手に隙をつかれた時の技術力の安定が必要だと感じました。今日の反省を踏まえて、次週挑戦したいと思います。
-雨の中、会場に足を運んで後押しして下さった多くのファンの皆さまに感謝いたします。また配信での応援も、ありがとうございました。",
-          away: "NEC：昨日の敗戦から今日どのようなメンタリティで、どのような戦いができるかが問われる一戦でした。
-昨日と同じような展開になりかけた第3セットに途中出場した大川、山田がゲームチェンジャーになり、ビハインドから追いつき勝ちきったことは、彼女達の普段の献身がよく現れたところだと思います。
-よく勝ちきった反面、第3セットにクオリティが一気に下がってしまうところは大きな課題でもあるので、変化を加えながらもゲーム終了まで高いパフォーマンスを維持できるよう練習していきたいです。
-また岡山シーガルズのボールコントロールのクオリティは、我々も見習うべきところであると感じさせてもらいました。
-来週もアウェーゲームになりますが、クルーの皆様の応援は日本全国どこに行っても届いております。
-本日も心強い後押しありがとうございました。"
+          home: "岡山：3セットを通し、大きく全体が乱れる時間は少なかったですが、チーム力を一人ひとりが理解し、大事なポイントで技術力を発揮することを貫けませんでした。特に第3セット、リードする中で相手に隙をつかれた時の技術力の安定が必要だと感じました。今日の反省を踏まえて、次週挑戦したいと思います。\n雨の中、会場に足を運んで後押しして下さった多くのファンの皆さまに感謝いたします。また配信での応援も、ありがとうございました。",
+          away: "NEC：昨日の敗戦から今日どのようなメンタリティで、どのような戦いができるかが問われる一戦でした。\n昨日と同じような展開になりかけた第3セットに途中出場した大川、山田がゲームチェンジャーになり、ビハインドから追いつき勝ちきったことは、彼女達の普段の献身がよく現れたところだと思います。\nよく勝ちきった反面、第3セットにクオリティが一気に下がってしまうところは大きな課題でもあるので、変化を加えながらもゲーム終了まで高いパフォーマンスを維持できるよう練習していきたいです。\nまた岡山シーガルズのボールコントロールのクオリティは、我々も見習うべきところであると感じさせてもらいました。\n来週もアウェーゲームになりますが、クルーの皆様の応援は日本全国どこに行っても届いております。\n本日も心強い後押しありがとうございました。"
         },
         parsed_b: {
           home_team: {
             team_name: "岡山シーガルズ",
             team_total: {
-              attack_att: 119,
-              attack_pts: 50,
-              attack_pct: 42.0,
-              block_pts: 8,
-              serve_att: 74,
-              serve_pts: 2,
-              serve_err: 8,
-              serve_eff: 8.1,
-              rec_att: 75,
-              rec_exc: 15,
-              rec_good: 19,
-              rec_pct: 32.7
+              attack_att: 119, attack_pts: 50, attack_pct: 42.0, block_pts: 8,
+              serve_att: 74, serve_pts: 2, serve_err: 8, serve_eff: 8.1,
+              rec_att: 75, rec_exc: 15, rec_good: 19, rec_pct: 32.7
             }
           },
           away_team: {
             team_name: "NECレッドロケッツ川崎",
             team_total: {
-              attack_att: 123,
-              attack_pts: 58,
-              attack_pct: 47.2,
-              block_pts: 4,
-              serve_att: 79,
-              serve_pts: 1,
-              serve_err: 4,
-              serve_eff: 12.7,
-              rec_att: 66,
-              rec_exc: 16,
-              rec_good: 24,
-              rec_pct: 42.4
+              attack_att: 123, attack_pts: 58, attack_pct: 47.2, block_pts: 4,
+              serve_att: 79, serve_pts: 1, serve_err: 4, serve_eff: 12.7,
+              rec_att: 66, rec_exc: 16, rec_good: 24, rec_pct: 42.4
             },
             players: [
               { number: 1, name: "山田 二千華", sets_played: 1, attack_att: 3, attack_pts: 1, attack_pct: 33.3, block_pts: 2, serve_eff: 16.7, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
@@ -1110,7 +1042,11 @@
     }
 
     function saveLocalSavedMatches(list) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+      } catch {
+        // Ignore storage quota errors in restricted contexts
+      }
     }
 
     function isNecHome(match) {
@@ -1184,6 +1120,7 @@
     function syncLiveScoreLinkForCurrentMatch() {
       const active = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
       const liveLink = document.getElementById("liveScoreLink");
+      if (!liveLink) return;
       const rawUrl = String(active?.sources?.live_score_url || "").trim();
       if (rawUrl && /^https?:\/\//i.test(rawUrl)) {
         liveLink.href = rawUrl;
@@ -1193,6 +1130,25 @@
         liveLink.href = "https://www.svleague.jp/";
         liveLink.textContent = "Live Score (未設定) ↗";
         liveLink.style.opacity = "0.75";
+      }
+    }
+
+    function mergeAndSortMatches(repoMatches = []) {
+      const localMatches = loadLocalSavedMatches();
+      const mergedMap = new Map();
+      for (const m of FALLBACK_MATCHES) mergedMap.set(String(m.id), m);
+      for (const m of repoMatches) mergedMap.set(String(m.id), m);
+      for (const m of localMatches) mergedMap.set(String(m.id), m);
+
+      allMatches = Array.from(mergedMap.values()).sort((a, b) => {
+        const da = String(a.meta?.date || "");
+        const db = String(b.meta?.date || "");
+        if (da !== db) return da.localeCompare(db);
+        return String(a.id).localeCompare(String(b.id));
+      });
+
+      if (!allMatches.some(m => String(m.id) === String(currentMatchId))) {
+        currentMatchId = allMatches[allMatches.length - 1].id;
       }
     }
 
@@ -1221,26 +1177,15 @@
         repoStatusMsg = `matches.json 未読込 (${err.message})`;
       }
 
+      mergeAndSortMatches(repoMatches);
       const localMatches = loadLocalSavedMatches();
 
-      const mergedMap = new Map();
-      for (const m of FALLBACK_MATCHES) mergedMap.set(String(m.id), m);
-      for (const m of repoMatches) mergedMap.set(String(m.id), m);
-      for (const m of localMatches) mergedMap.set(String(m.id), m);
-
-      allMatches = Array.from(mergedMap.values()).sort((a, b) => {
-        const da = String(a.meta?.date || "");
-        const db = String(b.meta?.date || "");
-        if (da !== db) return da.localeCompare(db);
-        return String(a.id).localeCompare(String(b.id));
-      });
-
-      if (!allMatches.some(m => String(m.id) === String(currentMatchId))) {
-        currentMatchId = allMatches[allMatches.length - 1].id;
+      if (mainEl) {
+        mainEl.textContent = `✓ ${nowLabel} 反映完了：全 ${allMatches.length} 試合（${repoStatusMsg} / ブラウザ追加 ${localMatches.length}件）`;
       }
-
-      mainEl.textContent = `✓ ${nowLabel} 反映完了：全 ${allMatches.length} 試合（${repoStatusMsg} / ブラウザ追加 ${localMatches.length}件）`;
-      subEl.textContent = `リポジトリJSON先: ${targetUrl}`;
+      if (subEl) {
+        subEl.textContent = `リポジトリJSON先: ${targetUrl}`;
+      }
 
       if (btn) {
         btn.disabled = false;
@@ -1257,14 +1202,19 @@
     }
 
     function updateJsonPreview() {
-      const localIds = new Set(loadLocalSavedMatches().map(x => String(x.id)));
+      const localMatches = loadLocalSavedMatches();
+      const localIds = new Set(localMatches.map(x => String(x.id)));
       const exportList = allMatches.filter(m => String(m.id) !== "168" || localIds.has("168"));
       const dataToShow = exportList.length > 0 ? exportList : allMatches;
-      document.getElementById("generatedJsonPreview").textContent = JSON.stringify(dataToShow, null, 2);
+      const previewEl = document.getElementById("generatedJsonPreview");
+      if (previewEl) {
+        previewEl.textContent = JSON.stringify(dataToShow, null, 2);
+      }
     }
 
     function renderMatchSelector() {
       const select = document.getElementById("matchSelect");
+      if (!select) return;
       select.innerHTML = "";
       for (const m of allMatches) {
         const opt = document.createElement("option");
@@ -1302,164 +1252,159 @@
           }).join("")
         : `<span class="set-pill">セット詳細: コメント・帳票登録データ</span>`;
 
-      banner.innerHTML = `
-        <div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px;">
-            <span class="badge">${fmtNum(meta.date, "日付未設定")}</span>
-            <span class="badge badge-blue">${fmtNum(meta.round_label, meta.match_no ? `Match No.${meta.match_no}` : `ID:${match.id}`)}</span>
-            <span class="sub-caption">会場: ${fmtNum(meta.venue, "未設定")}</span>
+      if (banner) {
+        banner.innerHTML = `
+          <div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px;">
+              <span class="badge">${fmtNum(meta.date, "日付未設定")}</span>
+              <span class="badge badge-blue">${fmtNum(meta.round_label, meta.match_no ? `Match No.${meta.match_no}` : `ID:${match.id}`)}</span>
+              <span class="sub-caption">会場: ${fmtNum(meta.venue, "未設定")}</span>
+            </div>
+            <div class="set-pills">${setsHtml}</div>
           </div>
-          <div class="set-pills">${setsHtml}</div>
-        </div>
-        <div class="score-box">
-          <span>NECレッドロケッツ川崎</span>
-          <span class="score-num">${necSets} - ${oppSets}</span>
-          <span>${getOpponentName(match)}</span>
-        </div>
-      `;
+          <div class="score-box">
+            <span>NECレッドロケッツ川崎</span>
+            <span class="score-num">${necSets} - ${oppSets}</span>
+            <span>${escapeHtml(getOpponentName(match))}</span>
+          </div>
+        `;
+      }
 
       const hirotaKpis = document.getElementById("hirotaKpis");
       const hirotaNote = document.getElementById("hirotaParseNote");
-      if (hirota) {
-        hirotaNote.textContent = `出場 ${fmtNum(hirota.sets_played, 0)} セット`;
-        hirotaKpis.innerHTML = `
-          <div class="kpi-card highlight">
-            <div class="kpi-label">アタック決定率 / 得点</div>
-            <div class="kpi-value">${fmtPct(hirota.attack_pct)}</div>
-            <div class="kpi-sub">${fmtNum(hirota.attack_pts, 0)} 得点 / ${fmtNum(hirota.attack_att, 0)} 打数</div>
-          </div>
-          <div class="kpi-card highlight">
-            <div class="kpi-label">ブロック決定本数</div>
-            <div class="kpi-value">${fmtNum(hirota.block_pts, 0)} 本</div>
-            <div class="kpi-sub">ネット際ディフェンス貢献</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">サーブ効果率</div>
-            <div class="kpi-value">${fmtPct(hirota.serve_eff)}</div>
-            <div class="kpi-sub">サービスエース・効果・ミス反映</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">サーブレシーブ成功率</div>
-            <div class="kpi-value">${fmtPct(hirota.rec_pct)}</div>
-            <div class="kpi-sub">優 ${fmtNum(hirota.rec_exc, 0)} + 良 ${fmtNum(hirota.rec_good, 0)} / 受数 ${fmtNum(hirota.rec_att, 0)}</div>
-          </div>
-        `;
-      } else {
-        hirotaNote.textContent = "B帳票未反映または出場記録なし";
-        hirotaKpis.innerHTML = `<div class="kpi-card"><div class="kpi-label">#4 廣田 あい</div><div class="kpi-sub">この試合のB帳票個人成績はまだ登録されていません（コメントやA帳票情報は反映されています）。</div></div>`;
+      if (hirotaKpis) {
+        if (hirota) {
+          if (hirotaNote) hirotaNote.textContent = `出場 ${fmtNum(hirota.sets_played, 0)} セット`;
+          hirotaKpis.innerHTML = `
+            <div class="kpi-card highlight">
+              <div class="kpi-label">アタック決定率 / 得点</div>
+              <div class="kpi-value">${fmtPct(hirota.attack_pct)}</div>
+              <div class="kpi-sub">${fmtNum(hirota.attack_pts, 0)} 得点 / ${fmtNum(hirota.attack_att, 0)} 打数</div>
+            </div>
+            <div class="kpi-card highlight">
+              <div class="kpi-label">ブロック決定本数</div>
+              <div class="kpi-value">${fmtNum(hirota.block_pts, 0)} 本</div>
+              <div class="kpi-sub">ネット際ディフェンス貢献</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">サーブ効果率</div>
+              <div class="kpi-value">${fmtPct(hirota.serve_eff)}</div>
+              <div class="kpi-sub">サービスエース・効果・ミス反映</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">サーブレシーブ成功率</div>
+              <div class="kpi-value">${fmtPct(hirota.rec_pct)}</div>
+              <div class="kpi-sub">優 ${fmtNum(hirota.rec_exc, 0)} + 良 ${fmtNum(hirota.rec_good, 0)} / 受数 ${fmtNum(hirota.rec_att, 0)}</div>
+            </div>
+          `;
+        } else {
+          if (hirotaNote) hirotaNote.textContent = "B帳票未反映または出場記録なし";
+          hirotaKpis.innerHTML = `<div class="kpi-card"><div class="kpi-label">#4 廣田 あい</div><div class="kpi-sub">この試合のB帳票個人成績はまだ登録されていません（コメントやA帳票情報は反映されています）。</div></div>`;
+        }
       }
 
       const nTot = nec.team_total || {};
       const oTot = opp.team_total || {};
       const tbodyComp = document.querySelector("#teamCompareTable tbody");
-      const rowsSpec = [
-        { label: "アタック決定率", n: fmtPct(nTot.attack_pct), o: fmtPct(oTot.attack_pct) },
-        { label: "アタック得点 / 打数", n: `${fmtNum(nTot.attack_pts, "-")} / ${fmtNum(nTot.attack_att, "-")}`, o: `${fmtNum(oTot.attack_pts, "-")} / ${fmtNum(oTot.attack_att, "-")}` },
-        { label: "ブロック決定本数", n: `${fmtNum(nTot.block_pts, "-")} 本`, o: `${fmtNum(oTot.block_pts, "-")} 本` },
-        { label: "サーブ効果率", n: fmtPct(nTot.serve_eff), o: fmtPct(oTot.serve_eff) },
-        { label: "サーブレシーブ成功率", n: fmtPct(nTot.rec_pct), o: fmtPct(oTot.rec_pct) }
-      ];
-      tbodyComp.innerHTML = rowsSpec.map(r => `
-        <tr>
-          <td>${r.label}</td>
-          <td><strong>${r.n}</strong></td>
-          <td>${r.o}</td>
-        </tr>
-      `).join("");
+      if (tbodyComp) {
+        const rowsSpec = [
+          { label: "アタック決定率", n: fmtPct(nTot.attack_pct), o: fmtPct(oTot.attack_pct) },
+          { label: "アタック得点 / 打数", n: `${fmtNum(nTot.attack_pts, "-")} / ${fmtNum(nTot.attack_att, "-")}`, o: `${fmtNum(oTot.attack_pts, "-")} / ${fmtNum(oTot.attack_att, "-")}` },
+          { label: "ブロック決定本数", n: `${fmtNum(nTot.block_pts, "-")} 本`, o: `${fmtNum(oTot.block_pts, "-")} 本` },
+          { label: "サーブ効果率", n: fmtPct(nTot.serve_eff), o: fmtPct(oTot.serve_eff) },
+          { label: "サーブレシーブ成功率", n: fmtPct(nTot.rec_pct), o: fmtPct(oTot.rec_pct) }
+        ];
+        tbodyComp.innerHTML = rowsSpec.map(r => `
+          <tr>
+            <td>${r.label}</td>
+            <td><strong>${r.n}</strong></td>
+            <td>${r.o}</td>
+          </tr>
+        `).join("");
+      }
 
       renderSingleTeamChart(nTot, oTot, getOpponentName(match));
 
       const players = nec.players || [];
       const tbodyPlayers = document.querySelector("#playersTable tbody");
-      if (players.length > 0) {
-        tbodyPlayers.innerHTML = players.map(p => {
-          const isHirota = String(p.name || "").replace(/\s+/g, "").includes("廣田あい");
-          return `
-            <tr class="${isHirota ? "hirota-row" : ""}">
-              <td>${fmtNum(p.number)}</td>
-              <td><strong>${fmtNum(p.name)}</strong> ${isHirota ? '<span class="badge badge-gold">推し</span>' : ""}</td>
-              <td>${fmtNum(p.sets_played, 0)}</td>
-              <td>${fmtNum(p.attack_pts, 0)} / ${fmtNum(p.attack_att, 0)}</td>
-              <td>${fmtPct(p.attack_pct)}</td>
-              <td>${fmtNum(p.block_pts, 0)}</td>
-              <td>${fmtPct(p.serve_eff)}</td>
-              <td>${fmtNum(p.rec_exc, 0)}+${fmtNum(p.rec_good, 0)}/${fmtNum(p.rec_att, 0)}</td>
-              <td>${fmtPct(p.rec_pct)}</td>
-            </tr>
-          `;
-        }).join("");
-      } else {
-        tbodyPlayers.innerHTML = `<tr><td colspan="9" class="empty-state">この試合の個人成績データは未登録です（③タブからB帳票PDFをアップロードすると反映されます）。</td></tr>`;
+      if (tbodyPlayers) {
+        if (players.length > 0) {
+          tbodyPlayers.innerHTML = players.map(p => {
+            const isHirota = String(p.name || "").replace(/\s+/g, "").includes("廣田あい");
+            return `
+              <tr class="${isHirota ? "hirota-row" : ""}">
+                <td>${fmtNum(p.number)}</td>
+                <td><strong>${escapeHtml(fmtNum(p.name))}</strong> ${isHirota ? '<span class="badge badge-gold">推し</span>' : ""}</td>
+                <td>${fmtNum(p.sets_played, 0)}</td>
+                <td>${fmtNum(p.attack_pts, 0)} / ${fmtNum(p.attack_att, 0)}</td>
+                <td>${fmtPct(p.attack_pct)}</td>
+                <td>${fmtNum(p.block_pts, 0)}</td>
+                <td>${fmtPct(p.serve_eff)}</td>
+                <td>${fmtNum(p.rec_exc, 0)}+${fmtNum(p.rec_good, 0)}/${fmtNum(p.rec_att, 0)}</td>
+                <td>${fmtPct(p.rec_pct)}</td>
+              </tr>
+            `;
+          }).join("");
+        } else {
+          tbodyPlayers.innerHTML = `<tr><td colspan="9" class="empty-state">この試合の個人成績データは未登録です（③タブからB帳票PDFをアップロードすると反映されます）。</td></tr>`;
+        }
       }
 
       const commentsArea = document.getElementById("commentsArea");
-      const cNec = match.comments?.away || match.comments?.nec || "";
-      const cOpp = match.comments?.home || match.comments?.opp || "";
-      commentsArea.innerHTML = `
-        <div class="comment-box">
-          <span class="comment-label label-nec">NECレッドロケッツ川崎 コメント</span>
-          <div>${cNec ? escapeHtml(cNec) : "コメント未入力"}</div>
-        </div>
-        <div class="comment-box">
-          <span class="comment-label label-opp">${escapeHtml(getOpponentName(match))} コメント</span>
-          <div>${cOpp ? escapeHtml(cOpp) : "コメント未入力"}</div>
-        </div>
-      `;
+      if (commentsArea) {
+        const cNec = match.comments?.away || match.comments?.nec || "";
+        const cOpp = match.comments?.home || match.comments?.opp || "";
+        commentsArea.innerHTML = `
+          <div class="comment-box">
+            <span class="comment-label label-nec">NECレッドロケッツ川崎 コメント</span>
+            <div>${cNec ? escapeHtml(cNec) : "コメント未入力"}</div>
+          </div>
+          <div class="comment-box">
+            <span class="comment-label label-opp">${escapeHtml(getOpponentName(match))} コメント</span>
+            <div>${cOpp ? escapeHtml(cOpp) : "コメント未入力"}</div>
+          </div>
+        `;
+      }
     }
 
     function renderSingleTeamChart(nTot, oTot, oppName) {
-      if (!window.Chart) return;
-      const ctx = document.getElementById("singleTeamChart");
-      if (!ctx) return;
-      if (singleChartInstance) {
-        singleChartInstance.destroy();
-      }
-      singleChartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["アタック決定率(%)", "サーブ効果率(%)", "サーブレシーブ成功率(%)"],
-          datasets: [
-            {
-              label: "NECレッドロケッツ川崎",
-              data: [
-                Number(nTot.attack_pct) || 0,
-                Number(nTot.serve_eff) || 0,
-                Number(nTot.rec_pct) || 0
-              ],
-              backgroundColor: "rgba(225, 29, 72, 0.72)",
-              borderRadius: 8
-            },
-            {
-              label: oppName,
-              data: [
-                Number(oTot.attack_pct) || 0,
-                Number(oTot.serve_eff) || 0,
-                Number(oTot.rec_pct) || 0
-              ],
-              backgroundColor: "rgba(56, 189, 248, 0.72)",
-              borderRadius: 8
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: { color: "rgba(225, 29, 72, 0.08)" },
-              ticks: { color: "#6b5b64" }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { color: "#6b5b64" }
-            }
+      try {
+        if (!window.Chart) return;
+        const ctx = document.getElementById("singleTeamChart");
+        if (!ctx) return;
+        if (singleChartInstance) singleChartInstance.destroy();
+        singleChartInstance = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["アタック決定率(%)", "サーブ効果率(%)", "サーブレシーブ成功率(%)"],
+            datasets: [
+              {
+                label: "NECレッドロケッツ川崎",
+                data: [Number(nTot.attack_pct) || 0, Number(nTot.serve_eff) || 0, Number(nTot.rec_pct) || 0],
+                backgroundColor: "rgba(225, 29, 72, 0.72)",
+                borderRadius: 8
+              },
+              {
+                label: oppName,
+                data: [Number(oTot.attack_pct) || 0, Number(oTot.serve_eff) || 0, Number(oTot.rec_pct) || 0],
+                backgroundColor: "rgba(56, 189, 248, 0.72)",
+                borderRadius: 8
+              }
+            ]
           },
-          plugins: {
-            legend: { labels: { color: "#2c242b" } }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, grid: { color: "rgba(225, 29, 72, 0.08)" }, ticks: { color: "#6b5b64" } },
+              x: { grid: { display: false }, ticks: { color: "#6b5b64" } }
+            },
+            plugins: { legend: { labels: { color: "#2c242b" } } }
           }
-        }
-      });
+        });
+      } catch {
+        // Ignore chart errors so UI never blocks
+      }
     }
 
     function renderCumulativeView() {
@@ -1505,123 +1450,132 @@
 
       const cumAttPct = hirotaAttAtt > 0 ? ((hirotaAttPts / hirotaAttAtt) * 100).toFixed(1) + "%" : "-";
 
-      document.getElementById("cumulativeSummaryKpis").innerHTML = `
-        <div class="kpi-card">
-          <div class="kpi-label">蓄積試合数 / 戦績</div>
-          <div class="kpi-value">${totalMatches} 試合</div>
-          <div class="kpi-sub">${wins} 勝 ${losses} 敗（スコア反映分）</div>
-        </div>
-        <div class="kpi-card highlight">
-          <div class="kpi-label">#4 廣田あい 通算アタック決定率</div>
-          <div class="kpi-value">${cumAttPct}</div>
-          <div class="kpi-sub">${hirotaAttPts} 得点 / ${hirotaAttAtt} 打数</div>
-        </div>
-        <div class="kpi-card highlight">
-          <div class="kpi-label">#4 廣田あい 累計ブロック</div>
-          <div class="kpi-value">${hirotaBlk} 本</div>
-          <div class="kpi-sub">蓄積データ合計</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">JSONエクスポート対応</div>
-          <div class="kpi-value" style="font-size:1.25rem;">ブラウザ完結</div>
-          <div class="kpi-sub">PDF読込 → JSON作成・保存</div>
-        </div>
-      `;
+      const kpiEl = document.getElementById("cumulativeSummaryKpis");
+      if (kpiEl) {
+        kpiEl.innerHTML = `
+          <div class="kpi-card">
+            <div class="kpi-label">蓄積試合数 / 戦績</div>
+            <div class="kpi-value">${totalMatches} 試合</div>
+            <div class="kpi-sub">${wins} 勝 ${losses} 敗（スコア反映分）</div>
+          </div>
+          <div class="kpi-card highlight">
+            <div class="kpi-label">#4 廣田あい 通算アタック決定率</div>
+            <div class="kpi-value">${cumAttPct}</div>
+            <div class="kpi-sub">${hirotaAttPts} 得点 / ${hirotaAttAtt} 打数</div>
+          </div>
+          <div class="kpi-card highlight">
+            <div class="kpi-label">#4 廣田あい 累計ブロック</div>
+            <div class="kpi-value">${hirotaBlk} 本</div>
+            <div class="kpi-sub">蓄積データ合計</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">JSONエクスポート対応</div>
+            <div class="kpi-value" style="font-size:1.25rem;">ブラウザ完結</div>
+            <div class="kpi-sub">PDF読込 → JSON作成・保存</div>
+          </div>
+        `;
+      }
 
-      if (window.Chart) {
-        const ctxH = document.getElementById("hirotaTrendChart");
-        if (ctxH) {
-          if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
-          hirotaTrendChartInstance = new Chart(ctxH, {
-            type: "line",
-            data: {
-              labels,
-              datasets: [
-                {
-                  label: "#4 廣田あい アタック決定率(%)",
-                  data: hirotaPctSeries,
-                  borderColor: "#d97706",
-                  backgroundColor: "rgba(245, 158, 11, 0.18)",
-                  tension: 0.3,
-                  yAxisID: "y"
-                },
-                {
-                  label: "#4 廣田あい アタック+ブロック得点",
-                  data: hirotaPtsSeries,
-                  borderColor: "#e11d48",
-                  backgroundColor: "rgba(225, 29, 72, 0.18)",
-                  tension: 0.3,
-                  yAxisID: "y1"
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                y: { type: "linear", position: "left", ticks: { color: "#b45309" }, grid: { color: "rgba(225,29,72,0.08)" } },
-                y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#be123c" }, grid: { drawOnChartArea: false } },
-                x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+      try {
+        if (window.Chart) {
+          const ctxH = document.getElementById("hirotaTrendChart");
+          if (ctxH) {
+            if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
+            hirotaTrendChartInstance = new Chart(ctxH, {
+              type: "line",
+              data: {
+                labels,
+                datasets: [
+                  {
+                    label: "#4 廣田あい アタック決定率(%)",
+                    data: hirotaPctSeries,
+                    borderColor: "#d97706",
+                    backgroundColor: "rgba(245, 158, 11, 0.18)",
+                    tension: 0.3,
+                    yAxisID: "y"
+                  },
+                  {
+                    label: "#4 廣田あい アタック+ブロック得点",
+                    data: hirotaPtsSeries,
+                    borderColor: "#e11d48",
+                    backgroundColor: "rgba(225, 29, 72, 0.18)",
+                    tension: 0.3,
+                    yAxisID: "y1"
+                  }
+                ]
               },
-              plugins: { legend: { labels: { color: "#2c242b" } } }
-            }
-          });
-        }
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: { type: "linear", position: "left", ticks: { color: "#b45309" }, grid: { color: "rgba(225,29,72,0.08)" } },
+                  y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#be123c" }, grid: { drawOnChartArea: false } },
+                  x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+                },
+                plugins: { legend: { labels: { color: "#2c242b" } } }
+              }
+            });
+          }
 
-        const ctxT = document.getElementById("teamTrendChart");
-        if (ctxT) {
-          if (teamTrendChartInstance) teamTrendChartInstance.destroy();
-          teamTrendChartInstance = new Chart(ctxT, {
-            type: "line",
-            data: {
-              labels,
-              datasets: [
-                {
-                  label: "NEC チームアタック決定率(%)",
-                  data: necAttPctSeries,
-                  borderColor: "#e11d48",
-                  backgroundColor: "rgba(225, 29, 72, 0.18)",
-                  tension: 0.3
-                },
-                {
-                  label: "NEC サーブレシーブ成功率(%)",
-                  data: necRecPctSeries,
-                  borderColor: "#0284c7",
-                  backgroundColor: "rgba(2, 132, 199, 0.18)",
-                  tension: 0.3
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                y: { beginAtZero: true, ticks: { color: "#6b5b64" }, grid: { color: "rgba(225,29,72,0.08)" } },
-                x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+          const ctxT = document.getElementById("teamTrendChart");
+          if (ctxT) {
+            if (teamTrendChartInstance) teamTrendChartInstance.destroy();
+            teamTrendChartInstance = new Chart(ctxT, {
+              type: "line",
+              data: {
+                labels,
+                datasets: [
+                  {
+                    label: "NEC チームアタック決定率(%)",
+                    data: necAttPctSeries,
+                    borderColor: "#e11d48",
+                    backgroundColor: "rgba(225, 29, 72, 0.18)",
+                    tension: 0.3
+                  },
+                  {
+                    label: "NEC サーブレシーブ成功率(%)",
+                    data: necRecPctSeries,
+                    borderColor: "#0284c7",
+                    backgroundColor: "rgba(2, 132, 199, 0.18)",
+                    tension: 0.3
+                  }
+                ]
               },
-              plugins: { legend: { labels: { color: "#2c242b" } } }
-            }
-          });
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: { beginAtZero: true, ticks: { color: "#6b5b64" }, grid: { color: "rgba(225,29,72,0.08)" } },
+                  x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+                },
+                plugins: { legend: { labels: { color: "#2c242b" } } }
+              }
+            });
+          }
         }
+      } catch {
+        // Ignore chart errors
       }
 
       const tbodyCum = document.querySelector("#cumulativeMatchesTable tbody");
-      tbodyCum.innerHTML = allMatches.map(m => {
-        const meta = m.meta || {};
-        const h = getHirotaStat(m);
-        const hasComment = Boolean((m.comments?.away || m.comments?.nec || m.comments?.home || m.comments?.opp));
-        return `
-          <tr style="cursor:pointer;" onclick="selectMatchAndSwitch('${String(m.id)}')">
-            <td><strong>${fmtNum(meta.date, `ID:${m.id}`)}</strong></td>
-            <td>${fmtNum(meta.round_label, "")} vs ${escapeHtml(getOpponentName(m))}</td>
-            <td>${escapeHtml(getMatchResultLabel(m))}</td>
-            <td>${h ? `${fmtPct(h.attack_pct)} (${h.attack_pts}/${h.attack_att})` : "コメント等のみ"}</td>
-            <td>${h ? `${fmtNum(h.block_pts, 0)} 本` : "-"}</td>
-            <td>${h ? `${fmtPct(h.rec_pct)} (${h.rec_att}受)` : "-"}</td>
-            <td>${hasComment ? "✓ あり" : "-"}</td>
-          </tr>
-        `;
-      }).join("");
+      if (tbodyCum) {
+        tbodyCum.innerHTML = allMatches.map(m => {
+          const meta = m.meta || {};
+          const h = getHirotaStat(m);
+          const hasComment = Boolean((m.comments?.away || m.comments?.nec || m.comments?.home || m.comments?.opp));
+          return `
+            <tr style="cursor:pointer;" onclick="selectMatchAndSwitch('${String(m.id)}')">
+              <td><strong>${escapeHtml(fmtNum(meta.date, `ID:${m.id}`))}</strong></td>
+              <td>${escapeHtml(fmtNum(meta.round_label, ""))} vs ${escapeHtml(getOpponentName(m))}</td>
+              <td>${escapeHtml(getMatchResultLabel(m))}</td>
+              <td>${h ? `${fmtPct(h.attack_pct)} (${h.attack_pts}/${h.attack_att})` : "コメント等のみ"}</td>
+              <td>${h ? `${fmtNum(h.block_pts, 0)} 本` : "-"}</td>
+              <td>${h ? `${fmtPct(h.rec_pct)} (${h.rec_att}受)` : "-"}</td>
+              <td>${hasComment ? "✓ あり" : "-"}</td>
+            </tr>
+          `;
+        }).join("");
+      }
     }
 
     function selectMatchAndSwitch(id) {
@@ -1646,6 +1600,8 @@
       }
       if (tabName === "cumulative") {
         renderCumulativeView();
+      } else if (tabName === "upload") {
+        updateJsonPreview();
       }
     }
 
@@ -1655,6 +1611,131 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function handleCreateMatchJson() {
+      const feedbackEl = document.getElementById("uploadFeedback");
+      const liveUrl = normalizeStr(document.getElementById("liveScoreInput")?.value || "");
+      const overrideLabel = normalizeStr(document.getElementById("matchDateOverride")?.value || "");
+      const commentNec = (document.getElementById("commentNecInput")?.value || "").trim();
+      const commentOpp = (document.getElementById("commentOppInput")?.value || "").trim();
+
+      if (!parsedDraftB && !parsedDraftA && !liveUrl && !commentNec && !commentOpp && !overrideLabel) {
+        if (feedbackEl) {
+          feedbackEl.textContent = "⚠ 少なくともPDFファイル、Live Score URL、試合日・節ラベル、またはコメントのいずれかを入力してください。";
+        }
+        return;
+      }
+
+      const bMeta = parsedDraftB?.meta || {};
+      const aMeta = parsedDraftA || {};
+      const matchNo = bMeta.match_no || aMeta.match_no || null;
+
+      let dateVal = bMeta.date || aMeta.date || null;
+      let roundVal = bMeta.round_label || aMeta.round_label || null;
+      let oppVal = null;
+
+      if (overrideLabel) {
+        const dMatch = overrideLabel.match(/(\d{4}\/\d{2}\/\d{2})/);
+        if (dMatch) dateVal = dMatch[1];
+        const vsMatch = overrideLabel.match(/vs\s+(.+)$/i);
+        if (vsMatch) oppVal = vsMatch[1].trim();
+        const rest = overrideLabel
+          .replace(/(\d{4}\/\d{2}\/\d{2})/, "")
+          .replace(/vs\s+.+$/i, "")
+          .trim();
+        if (rest) roundVal = rest;
+      }
+
+      const newId = String(matchNo || `match_${Date.now()}`);
+      const newRecord = {
+        id: newId,
+        meta: {
+          match_no: matchNo,
+          round_label: roundVal,
+          date: dateVal,
+          venue: bMeta.venue || aMeta.venue || null,
+          home_team: oppVal || bMeta.home_team || "対戦相手",
+          away_team: bMeta.away_team || "NECレッドロケッツ川崎"
+        },
+        target_side: parsedDraftB?.target_side || "away",
+        sources: {
+          live_score_url: liveUrl || "",
+          form_a_name: parsedDraftA ? "uploaded_form_a.pdf" : null,
+          form_b_name: parsedDraftB ? "uploaded_form_b.pdf" : null
+        },
+        comments: {
+          away: commentNec,
+          home: commentOpp
+        },
+        parsed_b: parsedDraftB || {
+          home_team: { team_name: oppVal || "対戦相手", team_total: {}, players: [] },
+          away_team: { team_name: "NECレッドロケッツ川崎", team_total: {}, players: [] }
+        },
+        parsed_a: parsedDraftA || null
+      };
+
+      const savedList = loadLocalSavedMatches().filter(m => String(m.id) !== newId);
+      savedList.push(newRecord);
+      saveLocalSavedMatches(savedList);
+
+      currentMatchId = newId;
+      mergeAndSortMatches();
+      updateJsonPreview();
+      renderMatchSelector();
+      renderSingleMatch();
+      renderCumulativeView();
+
+      if (feedbackEl) {
+        feedbackEl.textContent = `✓ 新しい試合データ（ID: ${newId}）を作成しました！下の「生成された JSON データプレビュー」と①タブに反映済みです。「⬇ 蓄積用 matches.json をダウンロード」から保存できます。`;
+      }
+    }
+
+    function handleDownloadMatchesJson() {
+      updateJsonPreview();
+      const text = document.getElementById("generatedJsonPreview")?.textContent || "[]";
+      const blob = new Blob([text], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "matches.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    async function handleCopyMatchesJson() {
+      updateJsonPreview();
+      const text = document.getElementById("generatedJsonPreview")?.textContent || "[]";
+      const feedbackEl = document.getElementById("uploadFeedback");
+      try {
+        await navigator.clipboard.writeText(text);
+        if (feedbackEl) {
+          feedbackEl.textContent = "✓ matches.json の内容をクリップボードにコピーしました。GitHubの backend/data/matches.json に貼り付けて保存できます。";
+        }
+      } catch {
+        if (feedbackEl) {
+          feedbackEl.textContent = "ℹ 下のプレビュー枠から手動でテキストを選択してコピーしてください。";
+        }
+      }
+    }
+
+    function handleClearLocalData() {
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      } catch {
+        // Ignore
+      }
+      parsedDraftA = null;
+      parsedDraftB = null;
+      const stB = document.getElementById("pdfBStatus");
+      const stA = document.getElementById("pdfAStatus");
+      const fb = document.getElementById("uploadFeedback");
+      if (stB) { stB.textContent = "未選択（任意）"; stB.className = "pill-status"; }
+      if (stA) { stA.textContent = "未選択（任意）"; stA.className = "pill-status"; }
+      if (fb) { fb.textContent = "✓ ブラウザの一時保存データをクリアしました。"; }
+      loadMatchesFromRepo(false);
     }
 
     function bindEvents() {
@@ -1669,9 +1750,7 @@
 
       const reloadBtn = document.getElementById("reloadJsonBtn");
       if (reloadBtn) {
-        reloadBtn.addEventListener("click", () => {
-          loadMatchesFromRepo(true);
-        });
+        reloadBtn.addEventListener("click", () => loadMatchesFromRepo(true));
       }
 
       const pdfBInput = document.getElementById("pdfBInput");
@@ -1679,7 +1758,7 @@
         pdfBInput.addEventListener("change", async (e) => {
           const file = e.target.files?.[0];
           const st = document.getElementById("pdfBStatus");
-          if (!file) return;
+          if (!file || !st) return;
           st.textContent = "解析中...";
           st.className = "pill-status warn";
           try {
@@ -1702,7 +1781,7 @@
         pdfAInput.addEventListener("change", async (e) => {
           const file = e.target.files?.[0];
           const st = document.getElementById("pdfAStatus");
-          if (!file) return;
+          if (!file || !st) return;
           st.textContent = "解析中...";
           st.className = "pill-status warn";
           try {
@@ -1717,117 +1796,12 @@
           }
         });
       }
-
-      const addBtn = document.getElementById("addMatchToDashboardBtn");
-      if (addBtn) {
-        addBtn.addEventListener("click", () => {
-          const liveUrl = normalizeStr(document.getElementById("liveScoreInput").value);
-          const overrideLabel = normalizeStr(document.getElementById("matchDateOverride").value);
-          const commentNec = document.getElementById("commentNecInput").value.trim();
-          const commentOpp = document.getElementById("commentOppInput").value.trim();
-
-          if (!parsedDraftB && !parsedDraftA && !liveUrl && !commentNec && !commentOpp && !overrideLabel) {
-            document.getElementById("uploadFeedback").textContent = "⚠ 少なくともPDFファイル、Live Score URL、またはコメントのいずれかを入力してください。";
-            return;
-          }
-
-          const bMeta = parsedDraftB?.meta || {};
-          const aMeta = parsedDraftA || {};
-          const matchNo = bMeta.match_no || aMeta.match_no || null;
-
-          let dateVal = bMeta.date || aMeta.date || null;
-          let roundVal = bMeta.round_label || aMeta.round_label || null;
-          if (overrideLabel) {
-            const dMatch = overrideLabel.match(/(\d{4}\/\d{2}\/\d{2})/);
-            if (dMatch) dateVal = dMatch[1];
-            roundVal = overrideLabel.replace(/(\d{4}\/\d{2}\/\d{2})/, "").trim() || roundVal;
-          }
-
-          const newId = String(matchNo || Date.now());
-          const newRecord = {
-            id: newId,
-            meta: {
-              match_no: matchNo,
-              round_label: roundVal,
-              date: dateVal,
-              venue: bMeta.venue || aMeta.venue || null,
-              home_team: bMeta.home_team || "対戦相手",
-              away_team: bMeta.away_team || "NECレッドロケッツ川崎"
-            },
-            target_side: parsedDraftB?.target_side || "away",
-            sources: {
-              live_score_url: liveUrl || "",
-              form_a_name: parsedDraftA ? "uploaded_form_a.pdf" : null,
-              form_b_name: parsedDraftB ? "uploaded_form_b.pdf" : null
-            },
-            comments: {
-              away: commentNec,
-              home: commentOpp
-            },
-            parsed_b: parsedDraftB || {
-              home_team: { team_name: "対戦相手", team_total: {}, players: [] },
-              away_team: { team_name: "NECレッドロケッツ川崎", team_total: {}, players: [] }
-            },
-            parsed_a: parsedDraftA || null
-          };
-
-          const savedList = loadLocalSavedMatches().filter(m => String(m.id) !== newId);
-          savedList.push(newRecord);
-          saveLocalSavedMatches(savedList);
-
-          currentMatchId = newId;
-          loadMatchesFromRepo(false);
-          document.getElementById("uploadFeedback").textContent = `✓ 試合データ（ID: ${newId}）を作成し、ダッシュボードに反映しました！「⬇ 蓄積用 matches.json をダウンロード」からファイル保存もできます。`;
-          switchTab("single");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        });
-      }
-
-      const dlBtn = document.getElementById("downloadMatchesJsonBtn");
-      if (dlBtn) {
-        dlBtn.addEventListener("click", () => {
-          const text = document.getElementById("generatedJsonPreview").textContent;
-          const blob = new Blob([text], { type: "application/json;charset=utf-8" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "matches.json";
-          a.click();
-          URL.revokeObjectURL(url);
-        });
-      }
-
-      const cpBtn = document.getElementById("copyMatchesJsonBtn");
-      if (cpBtn) {
-        cpBtn.addEventListener("click", async () => {
-          const text = document.getElementById("generatedJsonPreview").textContent;
-          try {
-            await navigator.clipboard.writeText(text);
-            document.getElementById("uploadFeedback").textContent = "✓ matches.json の内容をクリップボードにコピーしました。GitHubの backend/data/matches.json に貼り付けて保存できます。";
-          } catch {
-            document.getElementById("uploadFeedback").textContent = "ℹ 下のプレビュー枠から手動でテキストを選択してコピーしてください。";
-          }
-        });
-      }
-
-      const clrBtn = document.getElementById("clearLocalDataBtn");
-      if (clrBtn) {
-        clrBtn.addEventListener("click", () => {
-          localStorage.removeItem(LOCAL_STORAGE_KEY);
-          parsedDraftA = null;
-          parsedDraftB = null;
-          document.getElementById("pdfBStatus").textContent = "未選択";
-          document.getElementById("pdfBStatus").className = "pill-status";
-          document.getElementById("pdfAStatus").textContent = "未選択";
-          document.getElementById("pdfAStatus").className = "pill-status";
-          document.getElementById("uploadFeedback").textContent = "✓ ブラウザの一時保存データをクリアしました。";
-          loadMatchesFromRepo(false);
-        });
-      }
     }
 
     function initApp() {
       bindEvents();
+      mergeAndSortMatches();
+      updateJsonPreview();
       renderMatchSelector();
       renderSingleMatch();
       renderCumulativeView();
