@@ -920,87 +920,74 @@
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
       const venueMatch = fullText.match(/会場[:：]\s*([^\s]+)/);
 
-      // Group items into horizontal lines by ny proximity
-      const lines = [];
-      for (const it of [...normItems].sort((a, b) => b.ny - a.ny || a.nx - b.nx)) {
-        let placed = false;
-        for (const ln of lines) {
-          if (Math.abs(ln.y - it.ny) < 4.0) {
-            ln.items.push(it);
-            placed = true;
-            break;
-          }
-        }
-        if (!placed) lines.push({ y: it.ny, items: [it] });
-      }
+      // SV.LEAGUE A帳票 layout:
+      // Each set 1..5 has a duration token like 【0:24】, 【0:24】, 【0:22】, 【0:29】, (0:15】 or 0:24
+      // Near each set's duration item, two set point numbers (home and away) appear around the same y/x band.
+      const durItems = normItems
+        .filter(it => /[\[【\(]?\d{1,2}:\d{2}[\]\)】]?/.test(it.str))
+        .sort((a, b) => b.ny - a.ny || a.nx - b.nx);
 
       const setsDetail = [];
-      // Pattern 1: Look for lines containing set numbers/labels or paired scores near set headers
-      for (const ln of lines) {
-        const sorted = ln.items.sort((a, b) => a.nx - b.nx);
-        const lineStr = sorted.map(x => x.str).join(" ");
-        // Match explicit "Set 1" / "1st" / "第1セット" followed by scores and optional duration
-        const labeledMatch = lineStr.match(/(?:Set\s*(\d)|第(\d)セット|(1st|2nd|3rd|4th|5th))\s*[:：]?\s*(\d{1,2})\s*[-－–/／]?\s*(\d{1,2})(?:\s*\(?(\d{1,2}:\d{2})\)?)?/i);
-        if (labeledMatch) {
-          const setNum = labeledMatch[1] ? parseInt(labeledMatch[1], 10)
-            : labeledMatch[2] ? parseInt(labeledMatch[2], 10)
-            : labeledMatch[3] === "1st" ? 1
-            : labeledMatch[3] === "2nd" ? 2
-            : labeledMatch[3] === "3rd" ? 3
-            : labeledMatch[3] === "4th" ? 4
-            : labeledMatch[3] === "5th" ? 5 : (setsDetail.length + 1);
-          const a = parseInt(labeledMatch[4], 10);
-          const b = parseInt(labeledMatch[5], 10);
-          if (a <= 45 && b <= 45 && (a >= 10 || b >= 10)) {
-            setsDetail.push({ set: setNum, home: a, away: b, duration: labeledMatch[6] || "" });
-          }
-        }
-      }
+      const usedNumIds = new Set();
 
-      // Pattern 2: If no labeled lines matched, search across lines for set score pairs + duration
-      if (setsDetail.length === 0) {
-        const foundPairs = [];
-        for (const ln of lines) {
-          const sorted = ln.items.sort((a, b) => a.nx - b.nx);
-          const durMatch = sorted.map(x => x.str).join(" ").match(/(\d{1,2}:\d{2})/);
-          const durStr = durMatch ? durMatch[1] : "";
+      for (let idx = 0; idx < durItems.length && idx < 5; idx++) {
+        const dItem = durItems[idx];
+        const durCleanMatch = dItem.str.match(/(\d{1,2}:\d{2})/);
+        const duration = durCleanMatch ? durCleanMatch[1] : "";
 
-          // Check adjacent numeric tokens or "25-20"
-          for (let i = 0; i < sorted.length; i++) {
-            const cur = sorted[i].str;
-            const dashPair = cur.match(/^(\d{1,2})\s*[-－–]\s*(\d{1,2})$/);
-            if (dashPair) {
-              const a = parseInt(dashPair[1], 10);
-              const b = parseInt(dashPair[2], 10);
-              if ((a >= 10 || b >= 10) && a <= 45 && b <= 45 && Math.abs(a - b) >= 2) {
-                foundPairs.push({ home: a, away: b, duration: durStr });
-              }
-              continue;
-            }
-            if (/^\d{1,2}$/.test(cur) && i + 1 < sorted.length && /^\d{1,2}$/.test(sorted[i + 1].str)) {
-              const a = parseInt(cur, 10);
-              const b = parseInt(sorted[i + 1].str, 10);
-              const dx = Math.abs(sorted[i + 1].nx - sorted[i].nx);
-              if (dx < 45 && (a >= 10 || b >= 10) && a <= 45 && b <= 45 && Math.abs(a - b) >= 2) {
-                foundPairs.push({ home: a, away: b, duration: durStr });
-                i++;
-              }
+        // Find numeric score items (1..45) near this duration item in Y (within ~26pt)
+        // Exclude starting lineup numbers or points inside roster columns if far away
+        const candidates = normItems
+          .map((it, i) => ({ ...it, _idx: i }))
+          .filter(it => {
+            if (usedNumIds.has(it._idx)) return false;
+            if (!/^\d{1,2}$/.test(it.str)) return false;
+            const val = parseInt(it.str, 10);
+            if (val < 1 || val > 45) return false;
+            const dy = Math.abs(it.ny - dItem.ny);
+            const dx = Math.abs(it.nx - dItem.nx);
+            return dy <= 28 && dx <= 150;
+          })
+          .sort((a, b) => {
+            const da = Math.abs(a.ny - dItem.ny) + Math.abs(a.nx - dItem.nx) * 0.25;
+            const db = Math.abs(b.ny - dItem.ny) + Math.abs(b.nx - dItem.nx) * 0.25;
+            return da - db;
+          });
+
+        // Pick two score numbers where at least one is >= 10 (volleyball set point)
+        let homePts = null;
+        let awayPts = null;
+        for (let i = 0; i < candidates.length; i++) {
+          for (let j = i + 1; j < candidates.length; j++) {
+            const a = parseInt(candidates[i].str, 10);
+            const b = parseInt(candidates[j].str, 10);
+            if ((a >= 10 || b >= 10) && Math.abs(a - b) >= 2 && Math.abs(a - b) <= 25) {
+              // Order home vs away by X position (left = home, right = away)
+              const pair = [candidates[i], candidates[j]].sort((p, q) => p.nx - q.nx);
+              homePts = parseInt(pair[0].str, 10);
+              awayPts = parseInt(pair[1].str, 10);
+              usedNumIds.add(pair[0]._idx);
+              usedNumIds.add(pair[1]._idx);
+              break;
             }
           }
+          if (homePts !== null) break;
         }
 
-        // Deduplicate consecutive identical pairs if any
-        for (const p of foundPairs) {
-          const prev = setsDetail[setsDetail.length - 1];
-          if (!prev || prev.home !== p.home || prev.away !== p.away) {
-            setsDetail.push({
-              set: setsDetail.length + 1,
-              home: p.home,
-              away: p.away,
-              duration: p.duration
-            });
-          }
-          if (setsDetail.length >= 5) break;
+        if (homePts !== null && awayPts !== null) {
+          setsDetail.push({
+            set: idx + 1,
+            home: homePts,
+            away: awayPts,
+            duration
+          });
+        } else if (duration) {
+          setsDetail.push({
+            set: idx + 1,
+            home: null,
+            away: null,
+            duration
+          });
         }
       }
 
@@ -1010,8 +997,10 @@
         let hWin = 0;
         let aWin = 0;
         for (const s of setsDetail) {
-          if (s.home > s.away) hWin++;
-          else if (s.away > s.home) aWin++;
+          if (typeof s.home === "number" && typeof s.away === "number") {
+            if (s.home > s.away) hWin++;
+            else if (s.away > s.home) aWin++;
+          }
         }
         if (hWin + aWin > 0) {
           scoreHomeSets = hWin;
@@ -1379,7 +1368,8 @@
         ? meta.sets_detail.map(s => {
             const nPts = isNecHome(match) ? s.home : s.away;
             const oPts = isNecHome(match) ? s.away : s.home;
-            return `<span class="set-pill">Set${s.set}: NEC ${nPts}-${oPts} ${s.duration ? `(${s.duration})` : ""}</span>`;
+            const scoreTxt = (typeof nPts === "number" && typeof oPts === "number") ? `NEC ${nPts}-${oPts}` : "得点要確認";
+            return `<span class="set-pill">Set${s.set}: ${scoreTxt} ${s.duration ? `(${s.duration})` : ""}</span>`;
           }).join("")
         : `<span class="set-pill">セット詳細: コメント・帳票登録データ</span>`;
 
