@@ -910,6 +910,7 @@
 
       const normItems = pages.flatMap(p => p.items.map(it => ({
         ...it,
+        page: p.pageNumber,
         nx: it.x * scaleX,
         ny: it.y * scaleY
       })));
@@ -918,74 +919,97 @@
       const matchNoMatch = fullText.match(/Match No\.\s*(\d+)/i);
       const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
-      const venueMatch = fullText.match(/会場[:：]\s*([^\s]+)/);
 
-      // SV.LEAGUE A帳票 layout:
-      // Each set 1..5 has a duration token like 【0:24】, 【0:24】, 【0:22】, 【0:29】, (0:15】 or 0:24
-      // Near each set's duration item, two set point numbers (home and away) appear around the same y/x band.
-      const durItems = normItems
-        .filter(it => /[\[【\(]?\d{1,2}:\d{2}[\]\)】]?/.test(it.str))
-        .sort((a, b) => b.ny - a.ny || a.nx - b.nx);
+      // Extract venue (e.g., 会場:山陽ふれあい公園総合体育館 or arena name)
+      let venueVal = null;
+      const venueLabeled = fullText.match(/会場[:：\s]*([^\s\/／|｜]+)/);
+      if (venueLabeled) {
+        venueVal = venueLabeled[1].trim();
+      } else {
+        const venueGuess = normItems.find(it =>
+          /(アリーナ|体育館|総合運動公園|武道館|センター|ドーム|ホール)$/.test(it.str) &&
+          it.str.length >= 3 && it.str.length <= 28
+        );
+        if (venueGuess) venueVal = venueGuess.str.trim();
+      }
+
+      // Extract Home / Away team names
+      let homeTeamVal = null;
+      let awayTeamVal = null;
+      const necItem = normItems.find(it => it.str.includes("NECレッドロケッツ"));
+      if (necItem) {
+        const sameBandTeams = normItems.filter(it =>
+          it.page === necItem.page &&
+          Math.abs(it.ny - necItem.ny) <= 22 &&
+          it !== necItem &&
+          /(シーガルズ|レッドロケッツ|マーヴェラス|久光|東レ|デンソー|PFU|日立|Astemo|クインシーズ|KUROBE|アランマーレ|ブレス|群馬|ヴィクトリーナ|岡山|姫路|埼玉上尾|トヨタ車体)/i.test(it.str)
+        );
+        if (sameBandTeams.length > 0) {
+          const pair = [necItem, sameBandTeams[0]].sort((a, b) => a.nx - b.nx);
+          homeTeamVal = pair[0].str.trim();
+          awayTeamVal = pair[1].str.trim();
+        }
+      }
+
+      // Locate "第1セット" .. "第5セット" anchors in the top summary score table
+      const setLabelItems = normItems
+        .map((it, idx) => {
+          const m = it.str.match(/第([1-5])\s*セット/);
+          return m ? { ...it, _idx: idx, setNum: parseInt(m[1], 10) } : null;
+        })
+        .filter(Boolean);
 
       const setsDetail = [];
-      const usedNumIds = new Set();
+      for (let sNum = 1; sNum <= 5; sNum++) {
+        // Prefer the top summary table entry (higher Y coordinate on page 1)
+        const matchingLabels = setLabelItems
+          .filter(it => it.setNum === sNum)
+          .sort((a, b) => a.page - b.page || b.ny - a.ny);
 
-      for (let idx = 0; idx < durItems.length && idx < 5; idx++) {
-        const dItem = durItems[idx];
-        const durCleanMatch = dItem.str.match(/(\d{1,2}:\d{2})/);
-        const duration = durCleanMatch ? durCleanMatch[1] : "";
+        if (matchingLabels.length === 0) continue;
+        const anchor = matchingLabels[0];
 
-        // Find numeric score items (1..45) near this duration item in Y (within ~26pt)
-        // Exclude starting lineup numbers or points inside roster columns if far away
-        const candidates = normItems
-          .map((it, i) => ({ ...it, _idx: i }))
-          .filter(it => {
-            if (usedNumIds.has(it._idx)) return false;
-            if (!/^\d{1,2}$/.test(it.str)) return false;
-            const val = parseInt(it.str, 10);
-            if (val < 1 || val > 45) return false;
-            const dy = Math.abs(it.ny - dItem.ny);
-            const dx = Math.abs(it.nx - dItem.nx);
-            return dy <= 28 && dx <= 150;
-          })
-          .sort((a, b) => {
-            const da = Math.abs(a.ny - dItem.ny) + Math.abs(a.nx - dItem.nx) * 0.25;
-            const db = Math.abs(b.ny - dItem.ny) + Math.abs(b.nx - dItem.nx) * 0.25;
-            return da - db;
-          });
+        // Find set duration like [0:24] or 0:24 near anchor
+        const nearDur = normItems.find(it =>
+          it.page === anchor.page &&
+          Math.abs(it.ny - anchor.ny) <= 16 &&
+          Math.abs(it.nx - anchor.nx) <= 65 &&
+          /\[?\d{1,2}:\d{2}\]?/.test(it.str)
+        );
+        const durMatch = nearDur ? nearDur.str.match(/(\d{1,2}:\d{2})/) : null;
+        const duration = durMatch ? durMatch[1] : "";
 
-        // Pick two score numbers where at least one is >= 10 (volleyball set point)
-        let homePts = null;
-        let awayPts = null;
-        for (let i = 0; i < candidates.length; i++) {
-          for (let j = i + 1; j < candidates.length; j++) {
-            const a = parseInt(candidates[i].str, 10);
-            const b = parseInt(candidates[j].str, 10);
-            if ((a >= 10 || b >= 10) && Math.abs(a - b) >= 2 && Math.abs(a - b) <= 25) {
-              // Order home vs away by X position (left = home, right = away)
-              const pair = [candidates[i], candidates[j]].sort((p, q) => p.nx - q.nx);
-              homePts = parseInt(pair[0].str, 10);
-              awayPts = parseInt(pair[1].str, 10);
-              usedNumIds.add(pair[0]._idx);
-              usedNumIds.add(pair[1]._idx);
-              break;
-            }
-          }
-          if (homePts !== null) break;
+        // Find home (left of anchor) and away (right of anchor) score numbers on the same row
+        const rowNums = normItems
+          .filter(it =>
+            it.page === anchor.page &&
+            Math.abs(it.ny - anchor.ny) <= 14 &&
+            /^\d{1,2}$/.test(it.str)
+          )
+          .map(it => ({ ...it, val: parseInt(it.str, 10) }))
+          .filter(it => it.val >= 0 && it.val <= 45);
+
+        const leftCandidates = rowNums
+          .filter(it => it.nx < anchor.nx - 5 && (anchor.nx - it.nx) <= 110)
+          .sort((a, b) => Math.abs(a.ny - anchor.ny) - Math.abs(b.ny - anchor.ny) || b.nx - a.nx);
+
+        const rightCandidates = rowNums
+          .filter(it => it.nx > anchor.nx + 5 && (it.nx - anchor.nx) <= 110)
+          .sort((a, b) => Math.abs(a.ny - anchor.ny) - Math.abs(b.ny - anchor.ny) || a.nx - b.nx);
+
+        const hPts = leftCandidates.length > 0 ? leftCandidates[0].val : null;
+        const aPts = rightCandidates.length > 0 ? rightCandidates[0].val : null;
+
+        // Skip unplayed 5th/4th sets that are 0-0 when earlier sets exist
+        if (hPts === 0 && aPts === 0 && setsDetail.length >= 3) {
+          continue;
         }
 
-        if (homePts !== null && awayPts !== null) {
+        if (hPts !== null || aPts !== null || duration) {
           setsDetail.push({
-            set: idx + 1,
-            home: homePts,
-            away: awayPts,
-            duration
-          });
-        } else if (duration) {
-          setsDetail.push({
-            set: idx + 1,
-            home: null,
-            away: null,
+            set: sNum,
+            home: hPts,
+            away: aPts,
             duration
           });
         }
@@ -993,14 +1017,13 @@
 
       let scoreHomeSets = null;
       let scoreAwaySets = null;
-      if (setsDetail.length > 0) {
+      const validSets = setsDetail.filter(s => typeof s.home === "number" && typeof s.away === "number" && (s.home > 0 || s.away > 0));
+      if (validSets.length > 0) {
         let hWin = 0;
         let aWin = 0;
-        for (const s of setsDetail) {
-          if (typeof s.home === "number" && typeof s.away === "number") {
-            if (s.home > s.away) hWin++;
-            else if (s.away > s.home) aWin++;
-          }
+        for (const s of validSets) {
+          if (s.home > s.away) hWin++;
+          else if (s.away > s.home) aWin++;
         }
         if (hWin + aWin > 0) {
           scoreHomeSets = hWin;
@@ -1012,7 +1035,9 @@
         match_no: matchNoMatch ? parseInt(matchNoMatch[1], 10) : null,
         date: dateMatch ? dateMatch[1] : null,
         round_label: roundMatch ? roundMatch[1] : null,
-        venue: venueMatch ? venueMatch[1] : null,
+        venue: venueVal,
+        home_team: homeTeamVal,
+        away_team: awayTeamVal,
         score_home_sets: scoreHomeSets,
         score_away_sets: scoreAwaySets,
         sets_detail: setsDetail,
