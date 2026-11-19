@@ -55,6 +55,8 @@
     }
 
     .top-bar {
+      position: relative;
+      z-index: 20;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
@@ -117,6 +119,8 @@
     }
 
     .controls-group {
+      position: relative;
+      z-index: 30;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -126,6 +130,7 @@
     select, input, textarea, button {
       font-family: inherit;
       color: var(--text-main);
+      position: relative;
     }
 
     select {
@@ -134,7 +139,7 @@
       border-radius: 14px;
       padding: 10px 14px;
       font-size: 0.88rem;
-      min-width: 260px;
+      min-width: 280px;
       cursor: pointer;
     }
 
@@ -157,6 +162,7 @@
       cursor: pointer;
       transition: all 0.18s ease;
       text-decoration: none;
+      pointer-events: auto;
     }
 
     .btn:hover {
@@ -183,6 +189,8 @@
     }
 
     .status-note {
+      position: relative;
+      z-index: 10;
       font-size: 0.82rem;
       color: var(--text-sub);
       background: var(--bg-card);
@@ -200,6 +208,8 @@
     }
 
     .mode-tabs {
+      position: relative;
+      z-index: 25;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
@@ -216,6 +226,7 @@
       font-size: 0.88rem;
       cursor: pointer;
       transition: all 0.18s ease;
+      pointer-events: auto;
     }
 
     .tab-btn.active {
@@ -227,6 +238,8 @@
 
     .tab-panel {
       display: none;
+      position: relative;
+      z-index: 10;
     }
 
     .tab-panel.active {
@@ -545,7 +558,7 @@
       </div>
       <div class="controls-group">
         <select id="matchSelect" aria-label="分析する試合を選択"></select>
-        <a id="liveScoreLink" class="btn" href="https://www.svleague.jp/match/detail/37493/?tab=live" target="_blank" rel="noopener noreferrer">
+        <a id="liveScoreLink" class="btn" href="https://www.svleague.jp/" target="_blank" rel="noopener noreferrer">
           Live Score ↗
         </a>
         <button id="reloadJsonBtn" class="btn" type="button" title="backend/data/matches.json と保存データを再読み込み">
@@ -730,7 +743,7 @@
         <div class="form-grid">
           <div>
             <label class="field-label" for="liveScoreInput">Live Score URL（速報ページリンク）</label>
-            <input id="liveScoreInput" type="text" placeholder="例: https://www.svleague.jp/match/detail/37493/?tab=live" />
+            <input id="liveScoreInput" type="text" placeholder="この試合のLive Score URLを入力してください" />
           </div>
           <div>
             <label class="field-label" for="matchDateOverride">試合日・節ラベル（PDFから取れない場合の補助・任意）</label>
@@ -893,7 +906,6 @@
       return Number.isNaN(n) ? null : n;
     }
 
-    // PDF.js を使ってPDFページ内のテキスト要素と座標を取得
     async function extractPdfItems(file) {
       if (!window.pdfjsLib) {
         throw new Error("PDF.js ライブラリが読み込めませんでした。ネットワーク接続を確認してください。");
@@ -908,23 +920,18 @@
         const textContent = await page.getTextContent();
         const items = textContent.items
           .filter(it => it.str && normalizeStr(it.str) !== "")
-          .map(it => {
-            const x = it.transform[4];
-            const y = it.transform[5];
-            return {
-              x,
-              y,
-              str: normalizeStr(it.str),
-              pageWidth: viewport.width,
-              pageHeight: viewport.height
-            };
-          });
+          .map(it => ({
+            x: it.transform[4],
+            y: it.transform[5],
+            str: normalizeStr(it.str),
+            pageWidth: viewport.width,
+            pageHeight: viewport.height
+          }));
         allPages.push({ pageNumber: p, width: viewport.width, height: viewport.height, items });
       }
       return allPages;
     }
 
-    // A帳票（試合会場レポート）の簡易抽出
     async function parseFormAPdf(file) {
       const pages = await extractPdfItems(file);
       const firstPage = pages[0];
@@ -935,28 +942,20 @@
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
       const venueMatch = fullText.match(/会場[:：]\s*([^\s]+)/);
 
-      // セットスコア抽出（例: 25 25 16 25 11 と 16 18 25 20 15）
-      const setNums = firstPage.items
-        .filter(i => /^\d{1,2}$/.test(i.str) && i.y > 430 && i.y < 660)
-        .map(i => ({ x: i.x, y: i.y, val: parseInt(i.str, 10) }));
-
       return {
         match_no: matchNoMatch ? parseInt(matchNoMatch[1], 10) : null,
         date: dateMatch ? dateMatch[1] : null,
         round_label: roundMatch ? roundMatch[1] : null,
         venue: venueMatch ? venueMatch[1] : null,
-        raw_preview: fullText.slice(0, 260),
-        set_scores_detected: setNums.length
+        raw_preview: fullText.slice(0, 260)
       };
     }
 
-    // B帳票（選手個人・チーム成績表）の座標ベース抽出
     async function parseFormBPdf(file) {
       const pages = await extractPdfItems(file);
       const p1 = pages[0];
       const items = p1.items;
 
-      // ページサイズ比率に合わせてX座標を595pt基準へ正規化
       const scaleX = 595 / (p1.width || 595);
       const scaleY = 842 / (p1.height || 842);
       const normItems = items.map(it => ({
@@ -971,7 +970,6 @@
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
       const venueMatch = fullText.match(/会場[:：]\s*([^\s]+)/);
 
-      // Y座標でグルーピング
       const rows = [];
       for (const it of [...normItems].sort((a, b) => b.ny - a.ny || a.nx - b.nx)) {
         let placed = false;
@@ -983,7 +981,7 @@
           }
         }
         if (!placed) {
-          rows.append ? rows.push({ y: it.ny, cells: [it] }) : rows.push({ y: it.ny, cells: [it] });
+          rows.push({ y: it.ny, cells: [it] });
         }
       }
 
@@ -1049,7 +1047,6 @@
       const homeBlock = extractPlayersInBand(295, 455);
       const awayBlock = extractPlayersInBand(110, 270);
 
-      // どちらがNECかを判定
       const necIsAway = awayBlock.players.some(p => p.name.replace(/\s+/g, "").includes("廣田あい"));
       const necIsHome = homeBlock.players.some(p => p.name.replace(/\s+/g, "").includes("廣田あい"));
 
@@ -1151,6 +1148,21 @@
       return new URL("./backend/data/matches.json", window.location.href).href;
     }
 
+    function syncLiveScoreLinkForCurrentMatch() {
+      const active = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
+      const liveLink = document.getElementById("liveScoreLink");
+      const rawUrl = String(active?.sources?.live_score_url || "").trim();
+      if (rawUrl && /^https?:\/\//i.test(rawUrl)) {
+        liveLink.href = rawUrl;
+        liveLink.textContent = "Live Score ↗";
+        liveLink.style.opacity = "1";
+      } else {
+        liveLink.href = "https://www.svleague.jp/";
+        liveLink.textContent = "Live Score (未設定) ↗";
+        liveLink.style.opacity = "0.75";
+      }
+    }
+
     async function loadMatchesFromRepo(isManualClick = false) {
       const mainEl = document.getElementById("statusMainText");
       const subEl = document.getElementById("statusSubText");
@@ -1212,7 +1224,8 @@
     }
 
     function updateJsonPreview() {
-      const exportList = allMatches.filter(m => String(m.id) !== "168" || loadLocalSavedMatches().some(x => String(x.id) === "168"));
+      const localIds = new Set(loadLocalSavedMatches().map(x => String(x.id)));
+      const exportList = allMatches.filter(m => String(m.id) !== "168" || localIds.has("168"));
       const dataToShow = exportList.length > 0 ? exportList : allMatches;
       document.getElementById("generatedJsonPreview").textContent = JSON.stringify(dataToShow, null, 2);
     }
@@ -1229,10 +1242,7 @@
         }
         select.appendChild(opt);
       }
-      const active = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
-      const liveLink = document.getElementById("liveScoreLink");
-      const liveUrl = active?.sources?.live_score_url || "https://www.svleague.jp/match/detail/37493/?tab=live";
-      liveLink.href = liveUrl;
+      syncLiveScoreLinkForCurrentMatch();
     }
 
     function renderSingleMatch() {
@@ -1241,6 +1251,8 @@
       const nec = getNecBlock(match);
       const opp = getOppBlock(match);
       const hirota = getHirotaStat(match);
+
+      syncLiveScoreLinkForCurrentMatch();
 
       const banner = document.getElementById("matchBanner");
       const necSets = typeof meta.score_home_sets === "number" && typeof meta.score_away_sets === "number"
@@ -1586,8 +1598,10 @@
         upload: ["tabUploadBtn", "panelUpload"]
       };
       for (const [key, [btnId, panelId]] of Object.entries(mapping)) {
-        document.getElementById(btnId).classList.toggle("active", key === tabName);
-        document.getElementById(panelId).classList.toggle("active", key === tabName);
+        const btn = document.getElementById(btnId);
+        const panel = document.getElementById(panelId);
+        if (btn) btn.classList.toggle("active", key === tabName);
+        if (panel) panel.classList.toggle("active", key === tabName);
       }
     }
 
@@ -1599,156 +1613,190 @@
         .replace(/"/g, "&quot;");
     }
 
-    // PDF Upload Handlers
-    document.getElementById("pdfBInput").addEventListener("change", async (e) => {
-      const file = e.target.files?.[0];
-      const st = document.getElementById("pdfBStatus");
-      if (!file) return;
-      st.textContent = "解析中...";
-      st.className = "pill-status warn";
-      try {
-        parsedDraftB = await parseFormBPdf(file);
-        const hirota = (parsedDraftB.away_team?.players || []).concat(parsedDraftB.home_team?.players || [])
-          .find(p => String(p.name || "").replace(/\s+/g, "").includes("廣田あい"));
-        const info = hirota ? `／ #4 廣田: ${hirota.attack_pts}/${hirota.attack_att} (${fmtPct(hirota.attack_pct)}), Blk ${hirota.block_pts}` : "";
-        st.textContent = `✓ B帳票読込完了${info}`;
-        st.className = "pill-status ok";
-      } catch (err) {
-        parsedDraftB = null;
-        st.textContent = `⚠ 読込エラー: ${err.message}`;
-        st.className = "pill-status warn";
-      }
-    });
-
-    document.getElementById("pdfAInput").addEventListener("change", async (e) => {
-      const file = e.target.files?.[0];
-      const st = document.getElementById("pdfAStatus");
-      if (!file) return;
-      st.textContent = "解析中...";
-      st.className = "pill-status warn";
-      try {
-        parsedDraftA = await parseFormAPdf(file);
-        const info = parsedDraftA.date ? `${parsedDraftA.date} ${parsedDraftA.round_label || ""}` : file.name;
-        st.textContent = `✓ A帳票読込完了（${info}）`;
-        st.className = "pill-status ok";
-      } catch (err) {
-        parsedDraftA = null;
-        st.textContent = `⚠ 読込エラー: ${err.message}`;
-        st.className = "pill-status warn";
-      }
-    });
-
-    // Add to Dashboard & LocalStorage
-    document.getElementById("addMatchToDashboardBtn").addEventListener("click", () => {
-      const liveUrl = normalizeStr(document.getElementById("liveScoreInput").value);
-      const overrideLabel = normalizeStr(document.getElementById("matchDateOverride").value);
-      const commentNec = document.getElementById("commentNecInput").value.trim();
-      const commentOpp = document.getElementById("commentOppInput").value.trim();
-
-      if (!parsedDraftB && !parsedDraftA && !liveUrl && !commentNec && !commentOpp && !overrideLabel) {
-        document.getElementById("uploadFeedback").textContent = "⚠ 少なくともPDFファイル、Live Score URL、またはコメントのいずれかを入力してください。";
-        return;
+    function bindEvents() {
+      const matchSelect = document.getElementById("matchSelect");
+      if (matchSelect) {
+        matchSelect.addEventListener("change", (e) => {
+          currentMatchId = String(e.target.value);
+          renderMatchSelector();
+          renderSingleMatch();
+        });
       }
 
-      const bMeta = parsedDraftB?.meta || {};
-      const aMeta = parsedDraftA || {};
-      const matchNo = bMeta.match_no || aMeta.match_no || null;
-
-      let dateVal = bMeta.date || aMeta.date || null;
-      let roundVal = bMeta.round_label || aMeta.round_label || null;
-      if (overrideLabel) {
-        const dMatch = overrideLabel.match(/(\d{4}\/\d{2}\/\d{2})/);
-        if (dMatch) dateVal = dMatch[1];
-        roundVal = overrideLabel.replace(/(\d{4}\/\d{2}\/\d{2})/, "").trim() || roundVal;
+      const reloadBtn = document.getElementById("reloadJsonBtn");
+      if (reloadBtn) {
+        reloadBtn.addEventListener("click", () => {
+          loadMatchesFromRepo(true);
+        });
       }
 
-      const newId = String(matchNo || Date.now());
-      const newRecord = {
-        id: newId,
-        meta: {
-          match_no: matchNo,
-          round_label: roundVal,
-          date: dateVal,
-          venue: bMeta.venue || aMeta.venue || null,
-          home_team: bMeta.home_team || "対戦相手",
-          away_team: bMeta.away_team || "NECレッドロケッツ川崎"
-        },
-        target_side: parsedDraftB?.target_side || "away",
-        sources: {
-          live_score_url: liveUrl || "https://www.svleague.jp/match/detail/37493/?tab=live",
-          form_a_name: parsedDraftA ? "uploaded_form_a.pdf" : null,
-          form_b_name: parsedDraftB ? "uploaded_form_b.pdf" : null
-        },
-        comments: {
-          away: commentNec,
-          home: commentOpp
-        },
-        parsed_b: parsedDraftB || {
-          home_team: { team_name: "対戦相手", team_total: {}, players: [] },
-          away_team: { team_name: "NECレッドロケッツ川崎", team_total: {}, players: [] }
-        },
-        parsed_a: parsedDraftA || null
-      };
+      const tabSingleBtn = document.getElementById("tabSingleBtn");
+      const tabCumulativeBtn = document.getElementById("tabCumulativeBtn");
+      const tabUploadBtn = document.getElementById("tabUploadBtn");
 
-      const savedList = loadLocalSavedMatches().filter(m => String(m.id) !== newId);
-      savedList.push(newRecord);
-      saveLocalSavedMatches(savedList);
+      if (tabSingleBtn) tabSingleBtn.addEventListener("click", () => switchTab("single"));
+      if (tabCumulativeBtn) tabCumulativeBtn.addEventListener("click", () => switchTab("cumulative"));
+      if (tabUploadBtn) tabUploadBtn.addEventListener("click", () => switchTab("upload"));
 
-      currentMatchId = newId;
-      loadMatchesFromRepo(false);
-      document.getElementById("uploadFeedback").textContent = `✓ 試合データ（ID: ${newId}）を作成し、ダッシュボードに反映しました！「⬇ 蓄積用 matches.json をダウンロード」からファイル保存もできます。`;
-      switchTab("single");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-    document.getElementById("downloadMatchesJsonBtn").addEventListener("click", () => {
-      const text = document.getElementById("generatedJsonPreview").textContent;
-      const blob = new Blob([text], { type: "application/json;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "matches.json";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    document.getElementById("copyMatchesJsonBtn").addEventListener("click", async () => {
-      const text = document.getElementById("generatedJsonPreview").textContent;
-      try {
-        await navigator.clipboard.writeText(text);
-        document.getElementById("uploadFeedback").textContent = "✓ matches.json の内容をクリップボードにコピーしました。GitHubの backend/data/matches.json に貼り付けて保存できます。";
-      } catch {
-        document.getElementById("uploadFeedback").textContent = "ℹ 下のプレビュー枠から手動でテキストを選択してコピーしてください。";
+      const pdfBInput = document.getElementById("pdfBInput");
+      if (pdfBInput) {
+        pdfBInput.addEventListener("change", async (e) => {
+          const file = e.target.files?.[0];
+          const st = document.getElementById("pdfBStatus");
+          if (!file) return;
+          st.textContent = "解析中...";
+          st.className = "pill-status warn";
+          try {
+            parsedDraftB = await parseFormBPdf(file);
+            const hirota = (parsedDraftB.away_team?.players || []).concat(parsedDraftB.home_team?.players || [])
+              .find(p => String(p.name || "").replace(/\s+/g, "").includes("廣田あい"));
+            const info = hirota ? `／ #4 廣田: ${hirota.attack_pts}/${hirota.attack_att} (${fmtPct(hirota.attack_pct)}), Blk ${hirota.block_pts}` : "";
+            st.textContent = `✓ B帳票読込完了${info}`;
+            st.className = "pill-status ok";
+          } catch (err) {
+            parsedDraftB = null;
+            st.textContent = `⚠ 読込エラー: ${err.message}`;
+            st.className = "pill-status warn";
+          }
+        });
       }
-    });
 
-    document.getElementById("clearLocalDataBtn").addEventListener("click", () => {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      parsedDraftA = null;
-      parsedDraftB = null;
-      document.getElementById("pdfBStatus").textContent = "未選択";
-      document.getElementById("pdfBStatus").className = "pill-status";
-      document.getElementById("pdfAStatus").textContent = "未選択";
-      document.getElementById("pdfAStatus").className = "pill-status";
-      document.getElementById("uploadFeedback").textContent = "✓ ブラウザの一時保存データをクリアしました。";
-      loadMatchesFromRepo(false);
-    });
+      const pdfAInput = document.getElementById("pdfAInput");
+      if (pdfAInput) {
+        pdfAInput.addEventListener("change", async (e) => {
+          const file = e.target.files?.[0];
+          const st = document.getElementById("pdfAStatus");
+          if (!file) return;
+          st.textContent = "解析中...";
+          st.className = "pill-status warn";
+          try {
+            parsedDraftA = await parseFormAPdf(file);
+            const info = parsedDraftA.date ? `${parsedDraftA.date} ${parsedDraftA.round_label || ""}` : file.name;
+            st.textContent = `✓ A帳票読込完了（${info}）`;
+            st.className = "pill-status ok";
+          } catch (err) {
+            parsedDraftA = null;
+            st.textContent = `⚠ 読込エラー: ${err.message}`;
+            st.className = "pill-status warn";
+          }
+        });
+      }
 
-    document.getElementById("matchSelect").addEventListener("change", (e) => {
-      currentMatchId = e.target.value;
+      const addBtn = document.getElementById("addMatchToDashboardBtn");
+      if (addBtn) {
+        addBtn.addEventListener("click", () => {
+          const liveUrl = normalizeStr(document.getElementById("liveScoreInput").value);
+          const overrideLabel = normalizeStr(document.getElementById("matchDateOverride").value);
+          const commentNec = document.getElementById("commentNecInput").value.trim();
+          const commentOpp = document.getElementById("commentOppInput").value.trim();
+
+          if (!parsedDraftB && !parsedDraftA && !liveUrl && !commentNec && !commentOpp && !overrideLabel) {
+            document.getElementById("uploadFeedback").textContent = "⚠ 少なくともPDFファイル、Live Score URL、またはコメントのいずれかを入力してください。";
+            return;
+          }
+
+          const bMeta = parsedDraftB?.meta || {};
+          const aMeta = parsedDraftA || {};
+          const matchNo = bMeta.match_no || aMeta.match_no || null;
+
+          let dateVal = bMeta.date || aMeta.date || null;
+          let roundVal = bMeta.round_label || aMeta.round_label || null;
+          if (overrideLabel) {
+            const dMatch = overrideLabel.match(/(\d{4}\/\d{2}\/\d{2})/);
+            if (dMatch) dateVal = dMatch[1];
+            roundVal = overrideLabel.replace(/(\d{4}\/\d{2}\/\d{2})/, "").trim() || roundVal;
+          }
+
+          const newId = String(matchNo || Date.now());
+          const newRecord = {
+            id: newId,
+            meta: {
+              match_no: matchNo,
+              round_label: roundVal,
+              date: dateVal,
+              venue: bMeta.venue || aMeta.venue || null,
+              home_team: bMeta.home_team || "対戦相手",
+              away_team: bMeta.away_team || "NECレッドロケッツ川崎"
+            },
+            target_side: parsedDraftB?.target_side || "away",
+            sources: {
+              live_score_url: liveUrl || "",
+              form_a_name: parsedDraftA ? "uploaded_form_a.pdf" : null,
+              form_b_name: parsedDraftB ? "uploaded_form_b.pdf" : null
+            },
+            comments: {
+              away: commentNec,
+              home: commentOpp
+            },
+            parsed_b: parsedDraftB || {
+              home_team: { team_name: "対戦相手", team_total: {}, players: [] },
+              away_team: { team_name: "NECレッドロケッツ川崎", team_total: {}, players: [] }
+            },
+            parsed_a: parsedDraftA || null
+          };
+
+          const savedList = loadLocalSavedMatches().filter(m => String(m.id) !== newId);
+          savedList.push(newRecord);
+          saveLocalSavedMatches(savedList);
+
+          currentMatchId = newId;
+          loadMatchesFromRepo(false);
+          document.getElementById("uploadFeedback").textContent = `✓ 試合データ（ID: ${newId}）を作成し、ダッシュボードに反映しました！「⬇ 蓄積用 matches.json をダウンロード」からファイル保存もできます。`;
+          switchTab("single");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+
+      const dlBtn = document.getElementById("downloadMatchesJsonBtn");
+      if (dlBtn) {
+        dlBtn.addEventListener("click", () => {
+          const text = document.getElementById("generatedJsonPreview").textContent;
+          const blob = new Blob([text], { type: "application/json;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "matches.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      }
+
+      const cpBtn = document.getElementById("copyMatchesJsonBtn");
+      if (cpBtn) {
+        cpBtn.addEventListener("click", async () => {
+          const text = document.getElementById("generatedJsonPreview").textContent;
+          try {
+            await navigator.clipboard.writeText(text);
+            document.getElementById("uploadFeedback").textContent = "✓ matches.json の内容をクリップボードにコピーしました。GitHubの backend/data/matches.json に貼り付けて保存できます。";
+          } catch {
+            document.getElementById("uploadFeedback").textContent = "ℹ 下のプレビュー枠から手動でテキストを選択してコピーしてください。";
+          }
+        });
+      }
+
+      const clrBtn = document.getElementById("clearLocalDataBtn");
+      if (clrBtn) {
+        clrBtn.addEventListener("click", () => {
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          parsedDraftA = null;
+          parsedDraftB = null;
+          document.getElementById("pdfBStatus").textContent = "未選択";
+          document.getElementById("pdfBStatus").className = "pill-status";
+          document.getElementById("pdfAStatus").textContent = "未選択";
+          document.getElementById("pdfAStatus").className = "pill-status";
+          document.getElementById("uploadFeedback").textContent = "✓ ブラウザの一時保存データをクリアしました。";
+          loadMatchesFromRepo(false);
+        });
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      bindEvents();
       renderMatchSelector();
       renderSingleMatch();
+      renderCumulativeView();
+      loadMatchesFromRepo(false);
     });
-
-    document.getElementById("reloadJsonBtn").addEventListener("click", () => {
-      loadMatchesFromRepo(true);
-    });
-
-    document.getElementById("tabSingleBtn").addEventListener("click", () => switchTab("single"));
-    document.getElementById("tabCumulativeBtn").addEventListener("click", () => switchTab("cumulative"));
-    document.getElementById("tabUploadBtn").addEventListener("click", () => switchTab("upload"));
-
-    loadMatchesFromRepo(false);
   </script>
 </body>
 </html>
