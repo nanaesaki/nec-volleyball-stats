@@ -710,6 +710,10 @@
             <label class="field-label" for="matchDateOverride">試合日・節ラベル（例: 2026/11/14 第5節 GAME1）</label>
             <input id="matchDateOverride" type="text" placeholder="例: 2026/11/14 第5節 GAME1 vs 岡山シーガルズ" />
           </div>
+          <div>
+            <label class="field-label" for="matchScoreInput">セットカウント（例: 3-2 または 2-3）</label>
+            <input id="matchScoreInput" type="text" placeholder="例: 3-2（NECセット数-相手セット数）" />
+          </div>
         </div>
 
         <div class="form-grid">
@@ -899,19 +903,50 @@
 
     async function parseFormAPdf(file) {
       const pages = await extractPdfItems(file);
-      const firstPage = pages[0];
-      const fullText = firstPage.items.map(i => i.str).join(" ");
+      const allItems = pages.flatMap(p => p.items);
+      const fullText = allItems.map(i => i.str).join(" ");
 
       const matchNoMatch = fullText.match(/Match No\.\s*(\d+)/i);
       const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
       const venueMatch = fullText.match(/会場[:：]\s*([^\s]+)/);
 
+      // Try to detect set scores like "25-20" or "25 - 20" or set counts like "3-2"
+      const setsDetail = [];
+      const setScoreRegex = /(\d{1,2})\s*[-－–]\s*(\d{1,2})/g;
+      let sm;
+      let idx = 1;
+      while ((sm = setScoreRegex.exec(fullText)) !== null) {
+        const a = parseInt(sm[1], 10);
+        const b = parseInt(sm[2], 10);
+        if ((a >= 15 || b >= 15) && a <= 45 && b <= 45 && Math.abs(a - b) >= 2) {
+          setsDetail.push({ set: idx++, home: a, away: b, duration: "" });
+        }
+      }
+
+      let scoreHomeSets = null;
+      let scoreAwaySets = null;
+      if (setsDetail.length > 0) {
+        let hWin = 0;
+        let aWin = 0;
+        for (const s of setsDetail) {
+          if (s.home > s.away) hWin++;
+          else if (s.away > s.home) aWin++;
+        }
+        if (hWin + aWin > 0) {
+          scoreHomeSets = hWin;
+          scoreAwaySets = aWin;
+        }
+      }
+
       return {
         match_no: matchNoMatch ? parseInt(matchNoMatch[1], 10) : null,
         date: dateMatch ? dateMatch[1] : null,
         round_label: roundMatch ? roundMatch[1] : null,
         venue: venueMatch ? venueMatch[1] : null,
+        score_home_sets: scoreHomeSets,
+        score_away_sets: scoreAwaySets,
+        sets_detail: setsDetail,
         raw_preview: fullText.slice(0, 260)
       };
     }
@@ -959,7 +994,7 @@
         { key: "attack_err", min: 256, max: 270 },
         { key: "attack_pct", min: 270, max: 292 },
         { key: "block_pts", min: 374, max: 392 },
-        { key: "serve_eff", min: 454, max: 488 },
+        { key: "serve_eff", min: 458, max: 484 },
         { key: "rec_att", min: 488, max: 506 },
         { key: "rec_exc", min: 506, max: 521 },
         { key: "rec_good", min: 521, max: 536 },
@@ -992,7 +1027,22 @@
               attack_pts: toNum(bag.attack_pts) ?? 0,
               attack_pct: toNum(bag.attack_pct, true),
               block_pts: toNum(bag.block_pts) ?? 0,
-              serve_eff: toNum(bag.serve_eff, true),
+              serve_eff: (() => {
+                const raw = normalizeStr(bag.serve_eff).replace(/\s+/g, "");
+                if (!raw || raw === "-") return null;
+                // If two decimal numbers merged without space, e.g., "47.10.8" -> "47.1"
+                const decMatches = raw.match(/-?\d+\.\d+/g);
+                if (decMatches && decMatches.length >= 2) {
+                  return parseFloat(decMatches[0]);
+                }
+                const val = parseFloat(raw);
+                if (Number.isNaN(val)) return null;
+                // If an unspaced decimal like 4710.8 occurred from 47.1 and 0.8
+                if (Math.abs(val) > 100 && /^\d{2,3}\d\.\d$/.test(raw)) {
+                  return parseFloat(raw.slice(0, 2) + "." + raw.slice(2));
+                }
+                return val;
+              })(),
               rec_att: toNum(bag.rec_att) ?? 0,
               rec_exc: toNum(bag.rec_exc) ?? 0,
               rec_good: toNum(bag.rec_good) ?? 0,
@@ -1367,6 +1417,13 @@
       }
     }
 
+    function safeRateForChart(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return 0;
+      if (n > 100 || n < -100) return 0;
+      return n;
+    }
+
     function renderSingleTeamChart(nTot, oTot, oppName) {
       try {
         if (!window.Chart) return;
@@ -1380,13 +1437,13 @@
             datasets: [
               {
                 label: "NECレッドロケッツ川崎",
-                data: [Number(nTot.attack_pct) || 0, Number(nTot.serve_eff) || 0, Number(nTot.rec_pct) || 0],
+                data: [safeRateForChart(nTot.attack_pct), safeRateForChart(nTot.serve_eff), safeRateForChart(nTot.rec_pct)],
                 backgroundColor: "rgba(225, 29, 72, 0.72)",
                 borderRadius: 8
               },
               {
                 label: oppName,
-                data: [Number(oTot.attack_pct) || 0, Number(oTot.serve_eff) || 0, Number(oTot.rec_pct) || 0],
+                data: [safeRateForChart(oTot.attack_pct), safeRateForChart(oTot.serve_eff), safeRateForChart(oTot.rec_pct)],
                 backgroundColor: "rgba(56, 189, 248, 0.72)",
                 borderRadius: 8
               }
@@ -1396,7 +1453,7 @@
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-              y: { beginAtZero: true, grid: { color: "rgba(225, 29, 72, 0.08)" }, ticks: { color: "#6b5b64" } },
+              y: { beginAtZero: true, suggestedMax: 60, grid: { color: "rgba(225, 29, 72, 0.08)" }, ticks: { color: "#6b5b64" } },
               x: { grid: { display: false }, ticks: { color: "#6b5b64" } }
             },
             plugins: { legend: { labels: { color: "#2c242b" } } }
@@ -1617,12 +1674,13 @@
       const feedbackEl = document.getElementById("uploadFeedback");
       const liveUrl = normalizeStr(document.getElementById("liveScoreInput")?.value || "");
       const overrideLabel = normalizeStr(document.getElementById("matchDateOverride")?.value || "");
+      const scoreInputRaw = normalizeStr(document.getElementById("matchScoreInput")?.value || "");
       const commentNec = (document.getElementById("commentNecInput")?.value || "").trim();
       const commentOpp = (document.getElementById("commentOppInput")?.value || "").trim();
 
-      if (!parsedDraftB && !parsedDraftA && !liveUrl && !commentNec && !commentOpp && !overrideLabel) {
+      if (!parsedDraftB && !parsedDraftA && !liveUrl && !commentNec && !commentOpp && !overrideLabel && !scoreInputRaw) {
         if (feedbackEl) {
-          feedbackEl.textContent = "⚠ 少なくともPDFファイル、Live Score URL、試合日・節ラベル、またはコメントのいずれかを入力してください。";
+          feedbackEl.textContent = "⚠ 少なくともPDFファイル、Live Score URL、試合日・節ラベル、セットカウント、またはコメントのいずれかを入力してください。";
         }
         return;
       }
@@ -1647,6 +1705,24 @@
         if (rest) roundVal = rest;
       }
 
+      const targetSide = parsedDraftB?.target_side || "away";
+      let scoreHomeSets = aMeta.score_home_sets ?? null;
+      let scoreAwaySets = aMeta.score_away_sets ?? null;
+
+      const scoreMatch = scoreInputRaw.match(/(\d)\s*[-－–:：]\s*(\d)/);
+      if (scoreMatch) {
+        const s1 = parseInt(scoreMatch[1], 10);
+        const s2 = parseInt(scoreMatch[2], 10);
+        // Input convention: NEC sets - Opponent sets
+        if (targetSide === "home") {
+          scoreHomeSets = s1;
+          scoreAwaySets = s2;
+        } else {
+          scoreAwaySets = s1;
+          scoreHomeSets = s2;
+        }
+      }
+
       const newId = String(matchNo || `match_${Date.now()}`);
       const newRecord = {
         id: newId,
@@ -1656,7 +1732,10 @@
           date: dateVal,
           venue: bMeta.venue || aMeta.venue || null,
           home_team: oppVal || bMeta.home_team || "対戦相手",
-          away_team: bMeta.away_team || "NECレッドロケッツ川崎"
+          away_team: bMeta.away_team || "NECレッドロケッツ川崎",
+          score_home_sets: scoreHomeSets,
+          score_away_sets: scoreAwaySets,
+          sets_detail: aMeta.sets_detail || []
         },
         target_side: parsedDraftB?.target_side || "away",
         sources: {
