@@ -708,7 +708,7 @@
           </div>
           <div>
             <label class="field-label" for="matchDateOverride">試合日・節ラベル（例: 2026/11/14 第5節 GAME1）</label>
-            <input id="matchDateOverride" type="text" placeholder="例: 2026/11/14 第5節 GAME1 vs 岡山シーガルズ" />
+            <input id="matchDateOverride" type="text" placeholder="例: 2026/11/08 第4節 GAME2 vs チーム名" />
           </div>
           <div>
             <label class="field-label" for="matchScoreInput">セットカウント（例: 3-2 または 2-3）</label>
@@ -934,21 +934,42 @@
         if (venueGuess) venueVal = venueGuess.str.trim();
       }
 
-      // Extract Home / Away team names
+      // Extract Home / Away team names from A-form
       let homeTeamVal = null;
       let awayTeamVal = null;
+      const teamPattern = /(NECレッドロケッツ(?:川崎)?|岡山シーガルズ|JTマーヴェラス|大阪マーヴェラス|久光スプリングス|SAGA久光スプリングス|東レアローズ(?:滋賀)?|デンソーエアリービーズ|PFUブルーキャッツ(?:石川かほく)?|日立Astemoリヴァーレ|トヨタ車体クインシーズ|クインシーズ刈谷|KUROBEアクアフェアリーズ|アランマーレ山形|ブレス浜松|群馬グリーンウイングス|ヴィクトリーナ姫路|埼玉上尾メディックス)/i;
       const necItem = normItems.find(it => it.str.includes("NECレッドロケッツ"));
       if (necItem) {
         const sameBandTeams = normItems.filter(it =>
           it.page === necItem.page &&
-          Math.abs(it.ny - necItem.ny) <= 22 &&
+          Math.abs(it.ny - necItem.ny) <= 28 &&
           it !== necItem &&
-          /(シーガルズ|レッドロケッツ|マーヴェラス|久光|東レ|デンソー|PFU|日立|Astemo|クインシーズ|KUROBE|アランマーレ|ブレス|群馬|ヴィクトリーナ|岡山|姫路|埼玉上尾|トヨタ車体)/i.test(it.str)
+          teamPattern.test(it.str) &&
+          !it.str.includes("NECレッドロケッツ")
         );
         if (sameBandTeams.length > 0) {
+          sameBandTeams.sort((a, b) => Math.abs(a.ny - necItem.ny) - Math.abs(b.ny - necItem.ny) || Math.abs(a.nx - necItem.nx) - Math.abs(b.nx - necItem.nx));
           const pair = [necItem, sameBandTeams[0]].sort((a, b) => a.nx - b.nx);
           homeTeamVal = pair[0].str.trim();
           awayTeamVal = pair[1].str.trim();
+        }
+      }
+      if (!homeTeamVal || !awayTeamVal) {
+        const foundTeams = [];
+        for (const it of normItems) {
+          const m = it.str.match(teamPattern);
+          if (m && !foundTeams.some(x => x.name === m[1])) {
+            foundTeams.push({ name: m[1], nx: it.nx, ny: it.ny });
+          }
+        }
+        if (foundTeams.length >= 2) {
+          const necFound = foundTeams.find(x => x.name.includes("NEC"));
+          const oppFound = foundTeams.find(x => !x.name.includes("NEC"));
+          if (necFound && oppFound) {
+            const pair = [necFound, oppFound].sort((a, b) => a.nx - b.nx);
+            homeTeamVal = pair[0].name;
+            awayTeamVal = pair[1].name;
+          }
         }
       }
 
@@ -1150,18 +1171,32 @@
       const necIsAway = awayBlock.players.some(p => p.name.replace(/\s+/g, "").includes("廣田あい"));
       const necIsHome = homeBlock.players.some(p => p.name.replace(/\s+/g, "").includes("廣田あい"));
 
+      const bTeamPattern = /(NECレッドロケッツ(?:川崎)?|岡山シーガルズ|JTマーヴェラス|大阪マーヴェラス|久光スプリングス|SAGA久光スプリングス|東レアローズ(?:滋賀)?|デンソーエアリービーズ|PFUブルーキャッツ(?:石川かほく)?|日立Astemoリヴァーレ|トヨタ車体クインシーズ|クインシーズ刈谷|KUROBEアクアフェアリーズ|アランマーレ山形|ブレス浜松|群馬グリーンウイングス|ヴィクトリーナ姫路|埼玉上尾メディックス)/i;
+      const bFoundTeams = [];
+      for (const it of normItems) {
+        const m = it.str.match(bTeamPattern);
+        if (m && !bFoundTeams.some(x => x.name === m[1])) {
+          bFoundTeams.push({ name: m[1], nx: it.nx, ny: it.ny });
+        }
+      }
+      const bOppTeamObj = bFoundTeams.find(x => !x.name.includes("NEC"));
+      const bOppName = bOppTeamObj ? bOppTeamObj.name : null;
+
+      const homeTeamName = necIsHome ? "NECレッドロケッツ川崎" : (bOppName || "対戦相手");
+      const awayTeamName = necIsAway ? "NECレッドロケッツ川崎" : (bOppName || "対戦相手");
+
       return {
         meta: {
           match_no: matchNoMatch ? parseInt(matchNoMatch[1], 10) : null,
           date: dateMatch ? dateMatch[1] : null,
           round_label: roundMatch ? roundMatch[1] : null,
           venue: venueMatch ? venueMatch[1] : null,
-          home_team: necIsHome ? "NECレッドロケッツ川崎" : "対戦相手（ホーム）",
-          away_team: necIsAway ? "NECレッドロケッツ川崎" : "対戦相手（アウェー）"
+          home_team: homeTeamName,
+          away_team: awayTeamName
         },
         target_side: necIsHome ? "home" : "away",
-        home_team: homeBlock,
-        away_team: awayBlock
+        home_team: { ...homeBlock, team_name: homeTeamName },
+        away_team: { ...awayBlock, team_name: awayTeamName }
       };
     }
 
@@ -1797,11 +1832,16 @@
       if (overrideLabel) {
         const dMatch = overrideLabel.match(/(\d{4}\/\d{2}\/\d{2})/);
         if (dMatch) dateVal = dMatch[1];
-        const vsMatch = overrideLabel.match(/vs\s+(.+)$/i);
-        if (vsMatch) oppVal = vsMatch[1].trim();
+        const vsMatch = overrideLabel.match(/(?:vs|VS|対)\s*(.+)$/i);
+        if (vsMatch) {
+          const cleanedOpp = vsMatch[1]
+            .replace(/[(（](?:ホーム|アウェー|HOME|AWAY)[)）]/gi, "")
+            .trim();
+          if (cleanedOpp) oppVal = cleanedOpp;
+        }
         const rest = overrideLabel
           .replace(/(\d{4}\/\d{2}\/\d{2})/, "")
-          .replace(/vs\s+.+$/i, "")
+          .replace(/(?:vs|VS|対)\s*.+$/i, "")
           .trim();
         if (rest) roundVal = rest;
       }
@@ -1840,6 +1880,13 @@
       }
 
       const newId = String(matchNo || `match_${Date.now()}`);
+      const resolvedHomeTeam = oppVal
+        ? (targetSide === "home" ? "NECレッドロケッツ川崎" : oppVal)
+        : (aMeta.home_team || bMeta.home_team || (targetSide === "home" ? "NECレッドロケッツ川崎" : "対戦相手"));
+      const resolvedAwayTeam = oppVal
+        ? (targetSide === "away" ? "NECレッドロケッツ川崎" : oppVal)
+        : (aMeta.away_team || bMeta.away_team || (targetSide === "away" ? "NECレッドロケッツ川崎" : "対戦相手"));
+
       const newRecord = {
         id: newId,
         meta: {
@@ -1847,8 +1894,8 @@
           round_label: roundVal,
           date: dateVal,
           venue: bMeta.venue || aMeta.venue || null,
-          home_team: oppVal || bMeta.home_team || "対戦相手",
-          away_team: bMeta.away_team || "NECレッドロケッツ川崎",
+          home_team: resolvedHomeTeam,
+          away_team: resolvedAwayTeam,
           score_home_sets: scoreHomeSets,
           score_away_sets: scoreAwaySets,
           sets_detail: setsDetail
@@ -1863,9 +1910,19 @@
           away: commentNec,
           home: commentOpp
         },
-        parsed_b: parsedDraftB || {
-          home_team: { team_name: oppVal || "対戦相手", team_total: {}, players: [] },
-          away_team: { team_name: "NECレッドロケッツ川崎", team_total: {}, players: [] }
+        parsed_b: parsedDraftB ? {
+          ...parsedDraftB,
+          home_team: {
+            ...(parsedDraftB.home_team || {}),
+            team_name: resolvedHomeTeam
+          },
+          away_team: {
+            ...(parsedDraftB.away_team || {}),
+            team_name: resolvedAwayTeam
+          }
+        } : {
+          home_team: { team_name: resolvedHomeTeam, team_total: {}, players: [] },
+          away_team: { team_name: resolvedAwayTeam, team_total: {}, players: [] }
         },
         parsed_a: parsedDraftA || null
       };
