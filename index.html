@@ -714,6 +714,7 @@
             <label class="field-label" for="matchScoreInput">セットカウント（例: 3-2 または 2-3）</label>
             <input id="matchScoreInput" type="text" placeholder="例: 3-2（NECセット数-相手セット数）" />
           </div>
+
         </div>
 
         <div class="form-grid">
@@ -903,24 +904,103 @@
 
     async function parseFormAPdf(file) {
       const pages = await extractPdfItems(file);
-      const allItems = pages.flatMap(p => p.items);
-      const fullText = allItems.map(i => i.str).join(" ");
+      const p1 = pages[0];
+      const scaleX = 595 / (p1.width || 595);
+      const scaleY = 842 / (p1.height || 842);
 
+      const normItems = pages.flatMap(p => p.items.map(it => ({
+        ...it,
+        nx: it.x * scaleX,
+        ny: it.y * scaleY
+      })));
+
+      const fullText = normItems.map(i => i.str).join(" ");
       const matchNoMatch = fullText.match(/Match No\.\s*(\d+)/i);
       const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
       const venueMatch = fullText.match(/会場[:：]\s*([^\s]+)/);
 
-      // Try to detect set scores like "25-20" or "25 - 20" or set counts like "3-2"
+      // Group items into horizontal lines by ny proximity
+      const lines = [];
+      for (const it of [...normItems].sort((a, b) => b.ny - a.ny || a.nx - b.nx)) {
+        let placed = false;
+        for (const ln of lines) {
+          if (Math.abs(ln.y - it.ny) < 4.0) {
+            ln.items.push(it);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) lines.push({ y: it.ny, items: [it] });
+      }
+
       const setsDetail = [];
-      const setScoreRegex = /(\d{1,2})\s*[-－–]\s*(\d{1,2})/g;
-      let sm;
-      let idx = 1;
-      while ((sm = setScoreRegex.exec(fullText)) !== null) {
-        const a = parseInt(sm[1], 10);
-        const b = parseInt(sm[2], 10);
-        if ((a >= 15 || b >= 15) && a <= 45 && b <= 45 && Math.abs(a - b) >= 2) {
-          setsDetail.push({ set: idx++, home: a, away: b, duration: "" });
+      // Pattern 1: Look for lines containing set numbers/labels or paired scores near set headers
+      for (const ln of lines) {
+        const sorted = ln.items.sort((a, b) => a.nx - b.nx);
+        const lineStr = sorted.map(x => x.str).join(" ");
+        // Match explicit "Set 1" / "1st" / "第1セット" followed by scores and optional duration
+        const labeledMatch = lineStr.match(/(?:Set\s*(\d)|第(\d)セット|(1st|2nd|3rd|4th|5th))\s*[:：]?\s*(\d{1,2})\s*[-－–/／]?\s*(\d{1,2})(?:\s*\(?(\d{1,2}:\d{2})\)?)?/i);
+        if (labeledMatch) {
+          const setNum = labeledMatch[1] ? parseInt(labeledMatch[1], 10)
+            : labeledMatch[2] ? parseInt(labeledMatch[2], 10)
+            : labeledMatch[3] === "1st" ? 1
+            : labeledMatch[3] === "2nd" ? 2
+            : labeledMatch[3] === "3rd" ? 3
+            : labeledMatch[3] === "4th" ? 4
+            : labeledMatch[3] === "5th" ? 5 : (setsDetail.length + 1);
+          const a = parseInt(labeledMatch[4], 10);
+          const b = parseInt(labeledMatch[5], 10);
+          if (a <= 45 && b <= 45 && (a >= 10 || b >= 10)) {
+            setsDetail.push({ set: setNum, home: a, away: b, duration: labeledMatch[6] || "" });
+          }
+        }
+      }
+
+      // Pattern 2: If no labeled lines matched, search across lines for set score pairs + duration
+      if (setsDetail.length === 0) {
+        const foundPairs = [];
+        for (const ln of lines) {
+          const sorted = ln.items.sort((a, b) => a.nx - b.nx);
+          const durMatch = sorted.map(x => x.str).join(" ").match(/(\d{1,2}:\d{2})/);
+          const durStr = durMatch ? durMatch[1] : "";
+
+          // Check adjacent numeric tokens or "25-20"
+          for (let i = 0; i < sorted.length; i++) {
+            const cur = sorted[i].str;
+            const dashPair = cur.match(/^(\d{1,2})\s*[-－–]\s*(\d{1,2})$/);
+            if (dashPair) {
+              const a = parseInt(dashPair[1], 10);
+              const b = parseInt(dashPair[2], 10);
+              if ((a >= 10 || b >= 10) && a <= 45 && b <= 45 && Math.abs(a - b) >= 2) {
+                foundPairs.push({ home: a, away: b, duration: durStr });
+              }
+              continue;
+            }
+            if (/^\d{1,2}$/.test(cur) && i + 1 < sorted.length && /^\d{1,2}$/.test(sorted[i + 1].str)) {
+              const a = parseInt(cur, 10);
+              const b = parseInt(sorted[i + 1].str, 10);
+              const dx = Math.abs(sorted[i + 1].nx - sorted[i].nx);
+              if (dx < 45 && (a >= 10 || b >= 10) && a <= 45 && b <= 45 && Math.abs(a - b) >= 2) {
+                foundPairs.push({ home: a, away: b, duration: durStr });
+                i++;
+              }
+            }
+          }
+        }
+
+        // Deduplicate consecutive identical pairs if any
+        for (const p of foundPairs) {
+          const prev = setsDetail[setsDetail.length - 1];
+          if (!prev || prev.home !== p.home || prev.away !== p.away) {
+            setsDetail.push({
+              set: setsDetail.length + 1,
+              home: p.home,
+              away: p.away,
+              duration: p.duration
+            });
+          }
+          if (setsDetail.length >= 5) break;
         }
       }
 
@@ -1100,10 +1180,11 @@
     }
 
     function isNecHome(match) {
-      if (match.target_side === "home") return true;
-      if (match.target_side === "away") return false;
       const meta = match.meta || {};
       if (String(meta.home_team || "").includes("NEC")) return true;
+      if (String(meta.away_team || "").includes("NEC")) return false;
+      if (match.target_side === "home") return true;
+      if (match.target_side === "away") return false;
       const homePlayers = match.parsed_b?.home_team?.players || [];
       return homePlayers.some(p => String(p.name || "").includes("廣田"));
     }
@@ -1706,8 +1787,23 @@
       }
 
       const targetSide = parsedDraftB?.target_side || "away";
+      let setsDetail = Array.isArray(aMeta.sets_detail) ? [...aMeta.sets_detail] : [];
+
       let scoreHomeSets = aMeta.score_home_sets ?? null;
       let scoreAwaySets = aMeta.score_away_sets ?? null;
+
+      if (setsDetail.length > 0) {
+        let hW = 0;
+        let aW = 0;
+        for (const s of setsDetail) {
+          if (s.home > s.away) hW++;
+          else if (s.away > s.home) aW++;
+        }
+        if (hW + aW > 0) {
+          scoreHomeSets = hW;
+          scoreAwaySets = aW;
+        }
+      }
 
       const scoreMatch = scoreInputRaw.match(/(\d)\s*[-－–:：]\s*(\d)/);
       if (scoreMatch) {
@@ -1735,7 +1831,7 @@
           away_team: bMeta.away_team || "NECレッドロケッツ川崎",
           score_home_sets: scoreHomeSets,
           score_away_sets: scoreAwaySets,
-          sets_detail: aMeta.sets_detail || []
+          sets_detail: setsDetail
         },
         target_side: parsedDraftB?.target_side || "away",
         sources: {
@@ -1865,9 +1961,11 @@
           st.className = "pill-status warn";
           try {
             parsedDraftA = await parseFormAPdf(file);
+            const setCount = parsedDraftA.sets_detail?.length || 0;
             const info = parsedDraftA.date ? `${parsedDraftA.date} ${parsedDraftA.round_label || ""}` : file.name;
-            st.textContent = `✓ A帳票読込完了（${info}）`;
-            st.className = "pill-status ok";
+            const setInfo = setCount > 0 ? ` / ${setCount}セット抽出` : " / セットスコア未検出";
+            st.textContent = `✓ A帳票読込完了（${info}${setInfo}）`;
+            st.className = setCount > 0 ? "pill-status ok" : "pill-status warn";
           } catch (err) {
             parsedDraftA = null;
             st.textContent = `⚠ 読込エラー: ${err.message}`;
