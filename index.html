@@ -130,7 +130,6 @@
     select, input, textarea, button {
       font-family: inherit;
       color: var(--text-main);
-      position: relative;
     }
 
     select {
@@ -162,7 +161,6 @@
       cursor: pointer;
       transition: all 0.18s ease;
       text-decoration: none;
-      pointer-events: auto;
     }
 
     .btn:hover {
@@ -226,7 +224,6 @@
       font-size: 0.88rem;
       cursor: pointer;
       transition: all 0.18s ease;
-      pointer-events: auto;
     }
 
     .tab-btn.active {
@@ -238,8 +235,6 @@
 
     .tab-panel {
       display: none;
-      position: relative;
-      z-index: 10;
     }
 
     .tab-panel.active {
@@ -790,11 +785,6 @@
   </div>
 
   <script>
-    if (window.pdfjsLib) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    }
-
     const LOCAL_STORAGE_KEY = "nec_hirota_uploaded_matches_v1";
 
     const FALLBACK_MATCHES = [
@@ -819,7 +809,7 @@
         sources: {
           form_a_url: "",
           form_b_url: "",
-          live_score_url: "https://www.svleague.jp/match/detail/37493/?tab=live"
+          live_score_url: ""
         },
         comments: {
           home: "岡山：3セットを通し、大きく全体が乱れる時間は少なかったですが、チーム力を一人ひとりが理解し、大事なポイントで技術力を発揮することを貫けませんでした。特に第3セット、リードする中で相手に隙をつかれた時の技術力の安定が必要だと感じました。今日の反省を踏まえて、次週挑戦したいと思います。
@@ -890,6 +880,7 @@
     let currentMatchId = FALLBACK_MATCHES[0].id;
     let parsedDraftB = null;
     let parsedDraftA = null;
+    let pdfJsReady = false;
 
     let singleChartInstance = null;
     let hirotaTrendChartInstance = null;
@@ -906,12 +897,52 @@
       return Number.isNaN(n) ? null : n;
     }
 
+    function ensurePdfJs() {
+      return new Promise((resolve, reject) => {
+        if (window.pdfjsLib) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          pdfJsReady = true;
+          resolve(window.pdfjsLib);
+          return;
+        }
+        const existing = document.getElementById("pdfjsDynamicScript");
+        if (existing) {
+          existing.addEventListener("load", () => {
+            if (window.pdfjsLib) {
+              window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+              pdfJsReady = true;
+              resolve(window.pdfjsLib);
+            } else {
+              reject(new Error("PDF.jsの初期化に失敗しました。"));
+            }
+          });
+          existing.addEventListener("error", () => reject(new Error("PDF.jsの読み込みに失敗しました。")));
+          return;
+        }
+        const sc = document.createElement("script");
+        sc.id = "pdfjsDynamicScript";
+        sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+        sc.onload = () => {
+          if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+              "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            pdfJsReady = true;
+            resolve(window.pdfjsLib);
+          } else {
+            reject(new Error("PDF.jsの初期化に失敗しました。"));
+          }
+        };
+        sc.onerror = () => reject(new Error("PDF.jsの読み込みに失敗しました。"));
+        document.head.appendChild(sc);
+      });
+    }
+
     async function extractPdfItems(file) {
-      if (!window.pdfjsLib) {
-        throw new Error("PDF.js ライブラリが読み込めませんでした。ネットワーク接続を確認してください。");
-      }
+      const pdfjs = await ensurePdfJs();
       const buffer = await file.arrayBuffer();
-      const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+      const doc = await pdfjs.getDocument({ data: buffer }).promise;
       const allPages = [];
 
       for (let p = 1; p <= doc.numPages; p++) {
@@ -920,13 +951,17 @@
         const textContent = await page.getTextContent();
         const items = textContent.items
           .filter(it => it.str && normalizeStr(it.str) !== "")
-          .map(it => ({
-            x: it.transform[4],
-            y: it.transform[5],
-            str: normalizeStr(it.str),
-            pageWidth: viewport.width,
-            pageHeight: viewport.height
-          }));
+          .map(it => {
+            const x = it.transform[4];
+            const y = it.transform[5];
+            return {
+              x,
+              y,
+              str: normalizeStr(it.str),
+              pageWidth: viewport.width,
+              pageHeight: viewport.height
+            };
+          });
         allPages.push({ pageNumber: p, width: viewport.width, height: viewport.height, items });
       }
       return allPages;
@@ -1375,6 +1410,7 @@
     }
 
     function renderSingleTeamChart(nTot, oTot, oppName) {
+      if (!window.Chart) return;
       const ctx = document.getElementById("singleTeamChart");
       if (singleChartInstance) {
         singleChartInstance.destroy();
@@ -1493,76 +1529,78 @@
         </div>
       `;
 
-      const ctxH = document.getElementById("hirotaTrendChart");
-      if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
-      hirotaTrendChartInstance = new Chart(ctxH, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "#4 廣田あい アタック決定率(%)",
-              data: hirotaPctSeries,
-              borderColor: "#d97706",
-              backgroundColor: "rgba(245, 158, 11, 0.18)",
-              tension: 0.3,
-              yAxisID: "y"
-            },
-            {
-              label: "#4 廣田あい アタック+ブロック得点",
-              data: hirotaPtsSeries,
-              borderColor: "#e11d48",
-              backgroundColor: "rgba(225, 29, 72, 0.18)",
-              tension: 0.3,
-              yAxisID: "y1"
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { type: "linear", position: "left", ticks: { color: "#b45309" }, grid: { color: "rgba(225,29,72,0.08)" } },
-            y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#be123c" }, grid: { drawOnChartArea: false } },
-            x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+      if (window.Chart) {
+        const ctxH = document.getElementById("hirotaTrendChart");
+        if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
+        hirotaTrendChartInstance = new Chart(ctxH, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "#4 廣田あい アタック決定率(%)",
+                data: hirotaPctSeries,
+                borderColor: "#d97706",
+                backgroundColor: "rgba(245, 158, 11, 0.18)",
+                tension: 0.3,
+                yAxisID: "y"
+              },
+              {
+                label: "#4 廣田あい アタック+ブロック得点",
+                data: hirotaPtsSeries,
+                borderColor: "#e11d48",
+                backgroundColor: "rgba(225, 29, 72, 0.18)",
+                tension: 0.3,
+                yAxisID: "y1"
+              }
+            ]
           },
-          plugins: { legend: { labels: { color: "#2c242b" } } }
-        }
-      });
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { type: "linear", position: "left", ticks: { color: "#b45309" }, grid: { color: "rgba(225,29,72,0.08)" } },
+              y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#be123c" }, grid: { drawOnChartArea: false } },
+              x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+            },
+            plugins: { legend: { labels: { color: "#2c242b" } } }
+          }
+        });
 
-      const ctxT = document.getElementById("teamTrendChart");
-      if (teamTrendChartInstance) teamTrendChartInstance.destroy();
-      teamTrendChartInstance = new Chart(ctxT, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "NEC チームアタック決定率(%)",
-              data: necAttPctSeries,
-              borderColor: "#e11d48",
-              backgroundColor: "rgba(225, 29, 72, 0.18)",
-              tension: 0.3
-            },
-            {
-              label: "NEC サーブレシーブ成功率(%)",
-              data: necRecPctSeries,
-              borderColor: "#0284c7",
-              backgroundColor: "rgba(2, 132, 199, 0.18)",
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true, ticks: { color: "#6b5b64" }, grid: { color: "rgba(225,29,72,0.08)" } },
-            x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+        const ctxT = document.getElementById("teamTrendChart");
+        if (teamTrendChartInstance) teamTrendChartInstance.destroy();
+        teamTrendChartInstance = new Chart(ctxT, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "NEC チームアタック決定率(%)",
+                data: necAttPctSeries,
+                borderColor: "#e11d48",
+                backgroundColor: "rgba(225, 29, 72, 0.18)",
+                tension: 0.3
+              },
+              {
+                label: "NEC サーブレシーブ成功率(%)",
+                data: necRecPctSeries,
+                borderColor: "#0284c7",
+                backgroundColor: "rgba(2, 132, 199, 0.18)",
+                tension: 0.3
+              }
+            ]
           },
-          plugins: { legend: { labels: { color: "#2c242b" } } }
-        }
-      });
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, ticks: { color: "#6b5b64" }, grid: { color: "rgba(225,29,72,0.08)" } },
+              x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+            },
+            plugins: { legend: { labels: { color: "#2c242b" } } }
+          }
+        });
+      }
 
       const tbodyCum = document.querySelector("#cumulativeMatchesTable tbody");
       tbodyCum.innerHTML = allMatches.map(m => {
@@ -1790,13 +1828,19 @@
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    function initApp() {
       bindEvents();
       renderMatchSelector();
       renderSingleMatch();
       renderCumulativeView();
       loadMatchesFromRepo(false);
-    });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+      initApp();
+    }
   </script>
 </body>
 </html>
