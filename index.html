@@ -207,14 +207,17 @@
 
     .mode-tabs {
       position: relative;
-      z-index: 25;
+      z-index: 40;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 20px;
+      pointer-events: auto;
     }
 
     .tab-btn {
+      position: relative;
+      z-index: 45;
       padding: 11px 20px;
       border-radius: 999px;
       border: 1.5px solid var(--border);
@@ -223,6 +226,9 @@
       font-weight: 700;
       font-size: 0.88rem;
       cursor: pointer;
+      pointer-events: auto;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
       transition: all 0.18s ease;
     }
 
@@ -570,13 +576,13 @@
 
     <!-- Mode Switch Tabs -->
     <div class="mode-tabs" role="tablist">
-      <button id="tabSingleBtn" class="tab-btn active" type="button" role="tab">
+      <button id="tabSingleBtn" class="tab-btn active" type="button" role="tab" onclick="switchTab('single')">
         ① 1試合ごとの詳細分析
       </button>
-      <button id="tabCumulativeBtn" class="tab-btn" type="button" role="tab">
+      <button id="tabCumulativeBtn" class="tab-btn" type="button" role="tab" onclick="switchTab('cumulative')">
         ② 蓄積・全試合の推移＆通算分析
       </button>
-      <button id="tabUploadBtn" class="tab-btn" type="button" role="tab">
+      <button id="tabUploadBtn" class="tab-btn" type="button" role="tab" onclick="switchTab('upload')">
         ③ PDF・URL・コメント登録（JSON作成）
       </button>
     </div>
@@ -880,7 +886,6 @@
     let currentMatchId = FALLBACK_MATCHES[0].id;
     let parsedDraftB = null;
     let parsedDraftA = null;
-    let pdfJsReady = false;
 
     let singleChartInstance = null;
     let hirotaTrendChartInstance = null;
@@ -902,7 +907,6 @@
         if (window.pdfjsLib) {
           window.pdfjsLib.GlobalWorkerOptions.workerSrc =
             "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-          pdfJsReady = true;
           resolve(window.pdfjsLib);
           return;
         }
@@ -912,7 +916,6 @@
             if (window.pdfjsLib) {
               window.pdfjsLib.GlobalWorkerOptions.workerSrc =
                 "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-              pdfJsReady = true;
               resolve(window.pdfjsLib);
             } else {
               reject(new Error("PDF.jsの初期化に失敗しました。"));
@@ -928,7 +931,6 @@
           if (window.pdfjsLib) {
             window.pdfjsLib.GlobalWorkerOptions.workerSrc =
               "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-            pdfJsReady = true;
             resolve(window.pdfjsLib);
           } else {
             reject(new Error("PDF.jsの初期化に失敗しました。"));
@@ -951,17 +953,13 @@
         const textContent = await page.getTextContent();
         const items = textContent.items
           .filter(it => it.str && normalizeStr(it.str) !== "")
-          .map(it => {
-            const x = it.transform[4];
-            const y = it.transform[5];
-            return {
-              x,
-              y,
-              str: normalizeStr(it.str),
-              pageWidth: viewport.width,
-              pageHeight: viewport.height
-            };
-          });
+          .map(it => ({
+            x: it.transform[4],
+            y: it.transform[5],
+            str: normalizeStr(it.str),
+            pageWidth: viewport.width,
+            pageHeight: viewport.height
+          }));
         allPages.push({ pageNumber: p, width: viewport.width, height: viewport.height, items });
       }
       return allPages;
@@ -1412,6 +1410,7 @@
     function renderSingleTeamChart(nTot, oTot, oppName) {
       if (!window.Chart) return;
       const ctx = document.getElementById("singleTeamChart");
+      if (!ctx) return;
       if (singleChartInstance) {
         singleChartInstance.destroy();
       }
@@ -1531,75 +1530,79 @@
 
       if (window.Chart) {
         const ctxH = document.getElementById("hirotaTrendChart");
-        if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
-        hirotaTrendChartInstance = new Chart(ctxH, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "#4 廣田あい アタック決定率(%)",
-                data: hirotaPctSeries,
-                borderColor: "#d97706",
-                backgroundColor: "rgba(245, 158, 11, 0.18)",
-                tension: 0.3,
-                yAxisID: "y"
-              },
-              {
-                label: "#4 廣田あい アタック+ブロック得点",
-                data: hirotaPtsSeries,
-                borderColor: "#e11d48",
-                backgroundColor: "rgba(225, 29, 72, 0.18)",
-                tension: 0.3,
-                yAxisID: "y1"
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: { type: "linear", position: "left", ticks: { color: "#b45309" }, grid: { color: "rgba(225,29,72,0.08)" } },
-              y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#be123c" }, grid: { drawOnChartArea: false } },
-              x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+        if (ctxH) {
+          if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
+          hirotaTrendChartInstance = new Chart(ctxH, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "#4 廣田あい アタック決定率(%)",
+                  data: hirotaPctSeries,
+                  borderColor: "#d97706",
+                  backgroundColor: "rgba(245, 158, 11, 0.18)",
+                  tension: 0.3,
+                  yAxisID: "y"
+                },
+                {
+                  label: "#4 廣田あい アタック+ブロック得点",
+                  data: hirotaPtsSeries,
+                  borderColor: "#e11d48",
+                  backgroundColor: "rgba(225, 29, 72, 0.18)",
+                  tension: 0.3,
+                  yAxisID: "y1"
+                }
+              ]
             },
-            plugins: { legend: { labels: { color: "#2c242b" } } }
-          }
-        });
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: { type: "linear", position: "left", ticks: { color: "#b45309" }, grid: { color: "rgba(225,29,72,0.08)" } },
+                y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#be123c" }, grid: { drawOnChartArea: false } },
+                x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+              },
+              plugins: { legend: { labels: { color: "#2c242b" } } }
+            }
+          });
+        }
 
         const ctxT = document.getElementById("teamTrendChart");
-        if (teamTrendChartInstance) teamTrendChartInstance.destroy();
-        teamTrendChartInstance = new Chart(ctxT, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "NEC チームアタック決定率(%)",
-                data: necAttPctSeries,
-                borderColor: "#e11d48",
-                backgroundColor: "rgba(225, 29, 72, 0.18)",
-                tension: 0.3
-              },
-              {
-                label: "NEC サーブレシーブ成功率(%)",
-                data: necRecPctSeries,
-                borderColor: "#0284c7",
-                backgroundColor: "rgba(2, 132, 199, 0.18)",
-                tension: 0.3
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: { beginAtZero: true, ticks: { color: "#6b5b64" }, grid: { color: "rgba(225,29,72,0.08)" } },
-              x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+        if (ctxT) {
+          if (teamTrendChartInstance) teamTrendChartInstance.destroy();
+          teamTrendChartInstance = new Chart(ctxT, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "NEC チームアタック決定率(%)",
+                  data: necAttPctSeries,
+                  borderColor: "#e11d48",
+                  backgroundColor: "rgba(225, 29, 72, 0.18)",
+                  tension: 0.3
+                },
+                {
+                  label: "NEC サーブレシーブ成功率(%)",
+                  data: necRecPctSeries,
+                  borderColor: "#0284c7",
+                  backgroundColor: "rgba(2, 132, 199, 0.18)",
+                  tension: 0.3
+                }
+              ]
             },
-            plugins: { legend: { labels: { color: "#2c242b" } } }
-          }
-        });
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: { beginAtZero: true, ticks: { color: "#6b5b64" }, grid: { color: "rgba(225,29,72,0.08)" } },
+                x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
+              },
+              plugins: { legend: { labels: { color: "#2c242b" } } }
+            }
+          });
+        }
       }
 
       const tbodyCum = document.querySelector("#cumulativeMatchesTable tbody");
@@ -1641,6 +1644,9 @@
         if (btn) btn.classList.toggle("active", key === tabName);
         if (panel) panel.classList.toggle("active", key === tabName);
       }
+      if (tabName === "cumulative") {
+        renderCumulativeView();
+      }
     }
 
     function escapeHtml(str) {
@@ -1667,14 +1673,6 @@
           loadMatchesFromRepo(true);
         });
       }
-
-      const tabSingleBtn = document.getElementById("tabSingleBtn");
-      const tabCumulativeBtn = document.getElementById("tabCumulativeBtn");
-      const tabUploadBtn = document.getElementById("tabUploadBtn");
-
-      if (tabSingleBtn) tabSingleBtn.addEventListener("click", () => switchTab("single"));
-      if (tabCumulativeBtn) tabCumulativeBtn.addEventListener("click", () => switchTab("cumulative"));
-      if (tabUploadBtn) tabUploadBtn.addEventListener("click", () => switchTab("upload"));
 
       const pdfBInput = document.getElementById("pdfBInput");
       if (pdfBInput) {
