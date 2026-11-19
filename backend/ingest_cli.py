@@ -11,14 +11,19 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "data" / "matches.json"
 
 
-def extract_live_match_id(url: str) -> str | None:
+def extract_id_from_url(url: str) -> str | None:
     if not url:
         return None
-    m = re.search(r"/match/detail/(\d+)", url)
+    # /match/form/?id=37492&sheet=a 形式や ?matchId=... 形式に対応
+    qs = parse_qs(urlparse(url).query)
+    if "id" in qs and qs["id"]:
+        return qs["id"][0]
+    if "matchId" in qs and qs["matchId"]:
+        return qs["matchId"][0]
+    m = re.search(r"/match/(?:detail|form)/(\d+)", url)
     if m:
         return m.group(1)
-    qs = parse_qs(urlparse(url).query)
-    return qs.get("matchId", [None])[0]
+    return None
 
 
 def load_matches() -> list[dict]:
@@ -45,17 +50,33 @@ def main() -> None:
     comment_home = os.environ.get("COMMENT_HOME", "").strip()
     comment_away = os.environ.get("COMMENT_AWAY", "").strip()
 
-    if not form_b_url and not live_score_url and not comment_home and not comment_away:
+    if not any([form_b_url, form_a_url, live_score_url, comment_home, comment_away]):
         raise ValueError("少なくとも1つの入力項目を指定してください。")
 
     parsed_b = {}
-    if form_b_url:
-        parsed_b = parse_b_form_from_source(form_b_url)
+    if form_b_url and not form_b_url.startswith("file://"):
+        try:
+            parsed_b = parse_b_form_from_source(form_b_url)
+        except Exception as e:
+            print(f"[WARN] 帳票BのPDF解析をスキップしました: {e}")
+            parsed_b = {
+                "parse_error": str(e),
+                "note": "URLがWebページ(HTML)またはアクセス制限対象のため、PDF直接解析をスキップしました。",
+            }
+    elif form_b_url.startswith("file://"):
+        print("[WARN] file:// パスはクラウド上から参照できないためスキップしました。")
+        parsed_b = {
+            "parse_error": "local file:// path is not accessible from GitHub Actions",
+        }
 
-    meta = parsed_b.get("meta", {})
+    meta = parsed_b.get("meta", {}) if isinstance(parsed_b, dict) else {}
     match_no = meta.get("match_no")
-    live_id = extract_live_match_id(live_score_url)
-    record_id = str(match_no or live_id or int(datetime.now(timezone.utc).timestamp()))
+    url_id = (
+        extract_id_from_url(live_score_url)
+        or extract_id_from_url(form_b_url)
+        or extract_id_from_url(form_a_url)
+    )
+    record_id = str(match_no or url_id or int(datetime.now(timezone.utc).timestamp()))
 
     record = {
         "id": record_id,
@@ -76,8 +97,7 @@ def main() -> None:
     matches = load_matches()
     matches = [m for m in matches if m.get("id") != record_id]
     matches.append(record)
-    # 試合日（またはID）順に並べる
-    matches.sort(key=lambda x: (x.get("meta", {}).get("date") or "", str(x.get("id", ""))))
+    matches.sort(key=lambda x: (str(x.get("meta", {}).get("date") or ""), str(x.get("id", ""))))
     save_matches(matches)
     print(f"Saved match_id={record_id}. Total matches={len(matches)}")
 
