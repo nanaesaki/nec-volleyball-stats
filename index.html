@@ -3,1026 +3,984 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>試合・選手パフォーマンス分析ダッシュボード</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
-          },
-          colors: {
-            nec: {
-              red: '#C8102E',
-              darkRed: '#9B0B22',
-              lightRed: '#FFF1F3',
-              navy: '#0F172A',
-              slate: '#1E293B',
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <title>NECレッドロケッツ川崎 SV.LEAGUE 分析ダッシュボード</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <style>
+    :root {
+      --bg-body: #0b0f19;
+      --bg-card: #131a2a;
+      --bg-card-alt: #192237;
+      --bg-input: #0e1422;
+      --border: #26334d;
+      --text-main: #eef2ff;
+      --text-sub: #94a3b8;
+      --accent-red: #e11d48;
+      --accent-red-soft: rgba(225, 29, 72, 0.16);
+      --accent-gold: #f59e0b;
+      --accent-gold-soft: rgba(245, 158, 11, 0.16);
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Inter', 'Noto Sans JP', sans-serif;
-      background-color: #F8FAFC;
-      color: #0F172A;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      background: radial-gradient(circle at top right, rgba(225, 29, 72, 0.12), transparent 42%),
+                  radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 40%),
+                  var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
     }
-    .tab-active {
-      border-bottom: 3px solid #C8102E;
-      color: #C8102E;
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 18px 64px;
+    }
+
+    /* Header & Top Controls */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 4px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
       font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--accent-red-soft);
+      color: #fda4af;
+      border: 1px solid rgba(225, 29, 72, 0.35);
     }
-    .scrollbar-thin::-webkit-scrollbar {
-      height: 6px;
-      width: 6px;
+
+    .badge-gold {
+      background: var(--accent-gold-soft);
+      color: #fcd34d;
+      border-color: rgba(245, 158, 11, 0.35);
     }
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-      background-color: #CBD5E1;
-      border-radius: 9999px;
+
+    .badge-blue {
+      background: rgba(56, 189, 248, 0.14);
+      color: #7dd3fc;
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .sub-caption {
+      margin: 0;
+      color: var(--text-sub);
+      font-size: 0.88rem;
+    }
+
+    .controls-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select, input, textarea, button {
+      font-family: inherit;
+      color: var(--text-main);
+    }
+
+    select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      min-width: 260px;
+      cursor: pointer;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card-alt);
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      border-color: #475569;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #be123c;
+    }
+
+    /* Mode Tabs */
+    .mode-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 11px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-sub);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(225, 29, 72, 0.25), rgba(245, 158, 11, 0.12));
+      color: var(--text-main);
+      border-color: var(--accent-red);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Cards & Grids */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+
+    .kpi-card.highlight {
+      border-color: rgba(245, 158, 11, 0.45);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.08), var(--bg-card));
+    }
+
+    .kpi-label {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .kpi-sub {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    /* Match Banner */
+    .match-banner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      background: linear-gradient(120deg, rgba(225, 29, 72, 0.16), rgba(19, 26, 42, 0.96));
+      border: 1px solid rgba(225, 29, 72, 0.35);
+      margin-bottom: 20px;
+    }
+
+    .score-box {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .score-num {
+      font-size: 1.85rem;
+      color: #fda4af;
+    }
+
+    .set-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .set-pill {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+
+    th, td {
+      padding: 10px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(38, 51, 77, 0.7);
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--text-sub);
+      font-weight: 700;
+      font-size: 0.78rem;
+      background: var(--bg-card-alt);
+      position: sticky;
+      top: 0;
+    }
+
+    tr.hirota-row {
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    tr.hirota-row td:first-child {
+      border-left: 3px solid var(--accent-gold);
+    }
+
+    /* Comments */
+    .comment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .comment-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      white-space: pre-line;
+      font-size: 0.88rem;
+    }
+
+    .comment-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .label-nec {
+      background: var(--accent-red-soft);
+      color: #fda4af;
+    }
+
+    .label-opp {
+      background: rgba(56, 189, 248, 0.15);
+      color: #7dd3fc;
+    }
+
+    .status-note {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      background: var(--bg-input);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    .chart-box {
+      position: relative;
+      height: 290px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--text-sub);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 640px) {
+      select {
+        min-width: 100%;
+      }
+      .brand-title {
+        font-size: 1.12rem;
+      }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
-
-  <!-- トップヘッダー -->
-  <header class="bg-nec-navy text-white shadow-lg border-b-4 border-nec-red sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-nec-red flex items-center justify-center font-black text-lg tracking-tighter shadow-inner shrink-0">
-          NEC
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-base sm:text-lg font-extrabold tracking-tight">NECレッドロケッツ川崎 戦績・選手分析</h1>
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-nec-red/20 text-rose-300 border border-nec-red/40">
-              推し選手: #4 廣田あい (OH)
-            </span>
-          </div>
-          <p class="text-xs text-slate-300 mt-0.5">2026-27 大同生命SV.LEAGUE WOMEN レギュラーシーズン 第5節 GAME2</p>
-        </div>
+<body>
+  <div class="container">
+    <!-- Top Header -->
+    <header class="top-bar">
+      <div>
+        <h1 class="brand-title">
+          <span>NECレッドロケッツ川崎 × #4 廣田あい</span>
+          <span class="badge">SV.LEAGUE WOMEN</span>
+          <span class="badge badge-gold">推し選手トラッカー</span>
+        </h1>
+        <p class="sub-caption">
+          帳票A・B（座標抽出スタッツ）＆ 試合後コメント連携 ／ 1試合分析・蓄積通算分析ダッシュボード
+        </p>
       </div>
-
-      <!-- 試合選択＆外部リンク -->
-      <div class="flex flex-wrap items-center gap-2">
-        <select id="matchSelector" class="bg-slate-800 text-white text-xs sm:text-sm font-semibold rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-nec-red">
-          <!-- JSで動的生成 -->
-        </select>
-        <a id="liveScoreLink" href="https://www.svleague.jp/match/detail/37493/?tab=live" target="_blank" rel="noopener noreferrer"
-           class="inline-flex items-center gap-1.5 text-xs font-bold bg-nec-red hover:bg-nec-darkRed text-white px-3 py-2 rounded-lg transition shadow">
-          <span>Live Score</span>
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      <div class="controls-group">
+        <select id="matchSelect" aria-label="分析する試合を選択"></select>
+        <a id="liveScoreLink" class="btn" href="https://www.svleague.jp/match/detail/37493/?tab=live" target="_blank" rel="noopener noreferrer">
+          Live Score ↗
         </a>
-      </div>
-    </div>
-
-    <!-- ナビゲーションタブ -->
-    <nav class="bg-white text-slate-600 border-b border-slate-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 overflow-x-auto scrollbar-thin">
-        <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-active py-3 px-1 text-xs sm:text-sm whitespace-nowrap transition">
-          1. 試合分析ダッシュボード
-        </button>
-        <button onclick="switchTab('tactics')" id="tab-btn-tactics" class="py-3 px-1 text-xs sm:text-sm font-medium hover:text-nec-red whitespace-nowrap transition">
-          2. 戦評・ローテ＆コメント分析
-        </button>
-        <button onclick="switchTab('register')" id="tab-btn-register" class="py-3 px-1 text-xs sm:text-sm font-medium hover:text-nec-red whitespace-nowrap transition">
-          3. 新規試合データ登録（帳票・URL）
+        <button id="reloadJsonBtn" class="btn" type="button" title="backend/data/matches.json を再読み込み">
+          ↻ データ更新
         </button>
       </div>
-    </nav>
-  </header>
+    </header>
 
-  <!-- メインコンテンツ -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-    <!-- 通知トースト -->
-    <div id="toastBox" class="hidden fixed bottom-5 right-5 z-50 bg-nec-navy text-white px-4 py-3 rounded-xl shadow-2xl border-l-4 border-nec-red text-sm font-medium flex items-center gap-2">
-      <span id="toastMessage"></span>
+    <div id="dataSourceStatus" class="status-note">
+      データソースを確認中...
     </div>
 
-    <!-- ===================================================================== -->
-    <!-- TAB 1: 試合分析ダッシュボード -->
-    <!-- ===================================================================== -->
-    <section id="view-dashboard" class="space-y-6">
+    <!-- Mode Switch Tabs -->
+    <div class="mode-tabs" role="tablist">
+      <button id="tabSingleBtn" class="tab-btn active" type="button" role="tab">
+        ① 1試合ごとの詳細分析
+      </button>
+      <button id="tabCumulativeBtn" class="tab-btn" type="button" role="tab">
+        ② 蓄積・全試合の推移＆通算分析
+      </button>
+      <button id="tabGuideBtn" class="tab-btn" type="button" role="tab">
+        ③ ブラウザからのデータ追加手順（GitHub Actions）
+      </button>
+    </div>
 
-      <!-- 試合スコアボード＆メタデータカード -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
-          <div class="flex flex-wrap items-center gap-2 font-semibold">
-            <span id="metaMatchNo" class="bg-nec-navy text-white px-2 py-0.5 rounded font-bold">Match No. 168</span>
-            <span id="metaDate">2026/11/15 (日)</span>
-            <span>•</span>
-            <span id="metaVenue">山陽ふれあい公園総合体育館（岡山県）</span>
-          </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <span id="metaAttendance">入場者数: 1,013人</span>
-            <span id="metaDuration">試合時間: 1:45 (14:05 - 15:50)</span>
-          </div>
+    <!-- TAB 1: SINGLE MATCH -->
+    <section id="panelSingle" class="tab-panel active">
+      <div id="matchBanner" class="match-banner"></div>
+
+      <!-- #4 Hirota Focus KPIs -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span>★ #4 廣田 あい 選手 試合スタッツ</span>
+            <span class="badge badge-gold">OH / 注目フォーカス</span>
+          </h2>
+          <span id="hirotaParseNote" class="sub-caption"></span>
         </div>
+        <div id="hirotaKpis" class="grid-4"></div>
+      </div>
 
-        <div class="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          <!-- スコア対決表示 -->
-          <div class="lg:col-span-7 flex items-center justify-between bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-200">
-            <!-- ホーム（岡山） -->
-            <div class="text-center flex-1">
-              <span class="inline-block text-[11px] font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded mb-1">HOME</span>
-              <h2 id="homeTeamName" class="text-sm sm:text-base font-extrabold text-slate-800">岡山シーガルズ</h2>
-              <p id="homeStandings" class="text-[11px] text-slate-500 mt-0.5">通算 2勝8敗 (Pt. 5)</p>
-              <p id="homeCoach" class="text-[10px] text-slate-400 mt-1">HC: 河本 昭義 / AC: ムレイ ポール</p>
-            </div>
-
-            <!-- セットカウント -->
-            <div class="px-4 sm:px-6 text-center">
-              <div class="flex items-center justify-center gap-3 sm:gap-4">
-                <span id="homeSets" class="text-3xl sm:text-4xl font-black text-slate-500">0</span>
-                <span class="text-lg font-bold text-slate-400">-</span>
-                <span id="awaySets" class="text-3xl sm:text-4xl font-black text-nec-red">3</span>
-              </div>
-              <span class="inline-block mt-1 text-[11px] font-extrabold text-nec-red bg-nec-lightRed px-2.5 py-0.5 rounded-full">
-                NEC ストレート勝利
-              </span>
-            </div>
-
-            <!-- アウェー（NEC） -->
-            <div class="text-center flex-1">
-              <span class="inline-block text-[11px] font-bold text-white bg-nec-red px-2 py-0.5 rounded mb-1">AWAY / MY TEAM</span>
-              <h2 id="awayTeamName" class="text-sm sm:text-base font-extrabold text-nec-navy">NECレッドロケッツ川崎</h2>
-              <p id="awayStandings" class="text-[11px] font-bold text-nec-red mt-0.5">通算 6勝4敗 (Pt. 20)</p>
-              <p id="awayCoach" class="text-[10px] text-slate-500 mt-1">HC: 中谷 宏大 / AC: ウィデラ マーチン</p>
-            </div>
+      <!-- Team Comparison & Chart -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">チーム成績比較（NEC vs 対戦相手）</h2>
           </div>
-
-          <!-- セット別詳細スコアテーブル -->
-          <div class="lg:col-span-5 overflow-x-auto">
-            <table class="w-full text-xs text-center border border-slate-200 rounded-lg overflow-hidden">
-              <thead class="bg-slate-100 text-slate-600 font-bold">
+          <div class="table-wrap">
+            <table id="teamCompareTable">
+              <thead>
                 <tr>
-                  <th class="py-2 px-2.5 text-left">チーム</th>
-                  <th class="py-2 px-2">1set<span class="block text-[10px] font-normal text-slate-400">0:25</span></th>
-                  <th class="py-2 px-2">2set<span class="block text-[10px] font-normal text-slate-400">0:32</span></th>
-                  <th class="py-2 px-2">3set<span class="block text-[10px] font-normal text-slate-400">0:30</span></th>
-                  <th class="py-2 px-2 bg-slate-200">総得点</th>
+                  <th>指標</th>
+                  <th>NECレッドロケッツ川崎</th>
+                  <th>対戦相手</th>
                 </tr>
               </thead>
-              <tbody id="setScoreTableBody" class="divide-y divide-slate-200 font-semibold">
-                <tr>
-                  <td class="py-2.5 px-2.5 text-left font-bold text-slate-700">岡山シーガルズ</td>
-                  <td class="py-2.5 px-2 text-slate-600">23</td>
-                  <td class="py-2.5 px-2 text-slate-600">22</td>
-                  <td class="py-2.5 px-2 text-slate-600">28</td>
-                  <td class="py-2.5 px-2 bg-slate-50 font-bold text-slate-700">73</td>
-                </tr>
-                <tr class="bg-nec-lightRed/40">
-                  <td class="py-2.5 px-2.5 text-left font-extrabold text-nec-red">NEC川崎</td>
-                  <td class="py-2.5 px-2 font-extrabold text-nec-red">25</td>
-                  <td class="py-2.5 px-2 font-extrabold text-nec-red">25</td>
-                  <td class="py-2.5 px-2 font-extrabold text-nec-red">30</td>
-                  <td class="py-2.5 px-2 bg-nec-lightRed font-black text-nec-red">80</td>
-                </tr>
-              </tbody>
+              <tbody></tbody>
             </table>
           </div>
         </div>
-      </div>
-
-      <!-- 推し選手フォーカスカード: #4 廣田あい -->
-      <div class="bg-gradient-to-br from-nec-navy via-slate-900 to-nec-darkRed text-white rounded-2xl shadow-lg border border-nec-red/40 p-5 sm:p-6">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-5 border-b border-white/15">
-          <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-2xl bg-nec-red flex flex-col items-center justify-center shadow-lg border-2 border-white/30 shrink-0">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-rose-100">OH</span>
-              <span class="text-2xl font-black leading-none">#4</span>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-extrabold uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full">
-                  推し選手フォーカス
-                </span>
-                <span id="hirotaSetsBadge" class="text-xs font-semibold bg-white/15 px-2.5 py-0.5 rounded-full">
-                  全3セット先発出場（■■■）
-                </span>
-              </div>
-              <h2 class="text-xl sm:text-2xl font-black mt-1 tracking-tight">廣田 あい <span class="text-sm font-normal text-slate-300 ml-1">Ai Hirota</span></h2>
-            </div>
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">主要指標バランス比較（%）</h2>
           </div>
-
-          <!-- 得点内訳バッジ -->
-          <div class="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/15 flex flex-wrap items-center gap-3">
-            <div>
-              <p class="text-[11px] text-rose-200 font-semibold">試合総得点（チーム最多）</p>
-              <p id="hirotaTotalPoints" class="text-2xl sm:text-3xl font-black text-white">21 <span class="text-sm font-bold">得点</span></p>
-            </div>
-            <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
-            <div id="hirotaPointBreakdown" class="flex flex-wrap gap-1.5 text-xs font-bold">
-              <span class="bg-nec-red px-2.5 py-1 rounded-lg">アタック 20点</span>
-              <span class="bg-sky-600 px-2.5 py-1 rounded-lg">ブロック 1点</span>
-              <span class="bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">サーブ 0点</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 廣田あい 詳細指標グリッド -->
-        <div id="hirotaMetricsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5">
-          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-            <p class="text-[11px] text-slate-300 font-medium">アタック決定率</p>
-            <p class="text-xl sm:text-2xl font-black text-amber-300 mt-0.5">46.5%</p>
-            <p class="text-[11px] text-slate-300 mt-1">20得点 / 43打数 (失3)</p>
-          </div>
-          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-            <p class="text-[11px] text-slate-300 font-medium">バックアタック</p>
-            <p class="text-xl sm:text-2xl font-black text-white mt-0.5">50.0%</p>
-            <p class="text-[11px] text-slate-300 mt-1">2得点 / 4打数 (失0)</p>
-          </div>
-          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-            <p class="text-[11px] text-slate-300 font-medium">ブロック得点</p>
-            <p class="text-xl sm:text-2xl font-black text-sky-300 mt-0.5">1 本</p>
-            <p class="text-[11px] text-slate-300 mt-1">セット平均 0.33本</p>
-          </div>
-          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-            <p class="text-[11px] text-slate-300 font-medium">サーブ効果率</p>
-            <p class="text-xl sm:text-2xl font-black text-white mt-0.5">6.8%</p>
-            <p class="text-[11px] text-slate-300 mt-1">11打 / 0点 / 2失 / 効果5</p>
-          </div>
-          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-            <p class="text-[11px] text-slate-300 font-medium">サーブレシーブ</p>
-            <p class="text-xl sm:text-2xl font-black text-emerald-300 mt-0.5">21.4%</p>
-            <p class="text-[11px] text-slate-300 mt-1">7受数 (優0 / 良3)</p>
-          </div>
-          <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-            <p class="text-[11px] text-slate-300 font-medium">アタックセット平均</p>
-            <p class="text-xl sm:text-2xl font-black text-rose-300 mt-0.5">6.67 点</p>
-            <p class="text-[11px] text-slate-300 mt-1">総得点セット平均 7.00点</p>
-          </div>
-        </div>
-
-        <!-- パフォーマンス分析コメント -->
-        <div id="hirotaInsightBanner" class="mt-4 bg-black/25 rounded-xl px-4 py-3 text-xs sm:text-sm text-rose-100 border border-white/10 flex items-start gap-2.5">
-          <span class="text-amber-400 font-black text-base leading-5">★</span>
-          <p>
-            チーム最多の<strong>43打数</strong>（チーム全打数123の約35%）を担いながら<strong>決定率46.5%</strong>のハイアベレージを記録。バックアタックも50.0%（2/4）と高確率で決め、ブロック1得点を含め<strong>計21得点</strong>でストレート勝利の原動力となりました。
-          </p>
-        </div>
-      </div>
-
-      <!-- チーム成績比較サマリー（6指標） -->
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-base sm:text-lg font-extrabold text-nec-navy flex items-center gap-2">
-            <span class="w-1.5 h-5 bg-nec-red rounded-full"></span>
-            チーム技術成績比較（NEC川崎 vs 岡山シーガルズ）
-          </h3>
-          <span class="text-xs text-slate-500">B帳票 技術成績データ準拠</span>
-        </div>
-
-        <div id="teamComparisonCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- JSで動的描画 -->
-        </div>
-      </div>
-
-      <!-- グラフ可視化セクション（Chart.js） -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- チーム主要率比較バーチャート -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h4 class="text-sm font-extrabold text-nec-navy mb-1">チーム主要スタッツ比較（%）</h4>
-          <p class="text-xs text-slate-500 mb-4">アタック・バックアタック・サーブ効果率・サーブレシーブ成功率の比較</p>
-          <div class="relative h-64 w-full">
-            <canvas id="teamCompareChart"></canvas>
-          </div>
-        </div>
-
-        <!-- NEC選手別得点内訳積み上げチャート -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h4 class="text-sm font-extrabold text-nec-navy mb-1">NEC川崎 選手別得点構成（アタック・ブロック・サーブ）</h4>
-          <p class="text-xs text-slate-500 mb-4">自力得点63点の内訳（#4 廣田あい 21点がトップ）</p>
-          <div class="relative h-64 w-full">
-            <canvas id="playerPointsChart"></canvas>
+          <div class="chart-box">
+            <canvas id="singleTeamChart"></canvas>
           </div>
         </div>
       </div>
 
-      <!-- NECレッドロケッツ川崎 全登録選手個人成績テーブル -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h3 class="text-base sm:text-lg font-extrabold text-nec-navy flex items-center gap-2">
-              <span class="w-1.5 h-5 bg-nec-red rounded-full"></span>
-              NECレッドロケッツ川崎 全選手個人成績（B帳票完全準拠）
-            </h3>
-            <p class="text-xs text-slate-500 mt-0.5">列見出しクリックで並び替え可能 • #4 廣田あい選手をハイライト表示</p>
-          </div>
-
-          <!-- ポジションフィルター -->
-          <div class="flex flex-wrap items-center gap-1.5" id="posFilterGroup">
-            <button onclick="setPosFilter('ALL')" data-pos="ALL" class="pos-btn bg-nec-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">全員 (14)</button>
-            <button onclick="setPosFilter('OH')" data-pos="OH" class="pos-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition">OH</button>
-            <button onclick="setPosFilter('OP')" data-pos="OP" class="pos-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition">OP</button>
-            <button onclick="setPosFilter('MB')" data-pos="MB" class="pos-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition">MB</button>
-            <button onclick="setPosFilter('S')" data-pos="S" class="pos-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition">S</button>
-            <button onclick="setPosFilter('L')" data-pos="L" class="pos-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition">L</button>
-          </div>
+      <!-- NEC Individual Players Table -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">NECレッドロケッツ川崎 選手別個人成績</h2>
+          <span class="sub-caption">※ #4 廣田あい選手をゴールドハイライト表示</span>
         </div>
-
-        <div class="overflow-x-auto scrollbar-thin">
-          <table class="w-full text-xs text-left border-collapse whitespace-nowrap">
-            <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+        <div class="table-wrap">
+          <table id="playersTable">
+            <thead>
               <tr>
-                <th onclick="sortPlayers('number')" class="py-3 px-3 cursor-pointer hover:text-nec-red"># ↕</th>
-                <th onclick="sortPlayers('name')" class="py-3 px-3 cursor-pointer hover:text-nec-red">選手名</th>
-                <th class="py-3 px-2 text-center">POS</th>
-                <th onclick="sortPlayers('sets')" class="py-3 px-2 text-center cursor-pointer hover:text-nec-red">出場Set ↕</th>
-                <th onclick="sortPlayers('totalPts')" class="py-3 px-3 text-right cursor-pointer hover:text-nec-red">総得点 ↕</th>
-                <th onclick="sortPlayers('attPts')" class="py-3 px-3 text-right cursor-pointer hover:text-nec-red">アタック (得/打・失) ↕</th>
-                <th onclick="sortPlayers('attPct')" class="py-3 px-3 text-right cursor-pointer hover:text-nec-red">決定率 ↕</th>
-                <th class="py-3 px-3 text-right">バックアタック</th>
-                <th onclick="sortPlayers('blkPts')" class="py-3 px-3 text-right cursor-pointer hover:text-nec-red">ブロック ↕</th>
-                <th onclick="sortPlayers('srvEff')" class="py-3 px-3 text-right cursor-pointer hover:text-nec-red">サーブ (打/得/失/効) ↕</th>
-                <th onclick="sortPlayers('recPct')" class="py-3 px-3 text-right cursor-pointer hover:text-nec-red">サーブレシーブ (優/良/受) ↕</th>
+                <th>No.</th>
+                <th>選手名</th>
+                <th>出場</th>
+                <th>アタック (得点/打数)</th>
+                <th>決定率</th>
+                <th>ブロック</th>
+                <th>サーブ効果率</th>
+                <th>サーブレシーブ (優+良/受数)</th>
+                <th>レシーブ成功率</th>
               </tr>
             </thead>
-            <tbody id="playerTableBody" class="divide-y divide-slate-200">
-              <!-- JSで動的描画 -->
-            </tbody>
-            <tfoot id="playerTableFoot" class="bg-slate-900 text-white font-bold">
-              <!-- チーム合計行 -->
-            </tfoot>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Post-match Comments -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">試合後コメント（定性振り返り）</h2>
+        </div>
+        <div id="commentsArea" class="comment-grid"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CUMULATIVE / ALL MATCHES -->
+    <section id="panelCumulative" class="tab-panel">
+      <div id="cumulativeSummaryKpis" class="grid-4"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">#4 廣田あい 選手｜アタック決定率＆得点推移</h2>
+          </div>
+          <div class="chart-box">
+            <canvas id="hirotaTrendChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">チーム推移｜アタック決定率＆サーブレシーブ成功率</h2>
+          </div>
+          <div class="chart-box">
+            <canvas id="teamTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">蓄積試合一覧（全データ）</h2>
+          <span class="sub-caption">行をクリックするとその試合の「1試合詳細分析」へ移動します</span>
+        </div>
+        <div class="table-wrap">
+          <table id="cumulativeMatchesTable">
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>節 / 対戦カード</th>
+                <th>結果</th>
+                <th>#4 廣田 アタック</th>
+                <th>#4 廣田 ブロック</th>
+                <th>#4 廣田 レシーブ</th>
+                <th>コメント有無</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- ===================================================================== -->
-    <!-- TAB 2: 戦評・ローテ＆コメント分析 -->
-    <!-- ===================================================================== -->
-    <section id="view-tactics" class="hidden space-y-6">
-
-      <!-- A帳票：セット別スターティング＆交代記録 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 border-b border-slate-200">
-          <div>
-            <span class="text-[11px] font-bold text-nec-red uppercase tracking-wider">A帳票 試合会場レポート解析</span>
-            <h2 class="text-lg font-extrabold text-nec-navy mt-0.5">セット別スターティングメンバー＆選手交代履歴（NEC川崎）</h2>
-          </div>
-          <span class="text-xs text-slate-500">()内は途中交代出場選手 / リベロ: #3 大工園 彩夏</span>
+    <!-- TAB 3: HOW TO ADD DATA FROM BROWSER -->
+    <section id="panelGuide" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">ブラウザ操作だけで試合データを蓄積する手順</h2>
         </div>
-
-        <div id="setLineupsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-          <!-- Set 1 -->
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="font-extrabold text-sm text-nec-navy">第1セット</span>
-              <span class="text-xs font-black bg-nec-red text-white px-2.5 py-0.5 rounded-full">25 - 23 (0:25)</span>
-            </div>
-            <div class="grid grid-cols-3 gap-1.5 text-center text-xs bg-white p-2.5 rounded-lg border border-slate-200">
-              <div class="p-1.5 rounded bg-rose-50 border border-rose-200 font-bold text-nec-red">#4 廣田<span class="block text-[10px] font-normal text-slate-500">(→大川)</span></div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#7 甲</div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#15 ヌワカロール<span class="block text-[10px] font-normal text-slate-500">(→シェイファー)</span></div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#18 ディーベル</div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#22 イ</div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#10 中川<span class="block text-[10px] font-normal text-slate-500">(→髙橋)</span></div>
-            </div>
-            <p class="text-[11px] text-slate-600">リベロ: <strong>#3 大工園</strong> / 終盤24-23でタイムアウト取得し逃げ切り</p>
-          </div>
-
-          <!-- Set 2 -->
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="font-extrabold text-sm text-nec-navy">第2セット</span>
-              <span class="text-xs font-black bg-nec-red text-white px-2.5 py-0.5 rounded-full">25 - 22 (0:32)</span>
-            </div>
-            <div class="grid grid-cols-3 gap-1.5 text-center text-xs bg-white p-2.5 rounded-lg border border-slate-200">
-              <div class="p-1.5 rounded bg-rose-50 border border-rose-200 font-bold text-nec-red">#4 廣田<span class="block text-[10px] font-normal text-slate-500">(→大川)</span></div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#7 甲</div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#15 ヌワカロール<span class="block text-[10px] font-normal text-slate-500">(→シェイファー)</span></div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#18 ディーベル<span class="block text-[10px] font-normal text-slate-500">(→佐々木)</span></div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#22 イ</div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#10 中川<span class="block text-[10px] font-normal text-slate-500">(→髙橋)</span></div>
-            </div>
-            <p class="text-[11px] text-slate-600">リベロ: <strong>#3 大工園</strong> / 24-21でタイムアウト取得後、25-22で連取</p>
-          </div>
-
-          <!-- Set 3 -->
-          <div class="rounded-xl border-2 border-nec-red/50 bg-nec-lightRed/30 p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="font-extrabold text-sm text-nec-red">第3セット（逆転デュース）</span>
-              <span class="text-xs font-black bg-nec-red text-white px-2.5 py-0.5 rounded-full">30 - 28 (0:30)</span>
-            </div>
-            <div class="grid grid-cols-3 gap-1.5 text-center text-xs bg-white p-2.5 rounded-lg border border-rose-200">
-              <div class="p-1.5 rounded bg-rose-50 border border-rose-200 font-bold text-nec-red">#4 廣田<span class="block text-[10px] font-normal text-slate-500">(→佐々木)</span></div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#7 甲</div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#15 ヌワカロール<span class="block text-[10px] font-normal text-slate-500">(→シェイファー)</span></div>
-              <div class="p-1.5 rounded bg-amber-50 border border-amber-300 font-bold text-amber-900">#18 ディーベル<span class="block text-[10px] text-nec-red font-bold">(→大川 ★)</span></div>
-              <div class="p-1.5 rounded bg-amber-50 border border-amber-300 font-bold text-amber-900">#22 イ<span class="block text-[10px] text-nec-red font-bold">(→山田 ★)</span></div>
-              <div class="p-1.5 rounded bg-slate-50 font-semibold">#10 中川<span class="block text-[10px] font-normal text-slate-500">(→髙橋)</span></div>
-            </div>
-            <p class="text-[11px] text-slate-700">
-              序盤 3-7・7-14 と大きくビハインドを背負う展開から、途中出場の<strong>#16 大川（6/9, 66.7%）</strong>と<strong>#1 山田（ブロック2本）</strong>が流れを一変させ30-28で逆転勝利！
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 両チーム試合後コメント＆定量データクロス分析 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- NECレッドロケッツ川崎 コメント -->
-        <div class="bg-white rounded-2xl shadow-sm border-t-4 border-nec-red border-x border-b border-slate-200 p-5 sm:p-6 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-xs font-extrabold bg-nec-red text-white px-2.5 py-1 rounded-md">NECレッドロケッツ川崎 コメント</span>
-              <span class="text-xs text-slate-400 font-semibold">勝利チーム談話</span>
-            </div>
-            <div id="necCommentBody" class="text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2.5 whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-200"></div>
-          </div>
-
-          <div class="mt-4 pt-4 border-t border-slate-100">
-            <p class="text-[11px] font-bold text-slate-500 mb-2">帳票スタッツとのクロス検証タグ：</p>
-            <div class="flex flex-wrap gap-1.5 text-[11px] font-bold">
-              <span class="bg-rose-100 text-nec-red px-2.5 py-1 rounded-full">#大川愛海 決定率66.7% (6/9)</span>
-              <span class="bg-sky-100 text-sky-800 px-2.5 py-1 rounded-full">#山田二千華 ブロック2本</span>
-              <span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full">#第3セット 7-14からの逆転30-28</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 岡山シーガルズ コメント -->
-        <div class="bg-white rounded-2xl shadow-sm border-t-4 border-slate-600 border-x border-b border-slate-200 p-5 sm:p-6 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-xs font-extrabold bg-slate-700 text-white px-2.5 py-1 rounded-md">岡山シーガルズ コメント</span>
-              <span class="text-xs text-slate-400 font-semibold">対戦相手チーム談話</span>
-            </div>
-            <div id="oppCommentBody" class="text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2.5 whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-200"></div>
-          </div>
-
-          <div class="mt-4 pt-4 border-t border-slate-100">
-            <p class="text-[11px] font-bold text-slate-500 mb-2">帳票スタッツとのクロス検証タグ：</p>
-            <div class="flex flex-wrap gap-1.5 text-[11px] font-bold">
-              <span class="bg-slate-200 text-slate-800 px-2.5 py-1 rounded-full">#岡山ブロック8本 (2.67/set)</span>
-              <span class="bg-slate-200 text-slate-800 px-2.5 py-1 rounded-full">#岡山アタック失点わずか3本</span>
-              <span class="bg-slate-200 text-slate-800 px-2.5 py-1 rounded-full">#第3セット終盤の決定力差</span>
-            </div>
-          </div>
-        </div>
+        <p class="sub-caption" style="margin-bottom: 14px;">
+          会社のPCなどローカル環境でPythonを動かせない場合でも、GitHubのブラウザ画面から <strong>GitHub Actions</strong> を実行することで <code>backend/data/matches.json</code> に蓄積され、この画面に自動反映されます。
+        </p>
+        <ol style="padding-left: 20px; margin: 0; font-size: 0.92rem;">
+          <li style="margin-bottom: 10px;">
+            GitHubリポジトリ（<code>nec-volleyball-stats</code>）の <strong>Actions</strong> タブを開きます。
+          </li>
+          <li style="margin-bottom: 10px;">
+            左メニューの <strong>Ingest SV.LEAGUE Match Data</strong> を選択し、右上の <strong>Run workflow</strong> ボタンを押します。
+          </li>
+          <li style="margin-bottom: 10px;">
+            帳票URL・Live Score URL・NECコメント・対戦相手コメントを入力して緑色の <strong>Run workflow</strong> を実行します。
+          </li>
+          <li>
+            完了後、このダッシュボード右上の <strong>「↻ データ更新」</strong>（またはブラウザ再読み込み）を押すと、新しい試合がドロップダウンと「蓄積・全試合分析」に追加されます。
+          </li>
+        </ol>
       </div>
     </section>
-
-    <!-- ===================================================================== -->
-    <!-- TAB 3: 新規試合データ登録フォーム -->
-    <!-- ===================================================================== -->
-    <section id="view-register" class="hidden max-w-4xl mx-auto">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-nec-navy text-white p-5 sm:p-6 border-b-4 border-nec-red">
-          <h2 class="text-lg font-extrabold">新規試合データの登録（帳票URL・Live Score・コメント）</h2>
-          <p class="text-xs text-slate-300 mt-1">
-            試合終了後にURLやコメントを入力すると、ブラウザ内ストレージ（localStorage）に保存され、ダッシュボードの試合セレクターからいつでも切り替え・分析できます。
-          </p>
-        </div>
-
-        <form id="newMatchForm" onsubmit="handleRegisterMatch(event)" class="p-5 sm:p-6 space-y-5">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">試合番号 (Match No.)</label>
-              <input type="text" id="regMatchNo" value="Match No. 175" required
-                     class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-nec-red focus:outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">開催日</label>
-              <input type="date" id="regDate" value="2026-11-21" required
-                     class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-nec-red focus:outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">対戦相手チーム</label>
-              <input type="text" id="regOpponent" value="デンソーエアリービーズ" required
-                     class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-nec-red focus:outline-none" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Live Score URL</label>
-              <input type="url" id="regLiveUrl" placeholder="https://www.svleague.jp/match/detail/..."
-                     value="https://www.svleague.jp/match/detail/37500/?tab=live"
-                     class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-nec-red focus:outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">セットカウント（例: 3 - 1）</label>
-              <input type="text" id="regScore" value="3 - 1" required
-                     class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-nec-red focus:outline-none" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">A帳票 URL（試合会場レポート）</label>
-              <input type="url" id="regFormAUrl" placeholder="https://www.svleague.jp/..."
-                     class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-nec-red focus:outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">B帳票 URL（試合結果速報）</label>
-              <input type="url" id="regFormBUrl" placeholder="https://www.svleague.jp/..."
-                     class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-nec-red focus:outline-none" />
-            </div>
-          </div>
-
-          <!-- #4 廣田あい 簡易入力 -->
-          <div class="bg-nec-lightRed/60 border border-rose-200 rounded-xl p-4 space-y-3">
-            <p class="text-xs font-extrabold text-nec-red">#4 廣田あい 個人成績入力（B帳票数値）</p>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">アタック打数</label>
-                <input type="number" id="regHirotaAtt" value="40" min="0" class="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-1.5" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">アタック得点</label>
-                <input type="number" id="regHirotaPts" value="19" min="0" class="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-1.5" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">ブロック得点</label>
-                <input type="number" id="regHirotaBlk" value="2" min="0" class="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-1.5" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">サーブ得点</label>
-                <input type="number" id="regHirotaSrv" value="1" min="0" class="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-1.5" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">レセプション成功率(%)</label>
-                <input type="number" step="0.1" id="regHirotaRec" value="48.5" min="0" max="100" class="w-full text-sm bg-white border border-slate-300 rounded-lg px-2.5 py-1.5" />
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">NECレッドロケッツ川崎 コメント</label>
-              <textarea id="regNecComment" rows="4" placeholder="監督・選手コメントを貼り付け..."
-                        class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-nec-red focus:outline-none">サーブで攻めてブロックとディグの関係性を機能させることができました。廣田を中心にサイドアウトが安定し、勝ち切ることができました。</textarea>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">対戦相手チーム コメント</label>
-              <textarea id="regOppComment" rows="4" placeholder="相手チームのコメントを貼り付け..."
-                        class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-nec-red focus:outline-none">相手のサーブに押されてコンビネーションを組み立てきれませんでした。次戦に向けて修正します。</textarea>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <button type="button" onclick="resetDemoStorage()" class="text-xs font-semibold text-slate-500 hover:text-nec-red underline">
-              初期データ（Match No. 168 岡山戦のみ）にリセット
-            </button>
-            <button type="submit" class="bg-nec-red hover:bg-nec-darkRed text-white font-extrabold text-sm px-6 py-2.5 rounded-xl shadow-md transition">
-              試合データを保存してダッシュボードに反映
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-  </main>
-
-  <footer class="bg-white border-t border-slate-200 py-4 mt-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-      <span>NECレッドロケッツ川崎 & #4 廣田あい パフォーマンス分析ダッシュボード</span>
-      <span>データ出典: 2026-27 大同生命SV.LEAGUE WOMEN 公式A帳票・B帳票・Live Score</span>
-    </div>
-  </footer>
+  </div>
 
   <script>
-    // =========================================================================
-    // 1. 検証済み実データ（Match No. 168: 2026/11/15 岡山シーガルズ vs NEC川崎）
-    // =========================================================================
-    const MATCH_168_DATA = {
-      id: 'match-168',
-      label: '2026/11/15 第5節G2 vs 岡山シーガルズ (3-0 勝)',
-      matchNo: 'Match No. 168',
-      date: '2026/11/15 (日)',
-      venue: '山陽ふれあい公園総合体育館（岡山県）',
-      attendance: '1,013人',
-      duration: '1:45 (14:05 - 15:50)',
-      liveUrl: 'https://www.svleague.jp/match/detail/37493/?tab=live',
-      homeTeam: '岡山シーガルズ',
-      awayTeam: 'NECレッドロケッツ川崎',
-      homeStandings: '通算 2勝8敗 (Pt. 5)',
-      awayStandings: '通算 6勝4敗 (Pt. 20)',
-      homeCoach: 'HC: 河本 昭義 / AC: ムレイ ポール',
-      awayCoach: 'HC: 中谷 宏大 / AC: ウィデラ マーチン',
-      homeSets: 0,
-      awaySets: 3,
-      setScores: {
-        home: [23, 22, 28],
-        away: [25, 25, 30],
-        times: ['0:25', '0:32', '0:30']
-      },
-      teamStats: [
-        {
-          title: 'アタック決定率',
-          necMain: '47.2%',
-          necSub: '58得点 / 123打数 (失点8 • 19.33/set)',
-          oppMain: '42.0%',
-          oppSub: '50得点 / 119打数 (失点3 • 16.67/set)',
-          necVal: 47.2,
-          oppVal: 42.0
+    // 初期フォールバックデータ（2026/11/15 第5節 GAME2 Match No.168 正確値）
+    const FALLBACK_MATCHES = [
+      {
+        id: "168",
+        meta: {
+          match_no: 168,
+          round_label: "第5節 GAME2",
+          date: "2026/11/15",
+          venue: "山陽ふれあい公園総合体育館",
+          home_team: "岡山シーガルズ",
+          away_team: "NECレッドロケッツ川崎",
+          score_home_sets: 0,
+          score_away_sets: 3,
+          sets_detail: [
+            { set: 1, home: 23, away: 25, duration: "0:25" },
+            { set: 2, home: 22, away: 25, duration: "0:32" },
+            { set: 3, home: 28, away: 30, duration: "0:30" }
+          ]
         },
-        {
-          title: 'バックアタック決定率',
-          necMain: '42.9%',
-          necSub: '3得点 / 7打数 (失点0)',
-          oppMain: '33.3%',
-          oppSub: '3得点 / 9打数 (失点0)',
-          necVal: 42.9,
-          oppVal: 33.3
+        target_side: "away",
+        sources: {
+          form_a_url: "",
+          form_b_url: "",
+          live_score_url: "https://www.svleague.jp/match/detail/37493/?tab=live"
         },
-        {
-          title: 'ブロック決定本数',
-          necMain: '4 本',
-          necSub: 'セット平均 1.33本 (#1山田2, #4廣田1, #15ヌワカロール1)',
-          oppMain: '8 本',
-          oppSub: 'セット平均 2.67本',
-          necVal: 1.33,
-          oppVal: 2.67
+        comments: {
+          home: "岡山：3セットを通し、大きく全体が乱れる時間は少なかったですが、チーム力を一人ひとりが理解し、大事なポイントで技術力を発揮することを貫けませんでした。特に第3セット、リードする中で相手に隙をつかれた時の技術力の安定が必要だと感じました。今日の反省を踏まえて、次週挑戦したいと思います。
+雨の中、会場に足を運んで後押しして下さった多くのファンの皆さまに感謝いたします。また配信での応援も、ありがとうございました。",
+          away: "NEC：昨日の敗戦から今日どのようなメンタリティで、どのような戦いができるかが問われる一戦でした。
+昨日と同じような展開になりかけた第3セットに途中出場した大川、山田がゲームチェンジャーになり、ビハインドから追いつき勝ちきったことは、彼女達の普段の献身がよく現れたところだと思います。
+よく勝ちきった反面、第3セットにクオリティが一気に下がってしまうところは大きな課題でもあるので、変化を加えながらもゲーム終了まで高いパフォーマンスを維持できるよう練習していきたいです。
+また岡山シーガルズのボールコントロールのクオリティは、我々も見習うべきところであると感じさせてもらいました。
+来週もアウェーゲームになりますが、クルーの皆様の応援は日本全国どこに行っても届いております。
+本日も心強い後押しありがとうございました。"
         },
-        {
-          title: 'サーブ効果率',
-          necMain: '12.7%',
-          necSub: '79打数 / 1エース / 4失点 / 効果40',
-          oppMain: '8.1%',
-          oppSub: '74打数 / 2エース / 8失点 / 効果24',
-          necVal: 12.7,
-          oppVal: 8.1
-        },
-        {
-          title: 'サーブレシーブ成功率',
-          necMain: '42.4%',
-          necSub: '66受数 / 優16 / 良24',
-          oppMain: '32.7%',
-          oppSub: '75受数 / 優15 / 良19',
-          necVal: 42.4,
-          oppVal: 32.7
-        },
-        {
-          title: '相手ミス得点 / チームフォルト',
-          necMain: '17 点獲得',
-          necSub: '自チームフォルト: 1 (総得点 80点)',
-          oppMain: '13 点獲得',
-          oppSub: '相手チームフォルト: 6 (総得点 73点)',
-          necVal: 17,
-          oppVal: 13
-        }
-      ],
-      hirota: {
-        setsText: '全3セット先発出場（■■■）',
-        totalPts: 21,
-        attPts: 20,
-        attTotal: 43,
-        attErr: 3,
-        attPct: 46.5,
-        backPts: 2,
-        backTotal: 4,
-        backPct: 50.0,
-        blkPts: 1,
-        blkPerSet: 0.33,
-        srvAtt: 11,
-        srvPts: 0,
-        srvErr: 2,
-        srvEff: 6.8,
-        recAtt: 7,
-        recExc: 0,
-        recGood: 3,
-        recPct: 21.4,
-        attPerSet: 6.67,
-        insight: 'チーム最多の43打数（チーム全打数123の約35%）を担いながら決定率46.5%のハイアベレージを記録。バックアタックも50.0%（2/4）と高確率で決め、ブロック1得点を含め計21得点でストレート勝利の原動力となりました。'
-      },
-      players: [
-        { number: 1, name: '山田 二千華', pos: 'MB', sets: 1, totalPts: 3, attPts: 1, attTotal: 3, attErr: 0, attPct: 33.3, backText: '-', blkPts: 2, srvText: '3打 / 0得 / 0失 / 効2', srvEff: 16.7, recText: '-', recPct: -1, dnp: false },
-        { number: 3, name: 'L 大工園 彩夏', pos: 'L', sets: 3, totalPts: 0, attPts: 0, attTotal: 0, attErr: 0, attPct: -1, backText: '-', blkPts: 0, srvText: '-', srvEff: -1, recText: '29受 (優10/良10) 51.7%', recPct: 51.7, dnp: false },
-        { number: 4, name: '廣田 あい', pos: 'OH', sets: 3, totalPts: 21, attPts: 20, attTotal: 43, attErr: 3, attPct: 46.5, backText: '2/4 (50.0%)', blkPts: 1, srvText: '11打 / 0得 / 2失 / 効5', srvEff: 6.8, recText: '7受 (優0/良3) 21.4%', recPct: 21.4, dnp: false, isOshi: true },
-        { number: 7, name: '甲 萌香', pos: 'MB', sets: 3, totalPts: 4, attPts: 4, attTotal: 5, attErr: 0, attPct: 80.0, backText: '-', blkPts: 0, srvText: '12打 / 0得 / 1失 / 効6', srvEff: 8.3, recText: '-', recPct: -1, dnp: false },
-        { number: 10, name: '中川 つかさ (C)', pos: 'S', sets: 3, totalPts: 0, attPts: 0, attTotal: 0, attErr: 0, attPct: -1, backText: '-', blkPts: 0, srvText: '11打 / 0得 / 1失 / 効5', srvEff: 6.8, recText: '-', recPct: -1, dnp: false },
-        { number: 11, name: '古谷 ちなみ', pos: 'OH', sets: 0, totalPts: 0, attPts: 0, attTotal: 0, attErr: 0, attPct: -1, backText: '-', blkPts: 0, srvText: '-', srvEff: -1, recText: '-', recPct: -1, dnp: true },
-        { number: 12, name: '佐々木 遥子', pos: 'OH', sets: 2, totalPts: 0, attPts: 0, attTotal: 0, attErr: 0, attPct: -1, backText: '-', blkPts: 0, srvText: '2打 / 0得 / 0失 / 効2', srvEff: 25.0, recText: '1受 (優1/良0) 100.0%', recPct: 100.0, dnp: false },
-        { number: 13, name: '髙橋 美鈴', pos: 'S', sets: 3, totalPts: 3, attPts: 3, attTotal: 6, attErr: 0, attPct: 50.0, backText: '-', blkPts: 0, srvText: '3打 / 0得 / 0失 / 効0', srvEff: 0.0, recText: '1受 (優0/良1) 50.0%', recPct: 50.0, dnp: false },
-        { number: 14, name: '長谷部 奈香', pos: 'L', sets: 0, totalPts: 0, attPts: 0, attTotal: 0, attErr: 0, attPct: -1, backText: '-', blkPts: 0, srvText: '-', srvEff: -1, recText: '-', recPct: -1, dnp: true },
-        { number: 15, name: 'シルビア・チネロ・ヌワカロール', pos: 'OP', sets: 3, totalPts: 14, attPts: 13, attTotal: 22, attErr: 1, attPct: 59.1, backText: '1/3 (33.3%)', blkPts: 1, srvText: '9打 / 1得 / 0失 / 効3', srvEff: 19.4, recText: '-', recPct: -1, dnp: false },
-        { number: 16, name: '大川 愛海', pos: 'OH', sets: 3, totalPts: 6, attPts: 6, attTotal: 9, attErr: 1, attPct: 66.7, backText: '-', blkPts: 0, srvText: '10打 / 0得 / 0失 / 効6', srvEff: 15.0, recText: '10受 (優2/良5) 45.0%', recPct: 45.0, dnp: false },
-        { number: 18, name: 'シアラ・モーガン・ディーベル', pos: 'OH', sets: 3, totalPts: 10, attPts: 10, attTotal: 29, attErr: 2, attPct: 34.5, backText: '-', blkPts: 0, srvText: '7打 / 0得 / 0失 / 効4', srvEff: 14.3, recText: '18受 (優3/良5) 30.6%', recPct: 30.6, dnp: false },
-        { number: 19, name: 'ミア・シェイファー', pos: 'OP', sets: 3, totalPts: 0, attPts: 0, attTotal: 0, attErr: 0, attPct: -1, backText: '-', blkPts: 0, srvText: '3打 / 0得 / 0失 / 効1', srvEff: 8.3, recText: '-', recPct: -1, dnp: false },
-        { number: 22, name: 'イ ダヒョン', pos: 'MB', sets: 3, totalPts: 1, attPts: 1, attTotal: 6, attErr: 1, attPct: 16.7, backText: '-', blkPts: 0, srvText: '5打 / 0得 / 0失 / 効4', srvEff: 20.0, recText: '-', recPct: -1, dnp: false }
-      ],
-      teamTotalRow: {
-        totalPts: '63 (自力) + 17 (相手ミス) = 80',
-        attText: '58/123 (失8)',
-        attPct: '47.2%',
-        backText: '3/7 (42.9%)',
-        blkPts: '4',
-        srvText: '79打 / 1得 / 4失 / 効40 (12.7%)',
-        recText: '66受 (優16/良24) 42.4%'
-      },
-      comments: {
-        nec: `昨日の敗戦から今日どのようなメンタリティで、どのような戦いができるかが問われる一戦でした。\n昨日と同じような展開になりかけた第3セットに途中出場した大川、山田がゲームチェンジャーになり、ビハインドから追いつき勝ちきったことは、彼女達の普段の献身がよく現れたところだと思います。\nよく勝ちきった反面、第3セットにクオリティが一気に下がってしまうところは大きな課題でもあるので、変化を加えながらもゲーム終了まで高いパフォーマンスを維持できるよう練習していきたいです。\nまた岡山シーガルズのボールコントロールのクオリティは、我々も見習うべきところであると感じさせてもらいました。\n来週もアウェーゲームになりますが、クルーの皆様の応援は日本全国どこに行っても届いております。\n本日も心強い後押しありがとうございました。`,
-        opp: `3セットを通し、大きく全体が乱れる時間は少なかったですが、チーム力を一人ひとりが理解し、大事なポイントで技術力を発揮することを貫けませんでした。特に第3セット、リードする中で相手に隙をつかれた時の技術力の安定が必要だと感じました。今日の反省を踏まえて、次週挑戦したいと思います。\n雨の中、会場に足を運んで後押しして下さった多くのファンの皆さまに感謝いたします。また配信での応援も、ありがとうございました。`
-      }
-    };
-
-    // =========================================================================
-    // 2. アプリケーション状態管理
-    // =========================================================================
-    const STORAGE_KEY = 'nec_hirota_matches_v2';
-    let matchesList = [];
-    let currentMatch = null;
-    let currentPosFilter = 'ALL';
-    let sortState = { key: 'totalPts', dir: 'desc' };
-    let teamChartInstance = null;
-    let playerChartInstance = null;
-
-    function loadMatches() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            matchesList = parsed;
-            return;
+        parsed_b: {
+          home_team: {
+            team_name: "岡山シーガルズ",
+            team_total: {
+              attack_att: 119,
+              attack_pts: 50,
+              attack_pct: 42.0,
+              block_pts: 8,
+              serve_att: 74,
+              serve_pts: 2,
+              serve_err: 8,
+              serve_eff: 8.1,
+              rec_att: 75,
+              rec_exc: 15,
+              rec_good: 19,
+              rec_pct: 32.7
+            }
+          },
+          away_team: {
+            team_name: "NECレッドロケッツ川崎",
+            team_total: {
+              attack_att: 123,
+              attack_pts: 58,
+              attack_pct: 47.2,
+              block_pts: 4,
+              serve_att: 79,
+              serve_pts: 1,
+              serve_err: 4,
+              serve_eff: 12.7,
+              rec_att: 66,
+              rec_exc: 16,
+              rec_good: 24,
+              rec_pct: 42.4
+            },
+            players: [
+              { number: 1, name: "山田 二千華", sets_played: 1, attack_att: 3, attack_pts: 1, attack_pct: 33.3, block_pts: 2, serve_eff: 16.7, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 3, name: "L 大工園 彩夏", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: null, rec_att: 29, rec_exc: 10, rec_good: 10, rec_pct: 51.7 },
+              { number: 4, name: "廣田 あい", sets_played: 3, attack_att: 43, attack_pts: 20, attack_pct: 46.5, block_pts: 1, serve_eff: 6.8, rec_att: 7, rec_exc: 0, rec_good: 3, rec_pct: 21.4 },
+              { number: 7, name: "甲 萌香", sets_played: 3, attack_att: 5, attack_pts: 4, attack_pct: 80.0, block_pts: 0, serve_eff: 8.3, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 10, name: "中川 つかさ(C)", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: 6.8, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 11, name: "古谷 ちなみ", sets_played: 0, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: null, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 12, name: "佐々木 遥子", sets_played: 2, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: 25.0, rec_att: 1, rec_exc: 1, rec_good: 0, rec_pct: 100.0 },
+              { number: 13, name: "髙橋 美鈴", sets_played: 3, attack_att: 6, attack_pts: 3, attack_pct: 50.0, block_pts: 0, serve_eff: null, rec_att: 1, rec_exc: 0, rec_good: 1, rec_pct: 50.0 },
+              { number: 14, name: "長谷部 奈香", sets_played: 0, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: null, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 15, name: "シルビア・チネロ・ヌワカロール", sets_played: 3, attack_att: 22, attack_pts: 13, attack_pct: 59.1, block_pts: 1, serve_eff: 19.4, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 16, name: "大川 愛海", sets_played: 3, attack_att: 9, attack_pts: 6, attack_pct: 66.7, block_pts: 0, serve_eff: 15.0, rec_att: 10, rec_exc: 2, rec_good: 5, rec_pct: 45.0 },
+              { number: 18, name: "シアラ・モーガン・ディーベル", sets_played: 3, attack_att: 29, attack_pts: 10, attack_pct: 34.5, block_pts: 0, serve_eff: 14.3, rec_att: 18, rec_exc: 3, rec_good: 5, rec_pct: 30.6 },
+              { number: 19, name: "ミア・シェイファー", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: 8.3, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 22, name: "イ ダヒョン", sets_played: 1, attack_att: 6, attack_pts: 1, attack_pct: 16.7, block_pts: 0, serve_eff: 20.0, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null }
+            ]
           }
         }
-      } catch (e) {
-        console.warn('localStorage読み込みエラー:', e);
       }
-      matchesList = [MATCH_168_DATA];
+    ];
+
+    let allMatches = [...FALLBACK_MATCHES];
+    let currentMatchId = FALLBACK_MATCHES[0].id;
+    let singleChartInstance = null;
+    let hirotaTrendChartInstance = null;
+    let teamTrendChartInstance = null;
+
+    function isNecHome(match) {
+      if (match.target_side === "home") return true;
+      if (match.target_side === "away") return false;
+      const meta = match.meta || {};
+      if (String(meta.home_team || "").includes("NEC")) return true;
+      const homePlayers = match.parsed_b?.home_team?.players || [];
+      return homePlayers.some(p => String(p.name || "").includes("廣田"));
     }
 
-    function saveMatches() {
+    function getNecBlock(match) {
+      const b = match.parsed_b || {};
+      return isNecHome(match) ? (b.home_team || {}) : (b.away_team || {});
+    }
+
+    function getOppBlock(match) {
+      const b = match.parsed_b || {};
+      return isNecHome(match) ? (b.away_team || {}) : (b.home_team || {});
+    }
+
+    function getHirotaStat(match) {
+      const nec = getNecBlock(match);
+      const players = nec.players || [];
+      return players.find(p => String(p.name || "").replace(/\s+/g, "").includes("廣田あい")) || null;
+    }
+
+    function getMatchResultLabel(match) {
+      const meta = match.meta || {};
+      const h = meta.score_home_sets;
+      const a = meta.score_away_sets;
+      if (typeof h === "number" && typeof a === "number") {
+        const necSets = isNecHome(match) ? h : a;
+        const oppSets = isNecHome(match) ? a : h;
+        const wl = necSets > oppSets ? "勝" : (necSets < oppSets ? "敗" : "");
+        return `${necSets}-${oppSets} ${wl}`.trim();
+      }
+      return "帳票未反映";
+    }
+
+    function getOpponentName(match) {
+      const meta = match.meta || {};
+      if (meta.home_team && meta.away_team) {
+        return isNecHome(match) ? meta.away_team : meta.home_team;
+      }
+      const opp = getOppBlock(match);
+      return opp.team_name || "対戦相手";
+    }
+
+    function formatMatchDropdownLabel(match) {
+      const meta = match.meta || {};
+      const dateStr = meta.date || `ID:${match.id}`;
+      const roundStr = meta.round_label ? ` ${meta.round_label}` : (meta.match_no ? ` #${meta.match_no}` : "");
+      const oppName = getOpponentName(match);
+      const resLabel = getMatchResultLabel(match);
+      return `${dateStr}${roundStr} vs ${oppName} (${resLabel})`;
+    }
+
+    function fmtPct(v) {
+      return (v === null || v === undefined || Number.isNaN(Number(v))) ? "-" : `${Number(v).toFixed(1)}%`;
+    }
+
+    function fmtNum(v, fallback = "-") {
+      return (v === null || v === undefined || v === "") ? fallback : v;
+    }
+
+    async function loadMatchesFromRepo() {
+      const statusEl = document.getElementById("dataSourceStatus");
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(matchesList));
-      } catch (e) {
-        console.warn('localStorage保存エラー:', e);
-      }
-    }
-
-    // =========================================================================
-    // 3. UIレンダリングロジック
-    // =========================================================================
-    function populateMatchSelector() {
-      const sel = document.getElementById('matchSelector');
-      sel.innerHTML = '';
-      matchesList.forEach((m, idx) => {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.label;
-        if (currentMatch && m.id === currentMatch.id) opt.selected = true;
-        sel.appendChild(opt);
-      });
-      sel.onchange = (e) => {
-        const found = matchesList.find(item => item.id === e.target.value);
-        if (found) {
-          currentMatch = found;
-          renderAll();
+        const cacheBuster = `?t=${Date.now()}`;
+        const res = await fetch(`./backend/data/matches.json${cacheBuster}`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
         }
-      };
+        const jsonData = await res.json();
+        if (Array.isArray(jsonData) && jsonData.length > 0) {
+          // 初期データ（168）とJSON側のデータをマージ（同一IDはJSON側を優先）
+          const mergedMap = new Map();
+          for (const m of FALLBACK_MATCHES) {
+            mergedMap.set(String(m.id), m);
+          }
+          for (const m of jsonData) {
+            mergedMap.set(String(m.id), m);
+          }
+          allMatches = Array.from(mergedMap.values()).sort((a, b) => {
+            const da = String(a.meta?.date || "");
+            const db = String(b.meta?.date || "");
+            if (da !== db) return da.localeCompare(db);
+            return String(a.id).localeCompare(String(b.id));
+          });
+          currentMatchId = allMatches[allMatches.length - 1].id;
+          statusEl.textContent = `✓ backend/data/matches.json から ${jsonData.length} 件の蓄積データを読み込みました（全 ${allMatches.length} 試合表示中）。`;
+        } else {
+          allMatches = [...FALLBACK_MATCHES];
+          currentMatchId = allMatches[0].id;
+          statusEl.textContent = `ℹ backend/data/matches.json は現在空のため、基準試合（2026/11/15 Match No.168）を表示中です。GitHub Actionsからデータを追加すると増えます。`;
+        }
+      } catch (err) {
+        allMatches = [...FALLBACK_MATCHES];
+        currentMatchId = allMatches[0].id;
+        statusEl.textContent = `ℹ backend/data/matches.json 未検出またはローカル表示のため、基準試合（2026/11/15 Match No.168）を表示中です。`;
+      }
+
+      renderMatchSelector();
+      renderSingleMatch();
+      renderCumulativeView();
     }
 
-    function renderAll() {
-      const m = currentMatch;
-      // ヘッダー・スコアボード
-      document.getElementById('liveScoreLink').href = m.liveUrl || 'https://www.svleague.jp/';
-      document.getElementById('metaMatchNo').textContent = m.matchNo;
-      document.getElementById('metaDate').textContent = m.date;
-      document.getElementById('metaVenue').textContent = m.venue;
-      document.getElementById('metaAttendance').textContent = `入場者数: ${m.attendance}`;
-      document.getElementById('metaDuration').textContent = `試合時間: ${m.duration}`;
+    function renderMatchSelector() {
+      const select = document.getElementById("matchSelect");
+      select.innerHTML = "";
+      for (const m of allMatches) {
+        const opt = document.createElement("option");
+        opt.value = String(m.id);
+        opt.textContent = formatMatchDropdownLabel(m);
+        if (String(m.id) === String(currentMatchId)) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      }
+      const active = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
+      const liveLink = document.getElementById("liveScoreLink");
+      const liveUrl = active?.sources?.live_score_url || "https://www.svleague.jp/match/detail/37493/?tab=live";
+      liveLink.href = liveUrl;
+    }
 
-      document.getElementById('homeTeamName').textContent = m.homeTeam;
-      document.getElementById('awayTeamName').textContent = m.awayTeam;
-      document.getElementById('homeStandings').textContent = m.homeStandings;
-      document.getElementById('awayStandings').textContent = m.awayStandings;
-      document.getElementById('homeCoach').textContent = m.homeCoach;
-      document.getElementById('awayCoach').textContent = m.awayCoach;
-      document.getElementById('homeSets').textContent = m.homeSets;
-      document.getElementById('awaySets').textContent = m.awaySets;
+    function renderSingleMatch() {
+      const match = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
+      const meta = match.meta || {};
+      const nec = getNecBlock(match);
+      const opp = getOppBlock(match);
+      const hirota = getHirotaStat(match);
 
-      // セット別スコアテーブル
-      const hScores = m.setScores.home;
-      const aScores = m.setScores.away;
-      const hTotal = hScores.reduce((a, b) => a + b, 0);
-      const aTotal = aScores.reduce((a, b) => a + b, 0);
-      document.getElementById('setScoreTableBody').innerHTML = `
-        <tr>
-          <td class="py-2.5 px-2.5 text-left font-bold text-slate-700">${m.homeTeam}</td>
-          ${hScores.map(s => `<td class="py-2.5 px-2 text-slate-600">${s}</td>`).join('')}
-          <td class="py-2.5 px-2 bg-slate-50 font-bold text-slate-700">${hTotal}</td>
-        </tr>
-        <tr class="bg-nec-lightRed/40">
-          <td class="py-2.5 px-2.5 text-left font-extrabold text-nec-red">${m.awayTeam}</td>
-          ${aScores.map(s => `<td class="py-2.5 px-2 font-extrabold text-nec-red">${s}</td>`).join('')}
-          <td class="py-2.5 px-2 bg-nec-lightRed font-black text-nec-red">${aTotal}</td>
-        </tr>
+      // Banner
+      const banner = document.getElementById("matchBanner");
+      const necSets = typeof meta.score_home_sets === "number" && typeof meta.score_away_sets === "number"
+        ? (isNecHome(match) ? meta.score_home_sets : meta.score_away_sets)
+        : "-";
+      const oppSets = typeof meta.score_home_sets === "number" && typeof meta.score_away_sets === "number"
+        ? (isNecHome(match) ? meta.score_away_sets : meta.score_home_sets)
+        : "-";
+      const setsHtml = Array.isArray(meta.sets_detail) && meta.sets_detail.length > 0
+        ? meta.sets_detail.map(s => {
+            const nPts = isNecHome(match) ? s.home : s.away;
+            const oPts = isNecHome(match) ? s.away : s.home;
+            return `<span class="set-pill">Set${s.set}: NEC ${nPts}-${oPts} ${s.duration ? `(${s.duration})` : ""}</span>`;
+          }).join("")
+        : `<span class="set-pill">セット詳細: 帳票A/B連携待ち</span>`;
+
+      banner.innerHTML = `
+        <div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px;">
+            <span class="badge">${fmtNum(meta.date, "日付未設定")}</span>
+            <span class="badge badge-blue">${fmtNum(meta.round_label, meta.match_no ? `Match No.${meta.match_no}` : `ID:${match.id}`)}</span>
+            <span class="sub-caption">会場: ${fmtNum(meta.venue, "未設定")}</span>
+          </div>
+          <div class="set-pills">${setsHtml}</div>
+        </div>
+        <div class="score-box">
+          <span>NECレッドロケッツ川崎</span>
+          <span class="score-num">${necSets} - ${oppSets}</span>
+          <span>${getOpponentName(match)}</span>
+        </div>
       `;
 
-      // #4 廣田あいカード
-      const h = m.hirota;
-      document.getElementById('hirotaSetsBadge').textContent = h.setsText;
-      document.getElementById('hirotaTotalPoints').innerHTML = `${h.totalPts} <span class="text-sm font-bold">得点</span>`;
-      document.getElementById('hirotaPointBreakdown').innerHTML = `
-        <span class="bg-nec-red px-2.5 py-1 rounded-lg">アタック ${h.attPts}点</span>
-        <span class="bg-sky-600 px-2.5 py-1 rounded-lg">ブロック ${h.blkPts}点</span>
-        <span class="bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg">サーブ ${h.srvPts}点</span>
-      `;
-      document.getElementById('hirotaMetricsGrid').innerHTML = `
-        <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-          <p class="text-[11px] text-slate-300 font-medium">アタック決定率</p>
-          <p class="text-xl sm:text-2xl font-black text-amber-300 mt-0.5">${h.attPct.toFixed(1)}%</p>
-          <p class="text-[11px] text-slate-300 mt-1">${h.attPts}得点 / ${h.attTotal}打数 (失${h.attErr})</p>
-        </div>
-        <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-          <p class="text-[11px] text-slate-300 font-medium">バックアタック</p>
-          <p class="text-xl sm:text-2xl font-black text-white mt-0.5">${h.backPct > 0 ? h.backPct.toFixed(1) + '%' : '-'}</p>
-          <p class="text-[11px] text-slate-300 mt-1">${h.backPts}得点 / ${h.backTotal}打数 (失0)</p>
-        </div>
-        <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-          <p class="text-[11px] text-slate-300 font-medium">ブロック得点</p>
-          <p class="text-xl sm:text-2xl font-black text-sky-300 mt-0.5">${h.blkPts} 本</p>
-          <p class="text-[11px] text-slate-300 mt-1">セット平均 ${h.blkPerSet.toFixed(2)}本</p>
-        </div>
-        <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-          <p class="text-[11px] text-slate-300 font-medium">サーブ効果率</p>
-          <p class="text-xl sm:text-2xl font-black text-white mt-0.5">${h.srvEff.toFixed(1)}%</p>
-          <p class="text-[11px] text-slate-300 mt-1">${h.srvAtt}打 / ${h.srvPts}点 / ${h.srvErr}失</p>
-        </div>
-        <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-          <p class="text-[11px] text-slate-300 font-medium">サーブレシーブ</p>
-          <p class="text-xl sm:text-2xl font-black text-emerald-300 mt-0.5">${h.recPct.toFixed(1)}%</p>
-          <p class="text-[11px] text-slate-300 mt-1">${h.recAtt}受数 (優${h.recExc} / 良${h.recGood})</p>
-        </div>
-        <div class="bg-white/10 rounded-xl p-3.5 border border-white/10">
-          <p class="text-[11px] text-slate-300 font-medium">アタックセット平均</p>
-          <p class="text-xl sm:text-2xl font-black text-rose-300 mt-0.5">${h.attPerSet.toFixed(2)} 点</p>
-          <p class="text-[11px] text-slate-300 mt-1">総得点 ${h.totalPts}点</p>
-        </div>
-      `;
-      document.getElementById('hirotaInsightBanner').innerHTML = `
-        <span class="text-amber-400 font-black text-base leading-5">★</span>
-        <p>${h.insight}</p>
-      `;
-
-      // チーム成績比較カード
-      const cardsHtml = m.teamStats.map(stat => {
-        const necBetter = stat.necVal >= stat.oppVal;
-        return `
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-extrabold text-slate-700">${stat.title}</span>
-              ${necBetter
-                ? '<span class="text-[10px] font-bold bg-nec-lightRed text-nec-red px-2 py-0.5 rounded-full">NEC優勢</span>'
-                : '<span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">相手優勢</span>'}
-            </div>
-            <div class="grid grid-cols-2 gap-3 items-end">
-              <div class="bg-nec-lightRed/60 border border-rose-200 rounded-xl p-3">
-                <p class="text-[10px] font-extrabold text-nec-red">NEC川崎</p>
-                <p class="text-lg sm:text-xl font-black text-nec-navy mt-0.5">${stat.necMain}</p>
-                <p class="text-[10px] text-slate-600 mt-1 leading-tight">${stat.necSub}</p>
-              </div>
-              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                <p class="text-[10px] font-bold text-slate-500">${m.homeTeam}</p>
-                <p class="text-lg sm:text-xl font-extrabold text-slate-700 mt-0.5">${stat.oppMain}</p>
-                <p class="text-[10px] text-slate-500 mt-1 leading-tight">${stat.oppSub}</p>
-              </div>
-            </div>
+      // Hirota KPIs
+      const hirotaKpis = document.getElementById("hirotaKpis");
+      const hirotaNote = document.getElementById("hirotaParseNote");
+      if (hirota) {
+        hirotaNote.textContent = `出場 ${fmtNum(hirota.sets_played, 0)} セット`;
+        hirotaKpis.innerHTML = `
+          <div class="kpi-card highlight">
+            <div class="kpi-label">アタック決定率 / 得点</div>
+            <div class="kpi-value">${fmtPct(hirota.attack_pct)}</div>
+            <div class="kpi-sub">${fmtNum(hirota.attack_pts, 0)} 得点 / ${fmtNum(hirota.attack_att, 0)} 打数</div>
+          </div>
+          <div class="kpi-card highlight">
+            <div class="kpi-label">ブロック決定本数</div>
+            <div class="kpi-value">${fmtNum(hirota.block_pts, 0)} 本</div>
+            <div class="kpi-sub">ネット際ディフェンス貢献</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">サーブ効果率</div>
+            <div class="kpi-value">${fmtPct(hirota.serve_eff)}</div>
+            <div class="kpi-sub">サービスエース・効果・ミス反映</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">サーブレシーブ成功率</div>
+            <div class="kpi-value">${fmtPct(hirota.rec_pct)}</div>
+            <div class="kpi-sub">優 ${fmtNum(hirota.rec_exc, 0)} + 良 ${fmtNum(hirota.rec_good, 0)} / 受数 ${fmtNum(hirota.rec_att, 0)}</div>
           </div>
         `;
-      }).join('');
-      document.getElementById('teamComparisonCards').innerHTML = cardsHtml;
-
-      // コメント描画
-      document.getElementById('necCommentBody').textContent = m.comments.nec;
-      document.getElementById('oppCommentBody').textContent = m.comments.opp;
-
-      renderPlayerTable();
-      renderCharts();
-    }
-
-    function setPosFilter(pos) {
-      currentPosFilter = pos;
-      document.querySelectorAll('.pos-btn').forEach(btn => {
-        if (btn.dataset.pos === pos) {
-          btn.className = 'pos-btn bg-nec-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg transition';
-        } else {
-          btn.className = 'pos-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition';
-        }
-      });
-      renderPlayerTable();
-    }
-
-    function sortPlayers(key) {
-      if (sortState.key === key) {
-        sortState.dir = sortState.dir === 'desc' ? 'asc' : 'desc';
       } else {
-        sortState.key = key;
-        sortState.dir = key === 'number' ? 'asc' : 'desc';
-      }
-      renderPlayerTable();
-    }
-
-    function renderPlayerTable() {
-      const m = currentMatch;
-      let list = [...m.players];
-
-      if (currentPosFilter !== 'ALL') {
-        list = list.filter(p => p.pos === currentPosFilter);
+        hirotaNote.textContent = "B帳票PDF未反映または出場記録なし";
+        hirotaKpis.innerHTML = `<div class="kpi-card"><div class="kpi-label">#4 廣田 あい</div><div class="kpi-sub">この試合のB帳票スタッツはまだ登録されていません。</div></div>`;
       }
 
-      list.sort((a, b) => {
-        const valA = a[sortState.key];
-        const valB = b[sortState.key];
-        if (typeof valA === 'string') {
-          return sortState.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        }
-        return sortState.dir === 'asc' ? valA - valB : valB - valA;
-      });
+      // Team Compare Table & Chart
+      const nTot = nec.team_total || {};
+      const oTot = opp.team_total || {};
+      const tbodyComp = document.querySelector("#teamCompareTable tbody");
+      const rowsSpec = [
+        { label: "アタック決定率", n: fmtPct(nTot.attack_pct), o: fmtPct(oTot.attack_pct) },
+        { label: "アタック得点 / 打数", n: `${fmtNum(nTot.attack_pts, "-")} / ${fmtNum(nTot.attack_att, "-")}`, o: `${fmtNum(oTot.attack_pts, "-")} / ${fmtNum(oTot.attack_att, "-")}` },
+        { label: "ブロック決定本数", n: `${fmtNum(nTot.block_pts, "-")} 本`, o: `${fmtNum(oTot.block_pts, "-")} 本` },
+        { label: "サーブ効果率", n: fmtPct(nTot.serve_eff), o: fmtPct(oTot.serve_eff) },
+        { label: "サーブレシーブ成功率", n: fmtPct(nTot.rec_pct), o: fmtPct(oTot.rec_pct) }
+      ];
+      tbodyComp.innerHTML = rowsSpec.map(r => `
+        <tr>
+          <td>${r.label}</td>
+          <td><strong>${r.n}</strong></td>
+          <td>${r.o}</td>
+        </tr>
+      `).join("");
 
-      const tbody = document.getElementById('playerTableBody');
-      tbody.innerHTML = list.map(p => {
-        const rowBg = p.isOshi
-          ? 'bg-nec-lightRed/85 hover:bg-nec-lightRed font-semibold border-l-4 border-nec-red'
-          : (p.dnp ? 'bg-slate-50/70 text-slate-400' : 'hover:bg-slate-50');
+      renderSingleTeamChart(nTot, oTot, getOpponentName(match));
 
-        if (p.dnp) {
+      // Players Table
+      const players = nec.players || [];
+      const tbodyPlayers = document.querySelector("#playersTable tbody");
+      if (players.length > 0) {
+        tbodyPlayers.innerHTML = players.map(p => {
+          const isHirota = String(p.name || "").replace(/\s+/g, "").includes("廣田あい");
           return `
-            <tr class="${rowBg}">
-              <td class="py-2.5 px-3 font-bold">${p.number}</td>
-              <td class="py-2.5 px-3">${p.name}</td>
-              <td class="py-2.5 px-2 text-center"><span class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 text-[10px] font-bold">${p.pos}</span></td>
-              <td class="py-2.5 px-2 text-center">0</td>
-              <td colspan="7" class="py-2.5 px-3 text-center text-slate-400 italic">出場なし (DNP)</td>
+            <tr class="${isHirota ? "hirota-row" : ""}">
+              <td>${fmtNum(p.number)}</td>
+              <td><strong>${fmtNum(p.name)}</strong> ${isHirota ? '<span class="badge badge-gold">推し</span>' : ""}</td>
+              <td>${fmtNum(p.sets_played, 0)}</td>
+              <td>${fmtNum(p.attack_pts, 0)} / ${fmtNum(p.attack_att, 0)}</td>
+              <td>${fmtPct(p.attack_pct)}</td>
+              <td>${fmtNum(p.block_pts, 0)}</td>
+              <td>${fmtPct(p.serve_eff)}</td>
+              <td>${fmtNum(p.rec_exc, 0)}+${fmtNum(p.rec_good, 0)}/${fmtNum(p.rec_att, 0)}</td>
+              <td>${fmtPct(p.rec_pct)}</td>
             </tr>
           `;
-        }
+        }).join("");
+      } else {
+        tbodyPlayers.innerHTML = `<tr><td colspan="9" class="empty-state">この試合の個人成績データは未登録です（コメント・URLのみ登録済みの状態）。</td></tr>`;
+      }
 
-        const attStr = p.attTotal > 0 ? `${p.attPts}/${p.attTotal} (失${p.attErr})` : '-';
-        const attPctStr = p.attPct >= 0 ? `${p.attPct.toFixed(1)}%` : '-';
-
-        return `
-          <tr class="${rowBg} transition">
-            <td class="py-2.5 px-3 font-extrabold ${p.isOshi ? 'text-nec-red' : 'text-slate-700'}">${p.number}</td>
-            <td class="py-2.5 px-3 font-bold ${p.isOshi ? 'text-nec-navy' : 'text-slate-800'}">
-              ${p.name}
-              ${p.isOshi ? '<span class="ml-1.5 text-[10px] bg-nec-red text-white px-1.5 py-0.5 rounded font-extrabold">推し</span>' : ''}
-            </td>
-            <td class="py-2.5 px-2 text-center">
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${p.pos === 'L' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'}">${p.pos}</span>
-            </td>
-            <td class="py-2.5 px-2 text-center font-semibold">${p.sets}</td>
-            <td class="py-2.5 px-3 text-right font-black ${p.totalPts >= 10 ? 'text-nec-red text-sm' : 'text-slate-800'}">${p.totalPts}</td>
-            <td class="py-2.5 px-3 text-right text-slate-700">${attStr}</td>
-            <td class="py-2.5 px-3 text-right font-bold ${p.attPct >= 45 ? 'text-nec-red' : 'text-slate-700'}">${attPctStr}</td>
-            <td class="py-2.5 px-3 text-right text-slate-600">${p.backText}</td>
-            <td class="py-2.5 px-3 text-right font-bold ${p.blkPts > 0 ? 'text-sky-700' : 'text-slate-500'}">${p.blkPts}</td>
-            <td class="py-2.5 px-3 text-right text-slate-600">${p.srvText} ${p.srvEff >= 0 ? `<strong class="text-slate-800">(${p.srvEff.toFixed(1)}%)</strong>` : ''}</td>
-            <td class="py-2.5 px-3 text-right text-slate-600">${p.recText}</td>
-          </tr>
-        `;
-      }).join('');
-
-      const t = m.teamTotalRow;
-      document.getElementById('playerTableFoot').innerHTML = `
-        <tr>
-          <td colspan="4" class="py-3 px-3 text-left">チーム合計（NECレッドロケッツ川崎）</td>
-          <td class="py-3 px-3 text-right text-amber-300">${t.totalPts}</td>
-          <td class="py-3 px-3 text-right">${t.attText}</td>
-          <td class="py-3 px-3 text-right text-amber-300">${t.attPct}</td>
-          <td class="py-3 px-3 text-right">${t.backText}</td>
-          <td class="py-3 px-3 text-right text-sky-300">${t.blkPts}</td>
-          <td class="py-3 px-3 text-right">${t.srvText}</td>
-          <td class="py-3 px-3 text-right text-emerald-300">${t.recText}</td>
-        </tr>
+      // Comments
+      const commentsArea = document.getElementById("commentsArea");
+      const cNec = match.comments?.away || match.comments?.nec || "";
+      const cOpp = match.comments?.home || match.comments?.opp || "";
+      commentsArea.innerHTML = `
+        <div class="comment-box">
+          <span class="comment-label label-nec">NECレッドロケッツ川崎 コメント</span>
+          <div>${cNec ? escapeHtml(cNec) : "コメント未入力"}</div>
+        </div>
+        <div class="comment-box">
+          <span class="comment-label label-opp">${escapeHtml(getOpponentName(match))} コメント</span>
+          <div>${cOpp ? escapeHtml(cOpp) : "コメント未入力"}</div>
+        </div>
       `;
     }
 
-    function renderCharts() {
-      const m = currentMatch;
-
-      // 1. チーム比較バーチャート
-      const ctx1 = document.getElementById('teamCompareChart').getContext('2d');
-      if (teamChartInstance) teamChartInstance.destroy();
-
-      const rateStats = [m.teamStats[0], m.teamStats[1], m.teamStats[3], m.teamStats[4]];
-      teamChartInstance = new Chart(ctx1, {
-        type: 'bar',
+    function renderSingleTeamChart(nTot, oTot, oppName) {
+      const ctx = document.getElementById("singleTeamChart");
+      if (singleChartInstance) {
+        singleChartInstance.destroy();
+      }
+      singleChartInstance = new Chart(ctx, {
+        type: "bar",
         data: {
-          labels: ['アタック決定率', 'バックアタック決定率', 'サーブ効果率', 'サーブレシーブ成功率'],
+          labels: ["アタック決定率(%)", "サーブ効果率(%)", "サーブレシーブ成功率(%)"],
           datasets: [
             {
-              label: 'NECレッドロケッツ川崎 (%)',
-              data: rateStats.map(s => s.necVal),
-              backgroundColor: '#C8102E',
+              label: "NECレッドロケッツ川崎",
+              data: [
+                Number(nTot.attack_pct) || 0,
+                Number(nTot.serve_eff) || 0,
+                Number(nTot.rec_pct) || 0
+              ],
+              backgroundColor: "rgba(225, 29, 72, 0.78)",
               borderRadius: 6
             },
             {
-              label: `${m.homeTeam} (%)`,
-              data: rateStats.map(s => s.oppVal),
-              backgroundColor: '#64748B',
+              label: oppName,
+              data: [
+                Number(oTot.attack_pct) || 0,
+                Number(oTot.serve_eff) || 0,
+                Number(oTot.rec_pct) || 0
+              ],
+              backgroundColor: "rgba(56, 189, 248, 0.72)",
               borderRadius: 6
             }
           ]
@@ -1030,163 +988,226 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' } } }
-          },
           scales: {
-            y: { beginAtZero: true, max: 60, ticks: { callback: v => v + '%' } }
-          }
-        }
-      });
-
-      // 2. NEC得点者内訳チャート
-      const ctx2 = document.getElementById('playerPointsChart').getContext('2d');
-      if (playerChartInstance) playerChartInstance.destroy();
-
-      const scorers = m.players.filter(p => p.totalPts > 0).sort((a, b) => b.totalPts - a.totalPts);
-      playerChartInstance = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: scorers.map(p => `#${p.number} ${p.name.split(' ')[0]}`),
-          datasets: [
-            {
-              label: 'アタック得点',
-              data: scorers.map(p => p.attPts),
-              backgroundColor: '#C8102E',
-              borderRadius: 4
+            y: {
+              beginAtZero: true,
+              grid: { color: "rgba(148, 163, 184, 0.12)" },
+              ticks: { color: "#cbd5e1" }
             },
-            {
-              label: 'ブロック得点',
-              data: scorers.map(p => p.blkPts),
-              backgroundColor: '#0284C7',
-              borderRadius: 4
-            },
-            {
-              label: 'サーブ得点',
-              data: scorers.map(p => Math.max(0, p.totalPts - p.attPts - p.blkPts)),
-              backgroundColor: '#F59E0B',
-              borderRadius: 4
+            x: {
+              grid: { display: false },
+              ticks: { color: "#cbd5e1" }
             }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' } } }
           },
-          scales: {
-            x: { stacked: true },
-            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 5 } }
+          plugins: {
+            legend: { labels: { color: "#eef2ff" } }
           }
         }
       });
     }
 
-    // =========================================================================
-    // 4. タブ切り替え・新規試合登録ハンドラ
-    // =========================================================================
-    function switchTab(tabName) {
-      ['dashboard', 'tactics', 'register'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tabName);
-        const btn = document.getElementById(`tab-btn-${t}`);
-        if (t === tabName) {
-          btn.classList.add('tab-active');
-          btn.classList.remove('font-medium');
+    function renderCumulativeView() {
+      const totalMatches = allMatches.length;
+      let wins = 0;
+      let losses = 0;
+      let hirotaAttPts = 0;
+      let hirotaAttAtt = 0;
+      let hirotaBlk = 0;
+      const labels = [];
+      const hirotaPctSeries = [];
+      const hirotaPtsSeries = [];
+      const necAttPctSeries = [];
+      const necRecPctSeries = [];
+
+      for (const m of allMatches) {
+        const meta = m.meta || {};
+        labels.push(meta.date || `ID:${m.id}`);
+
+        if (typeof meta.score_home_sets === "number" && typeof meta.score_away_sets === "number") {
+          const nS = isNecHome(m) ? meta.score_home_sets : meta.score_away_sets;
+          const oS = isNecHome(m) ? meta.score_away_sets : meta.score_home_sets;
+          if (nS > oS) wins += 1;
+          else if (nS < oS) losses += 1;
+        }
+
+        const h = getHirotaStat(m);
+        if (h) {
+          hirotaAttPts += Number(h.attack_pts) || 0;
+          hirotaAttAtt += Number(h.attack_att) || 0;
+          hirotaBlk += Number(h.block_pts) || 0;
+          hirotaPctSeries.push(h.attack_pct !== null && h.attack_pct !== undefined ? Number(h.attack_pct) : null);
+          hirotaPtsSeries.push((Number(h.attack_pts) || 0) + (Number(h.block_pts) || 0));
         } else {
-          btn.classList.remove('tab-active');
-          btn.classList.add('font-medium');
+          hirotaPctSeries.push(null);
+          hirotaPtsSeries.push(null);
         }
-      });
-    }
 
-    function showToast(msg) {
-      const box = document.getElementById('toastBox');
-      document.getElementById('toastMessage').textContent = msg;
-      box.classList.remove('hidden');
-      setTimeout(() => box.classList.add('hidden'), 3500);
-    }
-
-    function handleRegisterMatch(e) {
-      e.preventDefault();
-      const matchNo = document.getElementById('regMatchNo').value.trim();
-      const dateStr = document.getElementById('regDate').value;
-      const opponent = document.getElementById('regOpponent').value.trim();
-      const liveUrl = document.getElementById('regLiveUrl').value.trim();
-      const score = document.getElementById('regScore').value.trim();
-
-      const hAtt = parseInt(document.getElementById('regHirotaAtt').value, 10) || 1;
-      const hPts = parseInt(document.getElementById('regHirotaPts').value, 10) || 0;
-      const hBlk = parseInt(document.getElementById('regHirotaBlk').value, 10) || 0;
-      const hSrv = parseInt(document.getElementById('regHirotaSrv').value, 10) || 0;
-      const hRec = parseFloat(document.getElementById('regHirotaRec').value) || 0;
-      const hPct = +((hPts / hAtt) * 100).toFixed(1);
-      const hTotal = hPts + hBlk + hSrv;
-
-      const necComment = document.getElementById('regNecComment').value.trim();
-      const oppComment = document.getElementById('regOppComment').value.trim();
-
-      const newId = 'match-' + Date.now();
-      const newMatch = JSON.parse(JSON.stringify(MATCH_168_DATA));
-      newMatch.id = newId;
-      newMatch.label = `${dateStr} ${matchNo} vs ${opponent} (${score})`;
-      newMatch.matchNo = matchNo;
-      newMatch.date = dateStr;
-      newMatch.venue = 'SV.LEAGUE 開催会場';
-      newMatch.liveUrl = liveUrl || 'https://www.svleague.jp/';
-      newMatch.homeTeam = opponent;
-      newMatch.awaySets = parseInt(score.split('-')[0], 10) || 3;
-      newMatch.homeSets = parseInt(score.split('-')[1], 10) || 1;
-
-      newMatch.hirota.totalPts = hTotal;
-      newMatch.hirota.attPts = hPts;
-      newMatch.hirota.attTotal = hAtt;
-      newMatch.hirota.attPct = hPct;
-      newMatch.hirota.blkPts = hBlk;
-      newMatch.hirota.srvPts = hSrv;
-      newMatch.hirota.recPct = hRec;
-      newMatch.hirota.insight = `${opponent}戦でもアタック${hPts}/${hAtt}（決定率${hPct}%）、ブロック${hBlk}本、サーブ${hSrv}得点の計${hTotal}得点と攻守でチームを牽引しました。`;
-
-      const hPlayer = newMatch.players.find(p => p.number === 4);
-      if (hPlayer) {
-        hPlayer.totalPts = hTotal;
-        hPlayer.attPts = hPts;
-        hPlayer.attTotal = hAtt;
-        hPlayer.attPct = hPct;
-        hPlayer.blkPts = hBlk;
-        hPlayer.recText = `成功率 ${hRec.toFixed(1)}%`;
-        hPlayer.recPct = hRec;
+        const nTot = getNecBlock(m).team_total || {};
+        necAttPctSeries.push(nTot.attack_pct !== null && nTot.attack_pct !== undefined ? Number(nTot.attack_pct) : null);
+        necRecPctSeries.push(nTot.rec_pct !== null && nTot.rec_pct !== undefined ? Number(nTot.rec_pct) : null);
       }
 
-      newMatch.comments.nec = necComment || 'コメント未入力';
-      newMatch.comments.opp = oppComment || 'コメント未入力';
+      const cumAttPct = hirotaAttAtt > 0 ? ((hirotaAttPts / hirotaAttAtt) * 100).toFixed(1) + "%" : "-";
 
-      matchesList.unshift(newMatch);
-      saveMatches();
-      currentMatch = newMatch;
-      populateMatchSelector();
-      renderAll();
-      switchTab('dashboard');
-      showToast(`${matchNo}（vs ${opponent}）を登録し、ダッシュボードに反映しました。`);
+      document.getElementById("cumulativeSummaryKpis").innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-label">蓄積試合数 / 戦績</div>
+          <div class="kpi-value">${totalMatches} 試合</div>
+          <div class="kpi-sub">${wins} 勝 ${losses} 敗（帳票反映分）</div>
+        </div>
+        <div class="kpi-card highlight">
+          <div class="kpi-label">#4 廣田あい 通算アタック決定率</div>
+          <div class="kpi-value">${cumAttPct}</div>
+          <div class="kpi-sub">${hirotaAttPts} 得点 / ${hirotaAttAtt} 打数</div>
+        </div>
+        <div class="kpi-card highlight">
+          <div class="kpi-label">#4 廣田あい 累計ブロック</div>
+          <div class="kpi-value">${hirotaBlk} 本</div>
+          <div class="kpi-sub">蓄積データ合計</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">データ管理方式</div>
+          <div class="kpi-value" style="font-size:1.25rem;">GitHub JSON</div>
+          <div class="kpi-sub">Actions経由で自動追記・更新</div>
+        </div>
+      `;
+
+      // Hirota trend chart
+      const ctxH = document.getElementById("hirotaTrendChart");
+      if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
+      hirotaTrendChartInstance = new Chart(ctxH, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "#4 廣田あい アタック決定率(%)",
+              data: hirotaPctSeries,
+              borderColor: "#f59e0b",
+              backgroundColor: "rgba(245, 158, 11, 0.2)",
+              tension: 0.25,
+              yAxisID: "y"
+            },
+            {
+              label: "#4 廣田あい アタック+ブロック得点",
+              data: hirotaPtsSeries,
+              borderColor: "#e11d48",
+              backgroundColor: "rgba(225, 29, 72, 0.2)",
+              tension: 0.25,
+              yAxisID: "y1"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { type: "linear", position: "left", ticks: { color: "#fcd34d" }, grid: { color: "rgba(148,163,184,0.12)" } },
+            y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#fda4af" }, grid: { drawOnChartArea: false } },
+            x: { ticks: { color: "#cbd5e1" }, grid: { display: false } }
+          },
+          plugins: { legend: { labels: { color: "#eef2ff" } } }
+        }
+      });
+
+      // Team trend chart
+      const ctxT = document.getElementById("teamTrendChart");
+      if (teamTrendChartInstance) teamTrendChartInstance.destroy();
+      teamTrendChartInstance = new Chart(ctxT, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "NEC チームアタック決定率(%)",
+              data: necAttPctSeries,
+              borderColor: "#e11d48",
+              backgroundColor: "rgba(225, 29, 72, 0.2)",
+              tension: 0.25
+            },
+            {
+              label: "NEC サーブレシーブ成功率(%)",
+              data: necRecPctSeries,
+              borderColor: "#38bdf8",
+              backgroundColor: "rgba(56, 189, 248, 0.2)",
+              tension: 0.25
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,0.12)" } },
+            x: { ticks: { color: "#cbd5e1" }, grid: { display: false } }
+          },
+          plugins: { legend: { labels: { color: "#eef2ff" } } }
+        }
+      });
+
+      // Cumulative Table
+      const tbodyCum = document.querySelector("#cumulativeMatchesTable tbody");
+      tbodyCum.innerHTML = allMatches.map(m => {
+        const meta = m.meta || {};
+        const h = getHirotaStat(m);
+        const hasComment = Boolean((m.comments?.away || m.comments?.nec || m.comments?.home || m.comments?.opp));
+        return `
+          <tr style="cursor:pointer;" onclick="selectMatchAndSwitch('${String(m.id)}')">
+            <td><strong>${fmtNum(meta.date, `ID:${m.id}`)}</strong></td>
+            <td>${fmtNum(meta.round_label, "")} vs ${escapeHtml(getOpponentName(m))}</td>
+            <td>${escapeHtml(getMatchResultLabel(m))}</td>
+            <td>${h ? `${fmtPct(h.attack_pct)} (${h.attack_pts}/${h.attack_att})` : "未反映"}</td>
+            <td>${h ? `${fmtNum(h.block_pts, 0)} 本` : "-"}</td>
+            <td>${h ? `${fmtPct(h.rec_pct)} (${h.rec_att}受)` : "-"}</td>
+            <td>${hasComment ? "✓ あり" : "-"}</td>
+          </tr>
+        `;
+      }).join("");
     }
 
-    function resetDemoStorage() {
-      localStorage.removeItem(STORAGE_KEY);
-      matchesList = [MATCH_168_DATA];
-      currentMatch = MATCH_168_DATA;
-      populateMatchSelector();
-      renderAll();
-      switchTab('dashboard');
-      showToast('初期データ（Match No. 168 岡山戦）にリセットしました。');
+    function selectMatchAndSwitch(id) {
+      currentMatchId = String(id);
+      renderMatchSelector();
+      renderSingleMatch();
+      switchTab("single");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    // 初期化実行
-    window.onload = () => {
-      loadMatches();
-      currentMatch = matchesList[0];
-      populateMatchSelector();
-      renderAll();
-    };
+    function switchTab(tabName) {
+      const mapping = {
+        single: ["tabSingleBtn", "panelSingle"],
+        cumulative: ["tabCumulativeBtn", "panelCumulative"],
+        guide: ["tabGuideBtn", "panelGuide"]
+      };
+      for (const [key, [btnId, panelId]] of Object.entries(mapping)) {
+        document.getElementById(btnId).classList.toggle("active", key === tabName);
+        document.getElementById(panelId).classList.toggle("active", key === tabName);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    document.getElementById("matchSelect").addEventListener("change", (e) => {
+      currentMatchId = e.target.value;
+      renderMatchSelector();
+      renderSingleMatch();
+    });
+
+    document.getElementById("reloadJsonBtn").addEventListener("click", () => {
+      loadMatchesFromRepo();
+    });
+
+    document.getElementById("tabSingleBtn").addEventListener("click", () => switchTab("single"));
+    document.getElementById("tabCumulativeBtn").addEventListener("click", () => switchTab("cumulative"));
+    document.getElementById("tabGuideBtn").addEventListener("click", () => switchTab("guide"));
+
+    loadMatchesFromRepo();
   </script>
 </body>
 </html>
