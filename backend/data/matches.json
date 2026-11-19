@@ -1,13 +1,584 @@
 [
   {
+    "id": "143",
+    "meta": {
+      "match_no": 143,
+      "round_label": "第4節 GAME1",
+      "date": "2026/11/07",
+      "venue": "レポート",
+      "home_team": "NECレッドロケッツ川崎",
+      "away_team": "対戦相手（アウェー）",
+      "score_home_sets": 3,
+      "score_away_sets": 1,
+      "sets_detail": [
+        {
+          "set": 1,
+          "home": 25,
+          "away": 21,
+          "duration": "0:27"
+        },
+        {
+          "set": 2,
+          "home": 25,
+          "away": 22,
+          "duration": "0:27"
+        },
+        {
+          "set": 3,
+          "home": 25,
+          "away": 27,
+          "duration": "0:28"
+        },
+        {
+          "set": 4,
+          "home": 25,
+          "away": 20,
+          "duration": "0:30"
+        },
+        {
+          "set": 5,
+          "home": null,
+          "away": null,
+          "duration": "0:26"
+        }
+      ]
+    },
+    "target_side": "home",
+    "sources": {
+      "live_score_url": "https://www.svleague.jp/match/detail/37470/?tab=live",
+      "form_a_name": "uploaded_form_a.pdf",
+      "form_b_name": "uploaded_form_b.pdf"
+    },
+    "comments": {
+      "away": "先週悔しい連敗を喫したあと、もう一度練習から何を意識しなければいけないのか、強度とクオリティと両面で全員がハードワークして今日のゲームを迎えました。\nこのメンバーの強みであるフロアディフェンスで粘ることはできましたが、ブロックとトランジションアタックのところで最後まで苦労しました。明日はさらにタフなゲームになると思います。その中で最後の1点まで考え続け動き続け、点数を貪欲に奪いきれるよう今からしっかり準備したいと思います。\n本当に厳しく難しい展開が多いゲームの中で、多くのクルーの皆様の声がコートまで届きチームを後押ししていただきました。ありがとうございました。\n明日も是非よろしくお願い致します。",
+      "home": "まず、NECレッドロケッツ川崎の勝利にお祝いを申し上げます。非常に素晴らしく、競り合った試合でした。\n先週末の大阪での試合と同様、今回も勝敗を分けたのは、ごくわずかなディテールでした。NEC川崎はサーブが非常に優れたチームの一つであり、我々のレシーブやサイドアウトの戦略にとっては大きな試練となりましたが、その点に関しては我々もよく対応できたと思います。残念ながら、トランジション（切り返し）の局面ではNEC川崎の方が上回っており、それが接戦となったセットを彼女らが制する要因となりました。\n我々にとっては小さな前進ですので、明日はさらなる成果を目指して戦います。"
+    },
+    "parsed_b": {
+      "meta": {
+        "match_no": 143,
+        "date": "2026/11/07",
+        "round_label": "第4節 GAME1",
+        "venue": null,
+        "home_team": "NECレッドロケッツ川崎",
+        "away_team": "対戦相手（アウェー）"
+      },
+      "target_side": "home",
+      "home_team": {
+        "players": [
+          {
+            "number": 3,
+            "name": "大 工 園 彩夏",
+            "sets_played": 4,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 42.5,
+            "rec_att": 9,
+            "rec_exc": 2,
+            "rec_good": 5,
+            "rec_pct": 50
+          },
+          {
+            "number": 4,
+            "name": "廣 田 あい",
+            "sets_played": 4,
+            "attack_att": 64,
+            "attack_pts": 26,
+            "attack_pct": 40.6,
+            "block_pts": 1,
+            "serve_eff": 33.1,
+            "rec_att": 11,
+            "rec_exc": 3,
+            "rec_good": 6,
+            "rec_pct": 54.5
+          },
+          {
+            "number": 7,
+            "name": "甲 萌 香",
+            "sets_played": 4,
+            "attack_att": 21,
+            "attack_pts": 6,
+            "attack_pct": 28.6,
+            "block_pts": 1,
+            "serve_eff": 51.6,
+            "rec_att": 1,
+            "rec_exc": 0,
+            "rec_good": 1,
+            "rec_pct": 50
+          },
+          {
+            "number": 8,
+            "name": "野嶋 華澄",
+            "sets_played": 2,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 9,
+            "name": "L 児 玉 奈津美",
+            "sets_played": 4,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 28,
+            "rec_exc": 7,
+            "rec_good": 17,
+            "rec_pct": 55.4
+          },
+          {
+            "number": 10,
+            "name": "中川 つかさ(C)",
+            "sets_played": 4,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 61.5,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 11,
+            "name": "古 谷 ちなみ",
+            "sets_played": 0,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 12,
+            "name": "佐々 木 遥 子",
+            "sets_played": 4,
+            "attack_att": 30,
+            "attack_pts": 6,
+            "attack_pct": 20,
+            "block_pts": 1,
+            "serve_eff": 59.5,
+            "rec_att": 30,
+            "rec_exc": 6,
+            "rec_good": 15,
+            "rec_pct": 45
+          },
+          {
+            "number": 13,
+            "name": "髙橋 美鈴",
+            "sets_played": 4,
+            "attack_att": 39,
+            "attack_pts": 14,
+            "attack_pct": 35.9,
+            "block_pts": 0,
+            "serve_eff": 21.5,
+            "rec_att": 1,
+            "rec_exc": 1,
+            "rec_good": 0,
+            "rec_pct": 100
+          },
+          {
+            "number": 14,
+            "name": "⻑ 谷 部 奈 香",
+            "sets_played": 0,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 16,
+            "name": "大 川 愛海",
+            "sets_played": 4,
+            "attack_att": 13,
+            "attack_pts": 5,
+            "attack_pct": 38.5,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 18,
+            "name": "シアラ・モーガン・ディーベル",
+            "sets_played": 1,
+            "attack_att": 4,
+            "attack_pts": 1,
+            "attack_pct": 25,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 1,
+            "rec_exc": 0,
+            "rec_good": 1,
+            "rec_pct": 50
+          },
+          {
+            "number": 19,
+            "name": "ミア・シェイファー",
+            "sets_played": 4,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 21,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 22,
+            "name": "イ ダヒョン",
+            "sets_played": 4,
+            "attack_att": 15,
+            "attack_pts": 7,
+            "attack_pct": 46.7,
+            "block_pts": 3,
+            "serve_eff": 36.2,
+            "rec_att": 1,
+            "rec_exc": 0,
+            "rec_good": 1,
+            "rec_pct": 50
+          }
+        ],
+        "team_total": {
+          "number": null,
+          "name": "チーム合計",
+          "sets_played": 4,
+          "attack_att": 186,
+          "attack_pts": 65,
+          "attack_pct": 34.9,
+          "block_pts": 6,
+          "serve_eff": 30.12,
+          "rec_att": 82,
+          "rec_exc": 19,
+          "rec_good": 46,
+          "rec_pct": 51.2
+        }
+      },
+      "away_team": {
+        "players": [
+          {
+            "number": 1,
+            "name": "大 元 朱菜(C)",
+            "sets_played": 4,
+            "attack_att": 4,
+            "attack_pts": 1,
+            "attack_pct": 25,
+            "block_pts": 4,
+            "serve_eff": 0,
+            "rec_att": 1,
+            "rec_exc": 0,
+            "rec_good": 1,
+            "rec_pct": 50
+          },
+          {
+            "number": 2,
+            "name": "杜 秋爽",
+            "sets_played": 4,
+            "attack_att": 5,
+            "attack_pts": 2,
+            "attack_pct": 40,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 6,
+            "name": "加地 春花",
+            "sets_played": 3,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 28.3,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 8,
+            "name": "L 森 田 茉莉",
+            "sets_played": 4,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 22,
+            "rec_exc": 1,
+            "rec_good": 13,
+            "rec_pct": 34.1
+          },
+          {
+            "number": 9,
+            "name": "徳永 優奈",
+            "sets_played": 4,
+            "attack_att": 53,
+            "attack_pts": 20,
+            "attack_pct": 37.7,
+            "block_pts": 2,
+            "serve_eff": 1,
+            "rec_att": 36,
+            "rec_exc": 5,
+            "rec_good": 13,
+            "rec_pct": 31.9
+          },
+          {
+            "number": 10,
+            "name": "川釣 奈津",
+            "sets_played": 1,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 11,
+            "name": "田 中 麻 帆",
+            "sets_played": 2,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 4,
+            "rec_exc": 1,
+            "rec_good": 3,
+            "rec_pct": 62.5
+          },
+          {
+            "number": 12,
+            "name": "光広 のぞみ",
+            "sets_played": 2,
+            "attack_att": 1,
+            "attack_pts": 0,
+            "attack_pct": 0,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 16,
+            "name": "マリア・プリシラ・シュレーゲル・",
+            "sets_played": 3,
+            "attack_att": 33,
+            "attack_pts": 12,
+            "attack_pct": 36.4,
+            "block_pts": 0,
+            "serve_eff": 31.1,
+            "rec_att": 15,
+            "rec_exc": 0,
+            "rec_good": 6,
+            "rec_pct": 20
+          },
+          {
+            "number": 25,
+            "name": "閑 田 千尋",
+            "sets_played": 4,
+            "attack_att": 2,
+            "attack_pts": 1,
+            "attack_pct": 50,
+            "block_pts": 1,
+            "serve_eff": 23.8,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 27,
+            "name": "有村 涼美",
+            "sets_played": 3,
+            "attack_att": 12,
+            "attack_pts": 3,
+            "attack_pct": 25,
+            "block_pts": 0,
+            "serve_eff": 13.6,
+            "rec_att": 9,
+            "rec_exc": 1,
+            "rec_good": 8,
+            "rec_pct": 55.6
+          },
+          {
+            "number": 28,
+            "name": "インディグウェ シンディ 千想夢",
+            "sets_played": 0,
+            "attack_att": 0,
+            "attack_pts": 0,
+            "attack_pct": null,
+            "block_pts": 0,
+            "serve_eff": 0,
+            "rec_att": 0,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": null
+          },
+          {
+            "number": 29,
+            "name": "ウィモンラット・タナパン",
+            "sets_played": 4,
+            "attack_att": 12,
+            "attack_pts": 6,
+            "attack_pct": 50,
+            "block_pts": 1,
+            "serve_eff": 2,
+            "rec_att": 2,
+            "rec_exc": 0,
+            "rec_good": 0,
+            "rec_pct": 0
+          },
+          {
+            "number": 30,
+            "name": "アリョーナ・マルティニーク",
+            "sets_played": 4,
+            "attack_att": 34,
+            "attack_pts": 11,
+            "attack_pct": 32.4,
+            "block_pts": 4,
+            "serve_eff": 59.6,
+            "rec_att": 1,
+            "rec_exc": 0,
+            "rec_good": 1,
+            "rec_pct": 50
+          }
+        ],
+        "team_total": {
+          "number": null,
+          "name": "チーム合計",
+          "sets_played": 4,
+          "attack_att": 156,
+          "attack_pts": 56,
+          "attack_pct": 35.9,
+          "block_pts": 12,
+          "serve_eff": 16.3,
+          "rec_att": 90,
+          "rec_exc": 8,
+          "rec_good": 45,
+          "rec_pct": 33.9
+        }
+      }
+    },
+    "parsed_a": {
+      "match_no": 143,
+      "date": "2026/11/07",
+      "round_label": "第4節 GAME1",
+      "venue": "レポート",
+      "home_team": "NECレッドロケッツ川崎",
+      "away_team": "アランマーレ秋",
+      "score_home_sets": 3,
+      "score_away_sets": 1,
+      "sets_detail": [
+        {
+          "set": 1,
+          "home": 25,
+          "away": 21,
+          "duration": "0:27"
+        },
+        {
+          "set": 2,
+          "home": 25,
+          "away": 22,
+          "duration": "0:27"
+        },
+        {
+          "set": 3,
+          "home": 25,
+          "away": 27,
+          "duration": "0:28"
+        },
+        {
+          "set": 4,
+          "home": 25,
+          "away": 20,
+          "duration": "0:30"
+        },
+        {
+          "set": 5,
+          "home": null,
+          "away": null,
+          "duration": "0:26"
+        }
+      ],
+      "raw_preview": "ヘッ ド コーチ : 中 谷 宏 大 アシスタントコーチ : ウィデラ マーチン 通算 : 4 勝 3 敗 ポ イント : 13 NECレッドロケッツ川崎 3 25 第1セット 【0:27】 21 1 25 第2セット 【0:28】 22 25 第3セット 【0:30】 27 25 第4セット 【0:26】 20 第5セット 【】 ヘッ ド コーチ : クリスティアン・ミハ イロフ アシスタントコーチ : パウィン・ジャンリー 通算 : 0 勝 7 敗 ポ イント : 1 アランマーレ秋 田 庄内 入 場者数: 3"
+    }
+  },
+  {
     "id": "161",
     "meta": {
       "match_no": 161,
       "round_label": "第5節 GAME1",
       "date": "2026/11/14",
-      "venue": null,
+      "venue": "レポート",
       "home_team": "対戦相手（ホーム）",
-      "away_team": "NECレッドロケッツ川崎"
+      "away_team": "NECレッドロケッツ川崎",
+      "score_home_sets": 3,
+      "score_away_sets": 2,
+      "sets_detail": [
+        {
+          "set": 1,
+          "home": 16,
+          "away": 25,
+          "duration": "0:24"
+        },
+        {
+          "set": 2,
+          "home": 18,
+          "away": 25,
+          "duration": "0:24"
+        },
+        {
+          "set": 3,
+          "home": 25,
+          "away": 16,
+          "duration": "0:24"
+        },
+        {
+          "set": 4,
+          "home": 25,
+          "away": 20,
+          "duration": "0:22"
+        },
+        {
+          "set": 5,
+          "home": 15,
+          "away": 11,
+          "duration": "0:29"
+        }
+      ]
     },
     "target_side": "away",
     "sources": {
@@ -39,7 +610,7 @@
             "attack_pts": 0,
             "attack_pct": null,
             "block_pts": 0,
-            "serve_eff": 412.5,
+            "serve_eff": 41.2,
             "rec_att": 0,
             "rec_exc": 0,
             "rec_good": 0,
@@ -179,7 +750,7 @@
             "attack_pts": 6,
             "attack_pct": 60,
             "block_pts": 1,
-            "serve_eff": 613.9,
+            "serve_eff": 61.3,
             "rec_att": 0,
             "rec_exc": 0,
             "rec_good": 0,
@@ -207,7 +778,7 @@
             "attack_pts": 2,
             "attack_pct": 28.6,
             "block_pts": 0,
-            "serve_eff": 420,
+            "serve_eff": 42,
             "rec_att": 0,
             "rec_exc": 0,
             "rec_good": 0,
@@ -221,7 +792,7 @@
             "attack_pts": 4,
             "attack_pct": 33.3,
             "block_pts": 1,
-            "serve_eff": 1112,
+            "serve_eff": 11.12,
             "rec_att": 15,
             "rec_exc": 2,
             "rec_good": 7,
@@ -236,7 +807,7 @@
           "attack_pts": 67,
           "attack_pct": 41.6,
           "block_pts": 10,
-          "serve_eff": 338.8,
+          "serve_eff": 33.8,
           "rec_att": 88,
           "rec_exc": 10,
           "rec_good": 30,
@@ -267,7 +838,7 @@
             "attack_pts": 0,
             "attack_pct": null,
             "block_pts": 0,
-            "serve_eff": 212.5,
+            "serve_eff": 21.2,
             "rec_att": 7,
             "rec_exc": 0,
             "rec_good": 6,
@@ -295,7 +866,7 @@
             "attack_pts": 9,
             "attack_pct": 39.1,
             "block_pts": 2,
-            "serve_eff": 920,
+            "serve_eff": 92,
             "rec_att": 1,
             "rec_exc": 0,
             "rec_good": 0,
@@ -351,7 +922,7 @@
             "attack_pts": 3,
             "attack_pct": 42.9,
             "block_pts": 0,
-            "serve_eff": 611.5,
+            "serve_eff": 61.1,
             "rec_att": 21,
             "rec_exc": 6,
             "rec_good": 11,
@@ -407,7 +978,7 @@
             "attack_pts": 14,
             "attack_pct": 38.9,
             "block_pts": 1,
-            "serve_eff": 610,
+            "serve_eff": 61,
             "rec_att": 17,
             "rec_exc": 3,
             "rec_good": 5,
@@ -421,7 +992,7 @@
             "attack_pts": 0,
             "attack_pct": null,
             "block_pts": 0,
-            "serve_eff": 613.9,
+            "serve_eff": 61.3,
             "rec_att": 0,
             "rec_exc": 0,
             "rec_good": 0,
@@ -435,7 +1006,7 @@
             "attack_pts": 6,
             "attack_pct": 46.2,
             "block_pts": 1,
-            "serve_eff": 713.5,
+            "serve_eff": 71.3,
             "rec_att": 0,
             "rec_exc": 0,
             "rec_good": 0,
@@ -450,7 +1021,7 @@
           "attack_pts": 76,
           "attack_pct": 40.2,
           "block_pts": 8,
-          "serve_eff": 4710.8,
+          "serve_eff": 47.1,
           "rec_att": 97,
           "rec_exc": 22,
           "rec_good": 41,
@@ -462,7 +1033,43 @@
       "match_no": 161,
       "date": "2026/11/14",
       "round_label": "第5節 GAME1",
-      "venue": null,
+      "venue": "レポート",
+      "home_team": "シーガルズ",
+      "away_team": "NECレッドロケッツ川崎",
+      "score_home_sets": 3,
+      "score_away_sets": 2,
+      "sets_detail": [
+        {
+          "set": 1,
+          "home": 16,
+          "away": 25,
+          "duration": "0:24"
+        },
+        {
+          "set": 2,
+          "home": 18,
+          "away": 25,
+          "duration": "0:24"
+        },
+        {
+          "set": 3,
+          "home": 25,
+          "away": 16,
+          "duration": "0:24"
+        },
+        {
+          "set": 4,
+          "home": 25,
+          "away": 20,
+          "duration": "0:22"
+        },
+        {
+          "set": 5,
+          "home": 15,
+          "away": 11,
+          "duration": "0:29"
+        }
+      ],
       "raw_preview": "ヘッ ド コーチ : 河本 昭義 アシスタントコーチ : ムレイ ポール 通算 : 2 勝 7 敗 ポ イント : 5 岡 山 シーガルズ 3 16 第1セット 【0:24】 25 2 18 第2セット 【0:24】 25 25 第3セット 【0:22】 16 25 第4セット 【0:29】 20 15 第5セット 【0:15】 11 ヘッ ド コーチ : 中 谷 宏 大 アシスタントコーチ : ウィデラ マーチン 通算 : 5 勝 4 敗 ポ イント : 17 NECレッドロケッツ川崎 入 場者数: 803 開始"
     }
   }
