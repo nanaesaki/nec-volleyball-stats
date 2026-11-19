@@ -820,6 +820,7 @@
     ];
 
     let allMatches = [...FALLBACK_MATCHES];
+    let cachedRepoMatches = [];
     let currentMatchId = FALLBACK_MATCHES[0].id;
     let parsedDraftB = null;
     let parsedDraftA = null;
@@ -961,7 +962,6 @@
 
       const setsDetail = [];
       for (let sNum = 1; sNum <= 5; sNum++) {
-        // Prefer the top summary table entry (higher Y coordinate on page 1)
         const matchingLabels = setLabelItems
           .filter(it => it.setNum === sNum)
           .sort((a, b) => a.page - b.page || b.ny - a.ny);
@@ -969,21 +969,13 @@
         if (matchingLabels.length === 0) continue;
         const anchor = matchingLabels[0];
 
-        // Find set duration like [0:24] or 0:24 near anchor
-        const nearDur = normItems.find(it =>
-          it.page === anchor.page &&
-          Math.abs(it.ny - anchor.ny) <= 16 &&
-          Math.abs(it.nx - anchor.nx) <= 65 &&
-          /\[?\d{1,2}:\d{2}\]?/.test(it.str)
-        );
-        const durMatch = nearDur ? nearDur.str.match(/(\d{1,2}:\d{2})/) : null;
-        const duration = durMatch ? durMatch[1] : "";
-
         // Find home (left of anchor) and away (right of anchor) score numbers on the same row
+        // Exclude time values like 0:26 or [0:26]
         const rowNums = normItems
           .filter(it =>
             it.page === anchor.page &&
             Math.abs(it.ny - anchor.ny) <= 14 &&
+            !it.str.includes(":") &&
             /^\d{1,2}$/.test(it.str)
           )
           .map(it => ({ ...it, val: parseInt(it.str, 10) }))
@@ -1000,19 +992,20 @@
         const hPts = leftCandidates.length > 0 ? leftCandidates[0].val : null;
         const aPts = rightCandidates.length > 0 ? rightCandidates[0].val : null;
 
-        // Skip unplayed 5th/4th sets that are 0-0 when earlier sets exist
-        if (hPts === 0 && aPts === 0 && setsDetail.length >= 3) {
+        // Only keep sets that have actual valid scores (exclude unplayed sets like Set5 with no valid scores)
+        if (typeof hPts !== "number" || typeof aPts !== "number") {
+          continue;
+        }
+        if (hPts === 0 && aPts === 0) {
           continue;
         }
 
-        if (hPts !== null || aPts !== null || duration) {
-          setsDetail.push({
-            set: sNum,
-            home: hPts,
-            away: aPts,
-            duration
-          });
-        }
+        setsDetail.push({
+          set: sNum,
+          home: hPts,
+          away: aPts,
+          duration: ""
+        });
       }
 
       let scoreHomeSets = null;
@@ -1278,11 +1271,14 @@
       }
     }
 
-    function mergeAndSortMatches(repoMatches = []) {
+    function mergeAndSortMatches(repoMatches = null) {
+      if (Array.isArray(repoMatches)) {
+        cachedRepoMatches = repoMatches;
+      }
       const localMatches = loadLocalSavedMatches();
       const mergedMap = new Map();
       for (const m of FALLBACK_MATCHES) mergedMap.set(String(m.id), m);
-      for (const m of repoMatches) mergedMap.set(String(m.id), m);
+      for (const m of cachedRepoMatches) mergedMap.set(String(m.id), m);
       for (const m of localMatches) mergedMap.set(String(m.id), m);
 
       allMatches = Array.from(mergedMap.values()).sort((a, b) => {
@@ -1311,25 +1307,34 @@
 
       let repoMatches = [];
       let repoStatusMsg = "";
+      let loadedFromUrl = targetUrl;
 
       try {
-        const res = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: "no-store" });
+        let res = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) {
+          const altUrl = new URL("./matches.json", window.location.href).href;
+          const altRes = await fetch(`${altUrl}?t=${Date.now()}`, { cache: "no-store" });
+          if (altRes.ok) {
+            res = altRes;
+            loadedFromUrl = altUrl;
+          }
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const jsonData = await res.json();
         repoMatches = Array.isArray(jsonData) ? jsonData : (Array.isArray(jsonData?.matches) ? jsonData.matches : []);
-        repoStatusMsg = `matches.json ${repoMatches.length}件`;
+        repoStatusMsg = `GitHub側 matches.json: ${repoMatches.length}件`;
       } catch (err) {
-        repoStatusMsg = `matches.json 未読込 (${err.message})`;
+        repoStatusMsg = `GitHub側 matches.json: 未読込 (${err.message})`;
       }
 
       mergeAndSortMatches(repoMatches);
       const localMatches = loadLocalSavedMatches();
 
       if (mainEl) {
-        mainEl.textContent = `✓ ${nowLabel} 反映完了：全 ${allMatches.length} 試合（${repoStatusMsg} / ブラウザ追加 ${localMatches.length}件）`;
+        mainEl.textContent = `✓ ${nowLabel} 反映完了：合計 ${allMatches.length} 試合（${repoStatusMsg} ／ ブラウザ一時保存: ${localMatches.length}件）`;
       }
       if (subEl) {
-        subEl.textContent = `リポジトリJSON先: ${targetUrl}`;
+        subEl.textContent = `読込先: ${loadedFromUrl} ｜ 登録済ID: ${allMatches.map(m => m.id).join(", ")}`;
       }
 
       if (btn) {
@@ -1347,13 +1352,9 @@
     }
 
     function updateJsonPreview() {
-      const localMatches = loadLocalSavedMatches();
-      const localIds = new Set(localMatches.map(x => String(x.id)));
-      const exportList = allMatches.filter(m => String(m.id) !== "168" || localIds.has("168"));
-      const dataToShow = exportList.length > 0 ? exportList : allMatches;
       const previewEl = document.getElementById("generatedJsonPreview");
       if (previewEl) {
-        previewEl.textContent = JSON.stringify(dataToShow, null, 2);
+        previewEl.textContent = JSON.stringify(allMatches, null, 2);
       }
     }
 
@@ -1394,7 +1395,7 @@
             const nPts = isNecHome(match) ? s.home : s.away;
             const oPts = isNecHome(match) ? s.away : s.home;
             const scoreTxt = (typeof nPts === "number" && typeof oPts === "number") ? `NEC ${nPts}-${oPts}` : "得点要確認";
-            return `<span class="set-pill">Set${s.set}: ${scoreTxt} ${s.duration ? `(${s.duration})` : ""}</span>`;
+            return `<span class="set-pill">Set${s.set}: ${scoreTxt}</span>`;
           }).join("")
         : `<span class="set-pill">セット詳細: コメント・帳票登録データ</span>`;
 
@@ -2008,3 +2009,4 @@
   </script>
 </body>
 </html>
+
