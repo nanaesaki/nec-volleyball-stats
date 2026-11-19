@@ -953,6 +953,7 @@
       }
 
       // Locate "第1セット" .. "第5セット" anchors in the top summary score table
+      // Unplayed sets (e.g. 第5セット【】) have blank left/right score cells -> null (none)
       const setLabelItems = normItems
         .map((it, idx) => {
           const m = it.str.match(/第([1-5])\s*セット/);
@@ -969,12 +970,12 @@
         if (matchingLabels.length === 0) continue;
         const anchor = matchingLabels[0];
 
-        // Find home (left of anchor) and away (right of anchor) score numbers on the same row
-        // Exclude time values like 0:26 or [0:26]
+        // Find home (left of anchor) and away (right of anchor) score numbers in the same set cell row
+        // Exclude time values like 0:26 or [0:26] and outer match set-count columns
         const rowNums = normItems
           .filter(it =>
             it.page === anchor.page &&
-            Math.abs(it.ny - anchor.ny) <= 14 &&
+            Math.abs(it.ny - anchor.ny) <= 7 &&
             !it.str.includes(":") &&
             /^\d{1,2}$/.test(it.str)
           )
@@ -982,21 +983,18 @@
           .filter(it => it.val >= 0 && it.val <= 45);
 
         const leftCandidates = rowNums
-          .filter(it => it.nx < anchor.nx - 5 && (anchor.nx - it.nx) <= 110)
+          .filter(it => it.nx < anchor.nx - 4 && (anchor.nx - it.nx) <= 55)
           .sort((a, b) => Math.abs(a.ny - anchor.ny) - Math.abs(b.ny - anchor.ny) || b.nx - a.nx);
 
         const rightCandidates = rowNums
-          .filter(it => it.nx > anchor.nx + 5 && (it.nx - anchor.nx) <= 110)
+          .filter(it => it.nx > anchor.nx + 4 && (it.nx - anchor.nx) <= 55)
           .sort((a, b) => Math.abs(a.ny - anchor.ny) - Math.abs(b.ny - anchor.ny) || a.nx - b.nx);
 
         const hPts = leftCandidates.length > 0 ? leftCandidates[0].val : null;
         const aPts = rightCandidates.length > 0 ? rightCandidates[0].val : null;
 
-        // Only keep sets that have actual valid scores (exclude unplayed sets like Set5 with no valid scores)
-        if (typeof hPts !== "number" || typeof aPts !== "number") {
-          continue;
-        }
-        if (hPts === 0 && aPts === 0) {
+        // Judge unplayed sets by null (none) score on either side
+        if (hPts === null || aPts === null) {
           continue;
         }
 
@@ -1390,12 +1388,18 @@
       const oppSets = typeof meta.score_home_sets === "number" && typeof meta.score_away_sets === "number"
         ? (isNecHome(match) ? meta.score_away_sets : meta.score_home_sets)
         : "-";
-      const setsHtml = Array.isArray(meta.sets_detail) && meta.sets_detail.length > 0
-        ? meta.sets_detail.map(s => {
+      const validSetPills = Array.isArray(meta.sets_detail)
+        ? meta.sets_detail.filter(s => {
             const nPts = isNecHome(match) ? s.home : s.away;
             const oPts = isNecHome(match) ? s.away : s.home;
-            const scoreTxt = (typeof nPts === "number" && typeof oPts === "number") ? `NEC ${nPts}-${oPts}` : "得点要確認";
-            return `<span class="set-pill">Set${s.set}: ${scoreTxt}</span>`;
+            return nPts !== null && nPts !== undefined && oPts !== null && oPts !== undefined;
+          })
+        : [];
+      const setsHtml = validSetPills.length > 0
+        ? validSetPills.map(s => {
+            const nPts = isNecHome(match) ? s.home : s.away;
+            const oPts = isNecHome(match) ? s.away : s.home;
+            return `<span class="set-pill">Set${s.set}: NEC ${nPts}-${oPts}</span>`;
           }).join("")
         : `<span class="set-pill">セット詳細: コメント・帳票登録データ</span>`;
 
@@ -2009,4 +2013,3 @@
   </script>
 </body>
 </html>
-
