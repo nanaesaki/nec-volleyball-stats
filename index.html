@@ -248,6 +248,67 @@
       box-shadow: 0 6px 16px rgba(225, 29, 72, 0.1);
     }
 
+    .tab-btn.tab-upload-right {
+      margin-left: auto;
+      background: #fdf4ff;
+      border-color: #e9d5ff;
+      color: var(--accent-purple);
+    }
+
+    .tab-btn.tab-upload-right:hover {
+      background: #fae8ff;
+      border-color: #d8b4fe;
+    }
+
+    .tab-btn.tab-upload-right.active {
+      background: linear-gradient(135deg, #f3e8ff, #fff1f2);
+      color: var(--accent-purple);
+      border-color: rgba(124, 58, 237, 0.45);
+      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.12);
+    }
+
+    .upload-workspace-card {
+      background: linear-gradient(180deg, #fcfaff 0%, #ffffff 100%);
+      border-color: #e9d5ff;
+    }
+
+    .manage-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .manage-item {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+    }
+
+    .manage-item-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .btn-danger-soft {
+      background: #fff1f2;
+      border-color: #fecdd3;
+      color: #be123c;
+    }
+
+    .btn-danger-soft:hover {
+      background: #ffe4e6;
+      border-color: #fda4af;
+    }
+
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
@@ -594,8 +655,8 @@
       <button id="tabCumulativeBtn" class="tab-btn" type="button" role="tab" onclick="switchTab('cumulative')">
         ② 推移・通算
       </button>
-      <button id="tabUploadBtn" class="tab-btn" type="button" role="tab" onclick="switchTab('upload')">
-        ③ 帳票登録
+      <button id="tabUploadBtn" class="tab-btn tab-upload-right" type="button" role="tab" onclick="switchTab('upload')">
+        ③ 帳票登録・管理
       </button>
     </div>
 
@@ -767,12 +828,13 @@
 
     <!-- TAB 3: PDF・URL登録（JSON作成） -->
     <section id="panelUpload" class="tab-panel">
-      <div class="card">
+      <div class="card upload-workspace-card">
         <div class="card-header">
           <h2 class="card-title">
             <span>帳票PDF・URL登録</span>
-            <span class="badge badge-green">自動抽出</span>
+            <span class="badge" style="background:var(--accent-purple-soft); color:var(--accent-purple); border-color:rgba(124,58,237,0.28);">データ登録ワークスペース</span>
           </h2>
+          <span class="sub-caption">※ 試合閲覧（①・②）とは別のデータ操作エリアです</span>
         </div>
 
         <div class="form-grid">
@@ -838,7 +900,15 @@
         <div id="uploadFeedback" class="status-detail" style="margin-top: 10px;"></div>
       </div>
 
-      <div class="card">
+      <div class="card upload-workspace-card">
+        <div class="card-header">
+          <h2 class="card-title">登録済み試合の管理・削除</h2>
+          <span id="registeredMatchesCountNote" class="sub-caption"></span>
+        </div>
+        <div id="registeredMatchesManageList" class="manage-list"></div>
+      </div>
+
+      <div class="card upload-workspace-card">
         <div class="card-header">
           <h2 class="card-title">JSONプレビュー（backend/data/matches.json 用）</h2>
         </div>
@@ -851,6 +921,24 @@
 
   <script>
     const LOCAL_STORAGE_KEY = "nec_hirota_uploaded_matches_v2";
+    const DELETED_IDS_KEY = "nec_hirota_deleted_match_ids_v1";
+
+    function loadDeletedMatchIds() {
+      try {
+        const raw = localStorage.getItem(DELETED_IDS_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveDeletedMatchIds(ids) {
+      try {
+        localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(new Set(ids.map(String)))));
+      } catch {}
+    }
 
     const FALLBACK_MATCHES = [
       {
@@ -1500,10 +1588,17 @@
         cachedRepoMatches = repoMatches;
       }
       const localMatches = loadLocalSavedMatches();
+      const deletedIds = new Set(loadDeletedMatchIds());
       const mergedMap = new Map();
-      for (const m of FALLBACK_MATCHES) mergedMap.set(String(m.id), m);
-      for (const m of cachedRepoMatches) mergedMap.set(String(m.id), m);
-      for (const m of localMatches) mergedMap.set(String(m.id), m);
+      for (const m of FALLBACK_MATCHES) {
+        if (!deletedIds.has(String(m.id))) mergedMap.set(String(m.id), m);
+      }
+      for (const m of cachedRepoMatches) {
+        if (!deletedIds.has(String(m.id))) mergedMap.set(String(m.id), m);
+      }
+      for (const m of localMatches) {
+        if (!deletedIds.has(String(m.id))) mergedMap.set(String(m.id), m);
+      }
 
       allMatches = Array.from(mergedMap.values()).sort((a, b) => {
         const da = String(a.meta?.date || "");
@@ -1512,9 +1607,82 @@
         return String(a.id).localeCompare(String(b.id));
       });
 
-      if (!allMatches.some(m => String(m.id) === String(currentMatchId))) {
+      if (allMatches.length > 0 && !allMatches.some(m => String(m.id) === String(currentMatchId))) {
         currentMatchId = allMatches[allMatches.length - 1].id;
       }
+    }
+
+    function renderRegisteredMatchesList() {
+      const listEl = document.getElementById("registeredMatchesManageList");
+      const countNote = document.getElementById("registeredMatchesCountNote");
+      if (!listEl) return;
+
+      const localIds = new Set(loadLocalSavedMatches().map(m => String(m.id)));
+      const repoIds = new Set(cachedRepoMatches.map(m => String(m.id)));
+      const deletedCount = loadDeletedMatchIds().length;
+
+      if (countNote) {
+        countNote.textContent = `表示中 ${allMatches.length} 試合${deletedCount > 0 ? `（非表示/削除済: ${deletedCount}件）` : ""}`;
+      }
+
+      if (allMatches.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">表示中の試合データがありません。「↻ 更新」や「一時データ削除」で復元できます。</div>`;
+        return;
+      }
+
+      listEl.innerHTML = allMatches.map(m => {
+        const idStr = String(m.id);
+        const sourceBadge = localIds.has(idStr)
+          ? `<span class="badge badge-gold">ブラウザ登録</span>`
+          : (repoIds.has(idStr)
+            ? `<span class="badge badge-blue">JSON登録</span>`
+            : `<span class="badge">初期サンプル</span>`);
+        return `
+          <div class="manage-item">
+            <div class="manage-item-meta">
+              ${sourceBadge}
+              <strong>${escapeHtml(formatMatchDropdownLabel(m))}</strong>
+              <span class="sub-caption">ID: ${escapeHtml(idStr)}</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-sm" type="button" onclick="selectMatchAndSwitch('${escapeHtml(idStr)}')">表示</button>
+              <button class="btn btn-sm btn-danger-soft" type="button" onclick="handleDeleteMatch('${escapeHtml(idStr)}')">✕ 削除</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function handleDeleteMatch(matchId) {
+      const targetId = String(matchId);
+      const targetMatch = allMatches.find(m => String(m.id) === targetId);
+      const label = targetMatch ? formatMatchDropdownLabel(targetMatch) : `ID: ${targetId}`;
+      if (!confirm(`「${label}」を削除しますか？\n※ JSONからダウンロードして matches.json を更新すると完全に反映されます。`)) {
+        return;
+      }
+
+      const savedList = loadLocalSavedMatches().filter(m => String(m.id) !== targetId);
+      saveLocalSavedMatches(savedList);
+
+      const deletedIds = loadDeletedMatchIds();
+      if (!deletedIds.includes(targetId)) {
+        deletedIds.push(targetId);
+        saveDeletedMatchIds(deletedIds);
+      }
+
+      mergeAndSortMatches();
+      updateJsonPreview();
+      renderMatchSelector();
+      renderRegisteredMatchesList();
+      if (allMatches.length > 0) {
+        renderSingleMatch();
+        renderCumulativeView();
+      }
+      const fb = document.getElementById("uploadFeedback");
+      if (fb) {
+        fb.textContent = `✓ 「${label}」を削除しました。必要であれば「⬇ JSON保存」で matches.json を更新してください。`;
+      }
+      showToast("🗑 試合を削除しました");
     }
 
     async function loadMatchesFromRepo(isManualClick = false) {
@@ -1568,6 +1736,7 @@
       if (previewEl) {
         previewEl.textContent = JSON.stringify(allMatches, null, 2);
       }
+      renderRegisteredMatchesList();
     }
 
     function renderMatchSelector() {
@@ -2233,6 +2402,8 @@
         parsed_a: parsedDraftA || null
       };
 
+      const updatedDeleted = loadDeletedMatchIds().filter(id => String(id) !== newId);
+      saveDeletedMatchIds(updatedDeleted);
       const savedList = loadLocalSavedMatches().filter(m => String(m.id) !== newId);
       savedList.push(newRecord);
       saveLocalSavedMatches(savedList);
@@ -2293,6 +2464,7 @@
     function handleClearLocalData() {
       try {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem(DELETED_IDS_KEY);
       } catch {}
       parsedDraftA = null;
       parsedDraftB = null;
