@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,18 +10,17 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from parser_b import parse_b_form_from_source
+from parser_b import normalize_compact_name, parse_b_form_from_source
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 MATCHES_FILE = DATA_DIR / "matches.json"
 
 TARGET_TEAM = "NECレッドロケッツ川崎"
-TARGET_PLAYER_NAME = "廣田 あい"
+TARGET_PLAYER_NAME = "廣田あい"
 
-app = FastAPI(title="SV.LEAGUE Volleyball Analytics API", version="1.0.0")
+app = FastAPI(title="SV.LEAGUE Volleyball Analytics API", version="1.1.0")
 
-# GitHub Pages やローカルHTMLからのアクセスを許可
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,8 +34,6 @@ class MatchIngestRequest(BaseModel):
     form_a_url: Optional[str] = None
     form_b_url: Optional[str] = None
     live_score_url: Optional[str] = None
-    comment_home: Optional[str] = ""
-    comment_away: Optional[str] = ""
 
 
 def load_matches() -> list[dict]:
@@ -55,15 +51,11 @@ def save_matches(matches: list[dict]) -> None:
 def extract_match_id_from_url(url: Optional[str]) -> Optional[str]:
     if not url:
         return None
-    m = re.search(r"/match/detail/(\d+)", url)
+    m = re.search(r"/match/(?:detail|form)/(\d+)", url)
     return m.group(1) if m else None
 
 
 async def fetch_live_score_summary(live_url: Optional[str]) -> dict:
-    """
-    Live Score URLからタイトルや取得可否を確認する軽量フェッチャー
-    （SPA等でJS描画が必要な場合は取得ステータスとURLを安全に保持）
-    """
     if not live_url:
         return {"url": None, "fetched": False, "title": None}
 
@@ -83,47 +75,70 @@ async def fetch_live_score_summary(live_url: Optional[str]) -> dict:
 
 
 def detect_target_side(parsed_b: dict) -> str:
-    """ホーム/アウェーのどちらがNECレッドロケッツ川崎かを判定"""
-    home_players = parsed_b.get("home_team", {}).get("players", [])
-    away_players = parsed_b.get("away_team", {}).get("players", [])
-    if any(TARGET_PLAYER_NAME in p.get("name", "") for p in home_players):
-        return "home"
-    if any(TARGET_PLAYER_NAME in p.get("name", "") for p in away_players):
-        return "away"
+    target_player_norm = normalize_compact_name(TARGET_PLAYER_NAME)
+    target_team_norm = normalize_compact_name(TARGET_TEAM)
+
+    for side in ("home", "away"):
+        block = parsed_b.get(f"{side}_team", {}) or {}
+        team_name = normalize_compact_name(block.get("team_name") or "")
+        if target_team_norm and target_team_norm in team_name:
+            return side
+        players = block.get("players", []) or []
+        if any(target_player_norm in normalize_compact_name(p.get("name") or "") for p in players):
+            return side
+
     return "away"
 
 
 def build_dashboard_payload(matches: list[dict]) -> dict:
-    """蓄積された全試合からダッシュボード表示用の集計データを生成"""
+    target_player_norm = normalize_compact_name(TARGET_PLAYER_NAME)
     hirota_history = []
     team_history = []
 
     for m in matches:
-        b_data = m.get("parsed_b", {})
-        side = m.get("target_side", "away")
-        nec_block = b_data.get("away_team" if side == "away" else "home_team", {})
-        opp_block = b_data.get("home_team" if side == "away" else "away_team", {})
+        b_data = m.get("parsed_b", {}) or {}
+        side = m.get("target_side") or detect_target_side(b_data)
+        nec_block = b_data.get(side + "_team", {}) or {}
+        opp_side = "away" if side == "home" else "home"
+        opp_block = b_data.get(opp_side + "_team", {}) or {}
 
-        nec_total = nec_block.get("team_total", {})
-        opp_total = opp_block.get("team_total", {})
+        nec_total = nec_block.get("team_total", {}) or {}
+        opp_total = opp_block.get("team_total", {}) or {}
 
         hirota_stat = next(
-            (p for p in nec_block.get("players", []) if TARGET_PLAYER_NAME in p.get("name", "")),
+            (
+                p
+                for p in (nec_block.get("players", []) or [])
+                if target_player_norm in normalize_compact_name(p.get("name") or "")
+            ),
             None,
         )
 
-        match_label = m.get("meta", {}).get("date") or f"Match #{m.get('id')}"
+        match_label = (m.get("meta") or {}).get("date") or f"Match #{m.get('id')}"
 
         if hirota_stat:
-            total_pts = (hirota_stat.get("attack_pts") or 0) + (hirota_stat.get("block_pts") or 0) + (hirota_stat.get("serve_pts") or 0)
+            attack_pts = hirota_stat.get("attack_pts") or 0
+            block_pts = hirota_stat.get("block_pts") or 0
+            serve_pts = hirota_stat.get("serve_pts") or 0
+            total_pts = attack_pts + block_pts + serve_pts
+
             hirota_history.append({
                 "match_id": m.get("id"),
                 "date": match_label,
+                "sets_played": hirota_stat.get("sets_played", 0),
                 "total_pts": total_pts,
-                "attack_pts": hirota_stat.get("attack_pts", 0),
+                "attack_pts": attack_pts,
                 "attack_att": hirota_stat.get("attack_att", 0),
+                "attack_err": hirota_stat.get("attack_err", 0),
                 "attack_pct": hirota_stat.get("attack_pct"),
-                "block_pts": hirota_stat.get("block_pts", 0),
+                "back_att": hirota_stat.get("back_att", 0),
+                "back_pts": hirota_stat.get("back_pts", 0),
+                "back_pct": hirota_stat.get("back_pct"),
+                "block_pts": block_pts,
+                "serve_att": hirota_stat.get("serve_att", 0),
+                "serve_pts": serve_pts,
+                "serve_err": hirota_stat.get("serve_err", 0),
+                "serve_eff": hirota_stat.get("serve_eff"),
                 "serve_pct": hirota_stat.get("serve_pct"),
                 "rec_att": hirota_stat.get("rec_att", 0),
                 "rec_pct": hirota_stat.get("rec_pct"),
@@ -136,6 +151,14 @@ def build_dashboard_payload(matches: list[dict]) -> dict:
             "opp_attack_pct": opp_total.get("attack_pct"),
             "nec_block_pts": nec_total.get("block_pts", 0),
             "opp_block_pts": opp_total.get("block_pts", 0),
+            "nec_serve_att": nec_total.get("serve_att", 0),
+            "opp_serve_att": opp_total.get("serve_att", 0),
+            "nec_serve_pts": nec_total.get("serve_pts", 0),
+            "opp_serve_pts": opp_total.get("serve_pts", 0),
+            "nec_serve_err": nec_total.get("serve_err", 0),
+            "opp_serve_err": opp_total.get("serve_err", 0),
+            "nec_serve_eff": nec_total.get("serve_eff"),
+            "opp_serve_eff": opp_total.get("serve_eff"),
             "nec_serve_pct": nec_total.get("serve_pct"),
             "opp_serve_pct": opp_total.get("serve_pct"),
             "nec_rec_pct": nec_total.get("rec_pct"),
@@ -183,7 +206,7 @@ async def ingest_match(req: MatchIngestRequest):
     live_info = await fetch_live_score_summary(req.live_score_url)
     live_match_id = extract_match_id_from_url(req.live_score_url)
 
-    meta = parsed_b.get("meta", {})
+    meta = parsed_b.get("meta", {}) if isinstance(parsed_b, dict) else {}
     match_no = meta.get("match_no")
     record_id = str(match_no or live_match_id or int(datetime.now(timezone.utc).timestamp()))
 
@@ -199,15 +222,10 @@ async def ingest_match(req: MatchIngestRequest):
             "form_b_url": req.form_b_url,
             "live_score": live_info,
         },
-        "comments": {
-            "home": req.comment_home or "",
-            "away": req.comment_away or "",
-        },
         "parsed_b": parsed_b,
     }
 
     matches = load_matches()
-    # 同一試合IDがあれば上書き、なければ追加
     matches = [m for m in matches if m.get("id") != record_id]
     matches.append(match_record)
     save_matches(matches)
