@@ -1275,8 +1275,22 @@
             backPts = tmp;
           }
         }
-        if (backPct === null && backAtt > 0) {
-          backPct = Number(((backPts / backAtt) * 100).toFixed(1));
+
+        // backBandの末尾（決定率列）に小数値が含まれている場合を優先的に取得し、異常値や欠損なら計算値で補正
+        const decimalCandidate = [...backBand].reverse().find(v => /^-?\d+\.\d+$/.test(normalizeStr(v)));
+        if (decimalCandidate !== undefined) {
+          const parsedDec = parseRateSafe(decimalCandidate);
+          if (parsedDec !== null && parsedDec >= 0 && parsedDec <= 100) {
+            backPct = parsedDec;
+          }
+        }
+        if (backAtt > 0) {
+          const calcPct = Number(((backPts / backAtt) * 100).toFixed(1));
+          if (backPct === null || (backPts > 0 && backPct <= 2.0 && calcPct >= 10.0)) {
+            backPct = calcPct;
+          }
+        } else if (backPts === 0 && backAtt === 0) {
+          backPct = null;
         }
 
         const blockPts = toNum(blkBand[0]) ?? 0;
