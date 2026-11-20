@@ -5,31 +5,32 @@ import urllib.request
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextContainer
 
+# Match No. 105 等のSV.LEAGUE帳票Bレイアウトに合わせた列範囲（x0〜x1の中心xcで判定）
 B_FORM_COLUMNS = [
-    ("number", 40, 56),
-    ("player_name", 56, 165),
-    ("sets_played", 165, 178),
-    ("set_marks", 178, 225),
-    ("attack_att", 225, 240),
-    ("attack_pts", 240, 255),
-    ("attack_err", 255, 270),
-    ("attack_pct", 270, 290),
-    ("attack_per_set", 290, 310),
-    ("back_att", 310, 325),
-    ("back_pts", 325, 340),
-    ("back_err", 340, 355),
-    ("back_pct", 355, 375),
-    ("block_pts", 375, 390),
-    ("block_per_set", 390, 410),
-    ("serve_att", 410, 425),
-    ("serve_pts", 425, 440),
-    ("serve_err", 440, 455),
-    ("serve_eff", 455, 470),
-    ("serve_pct", 470, 490),
-    ("rec_att", 490, 505),
-    ("rec_exc", 505, 520),
-    ("rec_good", 520, 535),
-    ("rec_pct", 535, 555),
+    ("number", 35, 58),
+    ("player_name", 58, 168),
+    ("sets_played", 168, 182),
+    ("set_marks", 182, 232),
+    ("attack_att", 232, 248),
+    ("attack_pts", 248, 264),
+    ("attack_err", 264, 280),
+    ("attack_pct", 280, 302),
+    ("attack_per_set", 302, 322),
+    ("back_att", 322, 338),
+    ("back_pts", 338, 354),
+    ("back_pct", 354, 376),
+    ("back_err", 376, 392),
+    ("back_per_set", 392, 412),
+    ("block_pts", 412, 428),
+    ("block_per_set", 428, 448),
+    ("serve_att", 448, 466),
+    ("serve_pts", 466, 482),
+    ("serve_err", 482, 498),
+    ("serve_eff", 498, 520),
+    ("rec_att", 520, 538),
+    ("rec_exc", 538, 554),
+    ("rec_good", 554, 570),
+    ("rec_pct", 570, 600),
 ]
 
 
@@ -74,7 +75,7 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
     for x0, y0, x1, y1, txt in sorted(items, key=lambda x: (-x[1], x[0])):
         placed = False
         for r in rows:
-            if abs(r["y"] - y0) < 2.5:
+            if abs(r["y"] - y0) < 3.0:
                 r["cells"].append((x0, x1, txt))
                 placed = True
                 break
@@ -83,7 +84,7 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
 
     meta = {"match_no": None, "date": None, "venue": None}
     for r in rows:
-        if r["y"] > 750:
+        if r["y"] > 740:
             line_str = " ".join(c[2] for c in sorted(r["cells"], key=lambda x: x[0]))
             m_no = re.search(r"Match No\.\s*(\d+)", line_str)
             m_date = re.search(r"開催日\s*(\d{4}/\d{2}/\d{2})", line_str)
@@ -96,7 +97,7 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
                 meta["venue"] = m_venue.group(1)
 
     total_ys = sorted(
-        [r["y"] for r in rows if any("チーム合計" in c[2] for c in r["cells"])],
+        [r["y"] for r in rows if any("チーム合計" in normalize_compact_name(c[2]) for c in r["cells"])],
         reverse=True,
     )
     home_total_y = total_ys[0] if len(total_ys) >= 1 else 302.0
@@ -116,13 +117,14 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
                             break
 
                 name = raw["player_name"]
-                if not name or "出場セット" in name or name == "セット":
+                compact_name = normalize_compact_name(name)
+                if not compact_name or "出場セット" in compact_name or compact_name == "セット":
                     continue
 
                 record = {
-                    "number": to_number(raw["number"]) if raw["number"].isdigit() else None,
+                    "number": to_number(raw["number"]) if raw["number"].replace(" ", "").isdigit() else None,
                     "name": name,
-                    "is_libero": normalize_compact_name(name).startswith("L"),
+                    "is_libero": compact_name.startswith("L"),
                     "sets_played": to_number(raw["sets_played"]),
                     "attack_att": to_number(raw["attack_att"]),
                     "attack_pts": to_number(raw["attack_pts"]),
@@ -130,20 +132,20 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
                     "attack_pct": to_number(raw["attack_pct"], is_float=True),
                     "back_att": to_number(raw["back_att"]),
                     "back_pts": to_number(raw["back_pts"]),
+                    "back_err": to_number(raw["back_err"]),
                     "back_pct": to_number(raw["back_pct"], is_float=True),
                     "block_pts": to_number(raw["block_pts"]),
                     "serve_att": to_number(raw["serve_att"]),
                     "serve_pts": to_number(raw["serve_pts"]),
                     "serve_err": to_number(raw["serve_err"]),
                     "serve_eff": to_number(raw["serve_eff"], is_float=True),
-                    "serve_pct": to_number(raw["serve_pct"], is_float=True),
                     "rec_att": to_number(raw["rec_att"]),
                     "rec_exc": to_number(raw["rec_exc"]),
                     "rec_good": to_number(raw["rec_good"]),
                     "rec_pct": to_number(raw["rec_pct"], is_float=True),
                 }
 
-                if "チーム合計" in normalize_compact_name(name):
+                if "チーム合計" in compact_name:
                     team_total = record
                 elif record["number"] is not None:
                     players.append(record)
