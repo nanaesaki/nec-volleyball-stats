@@ -944,7 +944,7 @@
 
     let allMatches = [...FALLBACK_MATCHES];
     let cachedRepoMatches = [];
-    let currentMatchId = FALLBACK_MATCHES[FALLBACK_MATCHES.length - 1].id;
+    let currentMatchId = "";
     let parsedDraftB = null;
     let parsedDraftA = null;
 
@@ -1143,7 +1143,6 @@
       };
     }
 
-    // 帳票Bの数値トークンを行ごとに抽出し、SV.LEAGUE帳票Bの列構造に基づいてマッピングする
     async function parseFormBPdf(file) {
       const pages = await extractPdfItems(file);
       const p1 = pages[0];
@@ -1183,7 +1182,6 @@
         const leftCells = sorted.filter(c => c.nx < 220);
         const rightCells = sorted.filter(c => c.nx >= 220);
 
-        // 背番号と選手名の抽出
         let number = null;
         const nameParts = [];
         for (const c of leftCells) {
@@ -1202,14 +1200,12 @@
           return null;
         }
 
-        // 出場セット数（nxが165〜190付近の1桁数字）
         let setsPlayed = 0;
         const setCell = leftCells.find(c => c.nx >= 162 && c.nx <= 192 && /^[0-5]$/.test(c.str.replace(/\s+/g, "")));
         if (setCell) {
           setsPlayed = parseInt(setCell.str.replace(/\s+/g, ""), 10);
         }
 
-        // 右側の数値トークンを左右位置順に分解
         const tokens = [];
         for (const c of rightCells) {
           const pieces = c.str.trim().split(/\s+/);
@@ -1221,21 +1217,14 @@
           });
         }
 
-        // 帳票Bの横並びの標準的な構成（アタック4値、バックアタック3値、ブロック1〜2値、サーブ4値、レシーブ4値）
-        // 座標帯ごとにグループ化して安定取得
         function pickByBand(minX, maxX) {
           return tokens.filter(t => t.nx >= minX && t.nx < maxX).map(t => t.str);
         }
 
-        // アタック帯: nx ~ 225〜300（打数, 得点, 失点, 決定率）
         const attBand = pickByBand(222, 302);
-        // バックアタック帯: nx ~ 302〜378（打数, 得点, 決定率）
         const backBand = pickByBand(302, 378);
-        // ブロック帯: nx ~ 378〜415（得点, セット平均）
         const blkBand = pickByBand(378, 415);
-        // サーブ帯: nx ~ 415〜495（打数, 得点, 失点, 効果率）
         const srvBand = pickByBand(415, 495);
-        // レシーブ帯: nx ~ 495〜590（受数, 優, 良, 成功率）
         const recBand = pickByBand(495, 595);
 
         const attackAtt = toNum(attBand[0]) ?? 0;
@@ -1246,7 +1235,6 @@
         let backPts = toNum(backBand[1]) ?? 0;
         let backPct = parseRateSafe(backBand[2] ?? backBand[1]);
 
-        // 打数と得点が逆転して読まれるケース（例：打数3・得点6なのに実際は打数6・得点3で決定率50.0%になるケース）の補正
         if (backAtt > 0 && backPts > backAtt && backPct !== null && backPct > 0 && backPct <= 100) {
           const calcFromSwapped = (backAtt / backPts) * 100;
           if (Math.abs(calcFromSwapped - backPct) < 2.0) {
@@ -1256,7 +1244,6 @@
           }
         }
 
-        // backBandの末尾（決定率列）に小数値が含まれている場合を優先的に取得し、異常値や欠損なら計算値で補正
         const decimalCandidate = [...backBand].reverse().find(v => /^-?\d+\.\d+$/.test(normalizeStr(v)));
         if (decimalCandidate !== undefined) {
           const parsedDec = parseRateSafe(decimalCandidate);
@@ -1275,7 +1262,6 @@
 
         const blockPts = toNum(blkBand[0]) ?? 0;
 
-        // サーブ列（打数, 得点, 失点, 効果率）
         const serveAttRaw = toNum(srvBand[0]);
         const serveAtt = serveAttRaw !== null ? Math.abs(serveAttRaw) : 0;
         const servePts = toNum(srvBand[1]) ?? 0;
@@ -1565,11 +1551,9 @@
       mergeAndSortMatches();
       updateJsonPreview();
       renderMatchSelector();
-      renderRegisteredMatchesList();
-      if (allMatches.length > 0) {
-        renderSingleMatch();
-        renderCumulativeView();
-      }
+      renderSingleMatch();
+      renderCumulativeView();
+
       const fb = document.getElementById("uploadFeedback");
       if (fb) {
         fb.textContent = `✓ 「${label}」を削除しました。必要であれば「⬇ JSON保存」で matches.json を更新してください。`;
@@ -1596,31 +1580,39 @@
         const res = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const jsonData = await res.json();
-        repoMatches = Array.isArray(jsonData) ? jsonData : (Array.isArray(jsonData?.matches) ? jsonData.matches : []);
+        repoMatches = Array.isArray(jsonData)
+          ? jsonData
+          : (Array.isArray(jsonData?.matches) ? jsonData.matches : []);
         repoStatusMsg = `GitHub: ${repoMatches.length}件`;
-      } catch {
-        repoStatusMsg = "サンプル表示中";
+      } catch (err) {
+        repoStatusMsg = `JSON読込エラー(${err.message})`;
       }
 
-      mergeAndSortMatches(repoMatches);
-      const localMatches = loadLocalSavedMatches();
+      try {
+        mergeAndSortMatches(repoMatches);
+        const localMatches = loadLocalSavedMatches();
 
-      if (mainEl) {
-        mainEl.textContent = `計 ${allMatches.length} 試合（${repoStatusMsg} ／ ローカル: ${localMatches.length}件）`;
-      }
-      if (subEl) {
-        subEl.textContent = `更新: ${nowLabel}`;
-      }
+        if (mainEl) {
+          mainEl.textContent = `計 ${allMatches.length} 試合（${repoStatusMsg} ／ ローカル: ${localMatches.length}件）`;
+        }
+        if (subEl) {
+          subEl.textContent = `更新: ${nowLabel}`;
+        }
 
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "↻ 更新";
+        updateJsonPreview();
+        renderMatchSelector();
+        renderSingleMatch();
+        renderCumulativeView();
+      } catch (renderErr) {
+        if (mainEl) {
+          mainEl.textContent = `描画エラー: ${renderErr.message}`;
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "↻ 更新";
+        }
       }
-
-      updateJsonPreview();
-      renderMatchSelector();
-      renderSingleMatch();
-      renderCumulativeView();
     }
 
     function updateJsonPreview() {
@@ -1662,7 +1654,31 @@
 
     // ① 1試合ごとの詳細分析描画
     function renderSingleMatch() {
+      if (!Array.isArray(allMatches) || allMatches.length === 0) {
+        const banner = document.getElementById("matchBanner");
+        const hirotaKpis = document.getElementById("hirotaKpis");
+        const hirotaNote = document.getElementById("hirotaParseNote");
+        const tbodyComp = document.querySelector("#teamCompareTable tbody");
+        const tbodyPlayers = document.querySelector("#playersTable tbody");
+        if (banner) {
+          banner.innerHTML = `<div class="empty-state" style="width:100%;">表示中の試合データがありません。「↻ 更新」を押すか、「③ 帳票登録・管理」から登録してください。</div>`;
+        }
+        if (hirotaNote) hirotaNote.textContent = "";
+        if (hirotaKpis) {
+          hirotaKpis.innerHTML = `<div class="kpi-card"><div class="kpi-sub">試合データ未登録</div></div>`;
+        }
+        if (tbodyComp) {
+          tbodyComp.innerHTML = `<tr><td colspan="3" class="empty-state">試合データ未登録</td></tr>`;
+        }
+        if (tbodyPlayers) {
+          tbodyPlayers.innerHTML = `<tr><td colspan="12" class="empty-state">試合データ未登録</td></tr>`;
+        }
+        renderSingleTeamChart({}, {}, "対戦相手");
+        return;
+      }
+
       const match = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
+      if (!match) return;
       const meta = match.meta || {};
       const nec = getNecBlock(match);
       const opp = getOppBlock(match);
