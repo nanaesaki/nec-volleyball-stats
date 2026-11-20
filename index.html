@@ -796,12 +796,10 @@
           </div>
         </div>
 
-        <!-- PDFからの自動取得結果プレビュー -->
         <div id="autoExtractPreview" class="auto-summary-box">
           <strong>📄 自動抽出ステータス：</strong> PDFを選択すると試合情報を自動取得します。
         </div>
 
-        <!-- 自動取得できなかった場合や微調整したい場合のみ開く折りたたみ式補完フォーム -->
         <div class="override-drawer">
           <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px;">
             <span style="font-size:0.82rem; font-weight:700; color:var(--text-sub);">
@@ -1165,6 +1163,7 @@
       };
     }
 
+    // 帳票Bの数値トークンを行ごとに抽出し、SV.LEAGUE帳票Bの列構造に基づいてマッピングする
     async function parseFormBPdf(file) {
       const pages = await extractPdfItems(file);
       const p1 = pages[0];
@@ -1182,7 +1181,7 @@
       const matchNoMatch = fullText.match(/Match No\.\s*(\d+)/i);
       const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
-      const venueMatch = fullText.match(/会場[:：]\s*([^\s]+)/);
+      const venueMatch = fullText.match(/会場[:：\s]*([^\s]+)/);
 
       const rows = [];
       for (const it of [...normItems].sort((a, b) => b.ny - a.ny || a.nx - b.nx)) {
@@ -1199,81 +1198,137 @@
         }
       }
 
-      // SV.LEAGUE帳票Bの横並びに合わせて調整した列範囲（nx基準）
-      const COLS = [
-        { key: "number", min: 35, max: 58 },
-        { key: "name", min: 58, max: 168 },
-        { key: "sets_played", min: 168, max: 184 },
-        { key: "attack_att", min: 224, max: 242 },
-        { key: "attack_pts", min: 242, max: 258 },
-        { key: "attack_err", min: 258, max: 274 },
-        { key: "attack_pct", min: 274, max: 298 },
-        { key: "back_att", min: 298, max: 318 },
-        { key: "back_pts", min: 318, max: 336 },
-        { key: "back_pct", min: 336, max: 365 },
-        { key: "block_pts", min: 365, max: 388 },
-        { key: "serve_pts", min: 388, max: 408 },
-        { key: "serve_eff", min: 408, max: 436 },
-        { key: "serve_att", min: 436, max: 458 },
-        { key: "serve_err", min: 458, max: 478 },
-        { key: "rec_exc", min: 478, max: 498 },
-        { key: "rec_good", min: 498, max: 518 },
-        { key: "rec_att", min: 518, max: 540 },
-        { key: "rec_pct", min: 540, max: 585 }
-      ];
+      function parsePlayerRowFromCells(cells) {
+        const sorted = [...cells].sort((a, b) => a.nx - b.nx);
+        const leftCells = sorted.filter(c => c.nx < 220);
+        const rightCells = sorted.filter(c => c.nx >= 220);
+
+        // 背番号と選手名の抽出
+        let number = null;
+        const nameParts = [];
+        for (const c of leftCells) {
+          const compact = c.str.replace(/\s+/g, "");
+          if (number === null && c.nx < 68 && /^\d{1,2}$/.test(compact)) {
+            number = parseInt(compact, 10);
+          } else if (c.nx >= 50 && c.nx < 172) {
+            if (!["出場セット", "セット", "出場数", "1", "2", "3", "4", "5"].includes(compact)) {
+              nameParts.push(c.str);
+            }
+          }
+        }
+        const name = normalizeStr(nameParts.join(" "));
+        const compactName = name.replace(/\s+/g, "");
+        if (!compactName || compactName.includes("出場セット") || compactName === "セット") {
+          return null;
+        }
+
+        // 出場セット数（nxが165〜190付近の1桁数字）
+        let setsPlayed = 0;
+        const setCell = leftCells.find(c => c.nx >= 162 && c.nx <= 192 && /^[0-5]$/.test(c.str.replace(/\s+/g, "")));
+        if (setCell) {
+          setsPlayed = parseInt(setCell.str.replace(/\s+/g, ""), 10);
+        }
+
+        // 右側の数値トークンを左右位置順に分解
+        const tokens = [];
+        for (const c of rightCells) {
+          const pieces = c.str.trim().split(/\s+/);
+          const span = Math.max(pieces.length, 1);
+          pieces.forEach((p, idx) => {
+            if (!p) return;
+            const estX = c.nx + idx * 8;
+            tokens.push({ str: p, nx: estX, origX: c.nx, span });
+          });
+        }
+
+        // 帳票Bの横並びの標準的な構成（アタック4値、バックアタック3値、ブロック1〜2値、サーブ4値、レシーブ4値）
+        // 座標帯ごとにグループ化して安定取得
+        function pickByBand(minX, maxX) {
+          return tokens.filter(t => t.nx >= minX && t.nx < maxX).map(t => t.str);
+        }
+
+        // アタック帯: nx ~ 225〜300（打数, 得点, 失点, 決定率）
+        const attBand = pickByBand(222, 302);
+        // バックアタック帯: nx ~ 302〜378（打数, 得点, 決定率）
+        const backBand = pickByBand(302, 378);
+        // ブロック帯: nx ~ 378〜415（得点, セット平均）
+        const blkBand = pickByBand(378, 415);
+        // サーブ帯: nx ~ 415〜495（打数, 得点, 失点, 効果率）
+        const srvBand = pickByBand(415, 495);
+        // レシーブ帯: nx ~ 495〜590（受数, 優, 良, 成功率）
+        const recBand = pickByBand(495, 595);
+
+        const attackAtt = toNum(attBand[0]) ?? 0;
+        const attackPts = toNum(attBand[1]) ?? 0;
+        const attackPct = parseRateSafe(attBand[3] ?? attBand[2]);
+
+        let backAtt = toNum(backBand[0]) ?? 0;
+        let backPts = toNum(backBand[1]) ?? 0;
+        let backPct = parseRateSafe(backBand[2] ?? backBand[1]);
+
+        // 打数と得点が逆転して読まれるケース（例：打数3・得点6なのに実際は打数6・得点3で決定率50.0%になるケース）の補正
+        if (backAtt > 0 && backPts > backAtt && backPct !== null && backPct > 0 && backPct <= 100) {
+          const calcFromSwapped = (backAtt / backPts) * 100;
+          if (Math.abs(calcFromSwapped - backPct) < 2.0) {
+            const tmp = backAtt;
+            backAtt = backPts;
+            backPts = tmp;
+          }
+        }
+        if (backPct === null && backAtt > 0) {
+          backPct = Number(((backPts / backAtt) * 100).toFixed(1));
+        }
+
+        const blockPts = toNum(blkBand[0]) ?? 0;
+
+        // サーブ列（打数, 得点, 失点, 効果率）
+        const serveAttRaw = toNum(srvBand[0]);
+        const serveAtt = serveAttRaw !== null ? Math.abs(serveAttRaw) : 0;
+        const servePts = toNum(srvBand[1]) ?? 0;
+        const serveErr = toNum(srvBand[2]) ?? 0;
+        let serveEff = parseRateSafe(srvBand[3]);
+        if (serveEff === null && srvBand.length >= 2) {
+          const candidateEff = parseRateSafe(srvBand[srvBand.length - 1]);
+          if (candidateEff !== null && String(srvBand[srvBand.length - 1]).includes(".")) {
+            serveEff = candidateEff;
+          }
+        }
+
+        const recAtt = toNum(recBand[0]) ?? 0;
+        const recExc = toNum(recBand[1]) ?? 0;
+        const recGood = toNum(recBand[2]) ?? 0;
+        const recPct = parseRateSafe(recBand[3] ?? recBand[recBand.length - 1]);
+
+        return {
+          number,
+          name,
+          sets_played: setsPlayed,
+          attack_att: attackAtt,
+          attack_pts: attackPts,
+          attack_pct: attackPct,
+          back_att: backAtt,
+          back_pts: backPts,
+          back_pct: backPct,
+          block_pts: blockPts,
+          serve_att: serveAtt,
+          serve_pts: servePts,
+          serve_err: serveErr,
+          serve_eff: serveEff,
+          rec_att: recAtt,
+          rec_exc: recExc,
+          rec_good: recGood,
+          rec_pct: recPct
+        };
+      }
 
       function extractPlayersInBand(yMin, yMax) {
         const players = [];
         let teamTotal = null;
         for (const r of rows) {
           if (r.y >= yMin && r.y <= yMax) {
-            const bag = {};
-            for (const c of COLS) bag[c.key] = "";
-            for (const cell of r.cells.sort((a, b) => a.nx - b.nx)) {
-              for (const col of COLS) {
-                if (cell.nx >= col.min && cell.nx < col.max) {
-                  bag[col.key] = (bag[col.key] + " " + cell.str).trim();
-                  break;
-                }
-              }
-            }
-            const name = bag.name;
-            if (!name || name.includes("出場セット") || name === "セット") continue;
-
-            const backAtt = Math.abs(toNum(bag.back_att) ?? 0);
-            const backPts = Math.abs(toNum(bag.back_pts) ?? 0);
-            let backPct = parseRateSafe(bag.back_pct);
-            if ((backPct === null || backPct === 0) && backAtt > 0 && backPts > 0) {
-              backPct = Number(((backPts / backAtt) * 100).toFixed(1));
-            }
-
-            const serveAtt = Math.abs(toNum(bag.serve_att) ?? 0);
-            const servePts = Math.abs(toNum(bag.serve_pts) ?? 0);
-            const serveErr = Math.abs(toNum(bag.serve_err) ?? 0);
-            const serveEff = parseRateSafe(bag.serve_eff);
-
-            const rec = {
-              number: /^\d+$/.test(bag.number.replace(/\s+/g, "")) ? parseInt(bag.number.replace(/\s+/g, ""), 10) : null,
-              name,
-              sets_played: toNum(bag.sets_played) ?? 0,
-              attack_att: Math.abs(toNum(bag.attack_att) ?? 0),
-              attack_pts: Math.abs(toNum(bag.attack_pts) ?? 0),
-              attack_pct: parseRateSafe(bag.attack_pct),
-              back_att: backAtt,
-              back_pts: backPts,
-              back_pct: backPct,
-              block_pts: Math.abs(toNum(bag.block_pts) ?? 0),
-              serve_att: serveAtt,
-              serve_pts: servePts,
-              serve_err: serveErr,
-              serve_eff: serveEff,
-              rec_att: Math.abs(toNum(bag.rec_att) ?? 0),
-              rec_exc: Math.abs(toNum(bag.rec_exc) ?? 0),
-              rec_good: Math.abs(toNum(bag.rec_good) ?? 0),
-              rec_pct: parseRateSafe(bag.rec_pct)
-            };
-
-            if (name.includes("チーム合計")) {
+            const rec = parsePlayerRowFromCells(r.cells);
+            if (!rec) continue;
+            if (rec.name.replace(/\s+/g, "").includes("チーム合計")) {
               teamTotal = rec;
             } else if (rec.number !== null) {
               players.push(rec);
@@ -1517,6 +1572,19 @@
       syncLiveScoreLinkForCurrentMatch();
     }
 
+    function getBackPctDisplay(player) {
+      if (!player) return "-";
+      if (player.back_pct !== null && player.back_pct !== undefined && !Number.isNaN(Number(player.back_pct))) {
+        return fmtPct(player.back_pct);
+      }
+      const att = Number(player.back_att) || 0;
+      const pts = Number(player.back_pts) || 0;
+      if (att > 0) {
+        return `${((pts / att) * 100).toFixed(1)}%`;
+      }
+      return "-";
+    }
+
     // ① 1試合ごとの詳細分析描画
     function renderSingleMatch() {
       const match = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
@@ -1567,15 +1635,12 @@
         `;
       }
 
-      // #4 廣田あい選手 5スキルKPIカード
       const hirotaKpis = document.getElementById("hirotaKpis");
       const hirotaNote = document.getElementById("hirotaParseNote");
       if (hirotaKpis) {
         if (hirota) {
           if (hirotaNote) hirotaNote.textContent = `出場 ${fmtNum(hirota.sets_played, 0)} セット`;
-          const backPct = hirota.back_pct !== null && hirota.back_pct !== undefined
-            ? fmtPct(hirota.back_pct)
-            : (hirota.back_att > 0 ? `${((hirota.back_pts / hirota.back_att) * 100).toFixed(1)}%` : "-");
+          const backPctStr = getBackPctDisplay(hirota);
           hirotaKpis.innerHTML = `
             <div class="kpi-card highlight">
               <div class="kpi-label">アタック決定率</div>
@@ -1584,7 +1649,7 @@
             </div>
             <div class="kpi-card highlight">
               <div class="kpi-label">バックアタック</div>
-              <div class="kpi-value">${backPct}</div>
+              <div class="kpi-value">${backPctStr}</div>
               <div class="kpi-sub">${fmtNum(hirota.back_pts, 0)} 得点 / ${fmtNum(hirota.back_att, 0)} 打数</div>
             </div>
             <div class="kpi-card highlight">
@@ -1646,7 +1711,7 @@
                 <td>${fmtNum(p.attack_pts, 0)} / ${fmtNum(p.attack_att, 0)}</td>
                 <td>${fmtPct(p.attack_pct)}</td>
                 <td>${fmtNum(p.back_pts, 0)} / ${fmtNum(p.back_att, 0)}</td>
-                <td>${fmtPct(p.back_pct)}</td>
+                <td>${getBackPctDisplay(p)}</td>
                 <td>${fmtNum(p.block_pts, 0)}</td>
                 <td>${fmtNum(p.serve_pts, 0)} / ${fmtNum(p.serve_att, "-")}</td>
                 <td>${fmtPct(p.serve_eff)}</td>
@@ -1902,117 +1967,55 @@
       }
 
       try {
-        // 1. アタック決定率＆得点推移
         buildDualLineChart(
           "hirotaAttackChart",
           labels,
-          {
-            label: "アタック決定率(%)",
-            data: hAttPct,
-            borderColor: "#d97706",
-            backgroundColor: "rgba(245, 158, 11, 0.16)"
-          },
-          {
-            label: "アタック得点",
-            data: hAttPts,
-            borderColor: "#e11d48",
-            backgroundColor: "rgba(225, 29, 72, 0.16)"
-          },
+          { label: "アタック決定率(%)", data: hAttPct, borderColor: "#d97706", backgroundColor: "rgba(245, 158, 11, 0.16)" },
+          { label: "アタック得点", data: hAttPts, borderColor: "#e11d48", backgroundColor: "rgba(225, 29, 72, 0.16)" },
           "#b45309",
           "#be123c"
         );
 
-        // 2. バックアタック決定率＆得点推移
         buildDualLineChart(
           "hirotaBackAttackChart",
           labels,
-          {
-            label: "バックアタック決定率(%)",
-            data: hBackPct,
-            borderColor: "#7c3aed",
-            backgroundColor: "rgba(124, 58, 237, 0.15)"
-          },
-          {
-            label: "バックアタック得点",
-            data: hBackPts,
-            borderColor: "#f59e0b",
-            backgroundColor: "rgba(245, 158, 11, 0.16)"
-          },
+          { label: "バックアタック決定率(%)", data: hBackPct, borderColor: "#7c3aed", backgroundColor: "rgba(124, 58, 237, 0.15)" },
+          { label: "バックアタック得点", data: hBackPts, borderColor: "#f59e0b", backgroundColor: "rgba(245, 158, 11, 0.16)" },
           "#6d28d9",
           "#b45309"
         );
 
-        // 3. ブロック決定本数推移
         buildDualLineChart(
           "hirotaBlockChart",
           labels,
-          {
-            label: "ブロック決定本数",
-            data: hBlkPts,
-            borderColor: "#0284c7",
-            backgroundColor: "rgba(2, 132, 199, 0.18)",
-            fill: true
-          },
+          { label: "ブロック決定本数", data: hBlkPts, borderColor: "#0284c7", backgroundColor: "rgba(2, 132, 199, 0.18)", fill: true },
           null,
           "#0369a1"
         );
 
-        // 4. サーブ効果率＆サーブ得点（エース）推移
         buildDualLineChart(
           "hirotaServeChart",
           labels,
-          {
-            label: "サーブ効果率(%)",
-            data: hSrvEff,
-            borderColor: "#15803d",
-            backgroundColor: "rgba(22, 163, 74, 0.16)"
-          },
-          {
-            label: "サーブ得点(エース)",
-            data: hSrvPts,
-            borderColor: "#e11d48",
-            backgroundColor: "rgba(225, 29, 72, 0.16)"
-          },
+          { label: "サーブ効果率(%)", data: hSrvEff, borderColor: "#15803d", backgroundColor: "rgba(22, 163, 74, 0.16)" },
+          { label: "サーブ得点(エース)", data: hSrvPts, borderColor: "#e11d48", backgroundColor: "rgba(225, 29, 72, 0.16)" },
           "#15803d",
           "#be123c"
         );
 
-        // 5. サーブレシーブ成功率＆受数推移
         buildDualLineChart(
           "hirotaReceptionChart",
           labels,
-          {
-            label: "サーブレシーブ成功率(%)",
-            data: hRecPct,
-            borderColor: "#d97706",
-            backgroundColor: "rgba(245, 158, 11, 0.16)"
-          },
-          {
-            label: "サーブレシーブ受数",
-            data: hRecAtt,
-            borderColor: "#0284c7",
-            backgroundColor: "rgba(2, 132, 199, 0.16)"
-          },
+          { label: "サーブレシーブ成功率(%)", data: hRecPct, borderColor: "#d97706", backgroundColor: "rgba(245, 158, 11, 0.16)" },
+          { label: "サーブレシーブ受数", data: hRecAtt, borderColor: "#0284c7", backgroundColor: "rgba(2, 132, 199, 0.16)" },
           "#b45309",
           "#0369a1"
         );
 
-        // 6. チーム推移
         buildDualLineChart(
           "teamTrendChart",
           labels,
-          {
-            label: "アタック決定率(%)",
-            data: tAttPct,
-            borderColor: "#e11d48",
-            backgroundColor: "rgba(225, 29, 72, 0.16)"
-          },
-          {
-            label: "サーブレシーブ成功率(%)",
-            data: tRecPct,
-            borderColor: "#0284c7",
-            backgroundColor: "rgba(2, 132, 199, 0.16)"
-          },
+          { label: "アタック決定率(%)", data: tAttPct, borderColor: "#e11d48", backgroundColor: "rgba(225, 29, 72, 0.16)" },
+          { label: "サーブレシーブ成功率(%)", data: tRecPct, borderColor: "#0284c7", backgroundColor: "rgba(2, 132, 199, 0.16)" },
           "#be123c",
           "#0369a1"
         );
@@ -2029,7 +2032,7 @@
               <td>${escapeHtml(fmtNum(meta.round_label, ""))} vs ${escapeHtml(getOpponentName(m))}</td>
               <td>${escapeHtml(getMatchResultLabel(m))}</td>
               <td>${h ? `${fmtPct(h.attack_pct)} (${h.attack_pts}/${h.attack_att})` : "-"}</td>
-              <td>${h ? `${fmtPct(h.back_pct)} (${fmtNum(h.back_pts, 0)}/${fmtNum(h.back_att, 0)})` : "-"}</td>
+              <td>${h ? `${getBackPctDisplay(h)} (${fmtNum(h.back_pts, 0)}/${fmtNum(h.back_att, 0)})` : "-"}</td>
               <td>${h ? `${fmtNum(h.block_pts, 0)} 本` : "-"}</td>
               <td>${h ? `${fmtPct(h.serve_eff)} (得点${fmtNum(h.serve_pts, 0)})` : "-"}</td>
               <td>${h ? `${fmtPct(h.rec_pct)} (${h.rec_att}受)` : "-"}</td>
@@ -2317,7 +2320,7 @@
             parsedDraftB = await parseFormBPdf(file);
             const hirota = (parsedDraftB.away_team?.players || []).concat(parsedDraftB.home_team?.players || [])
               .find(p => String(p.name || "").replace(/\s+/g, "").includes("廣田あい"));
-            const info = hirota ? `／ #4 廣田: Att ${fmtPct(hirota.attack_pct)}, Back ${fmtPct(hirota.back_pct)}, Blk ${hirota.block_pts}` : "";
+            const info = hirota ? `／ #4 廣田: Att ${fmtPct(hirota.attack_pct)}, Back ${getBackPctDisplay(hirota)}, Blk ${hirota.block_pts}` : "";
             st.textContent = `✓ B帳票読込完了${info}`;
             st.className = "pill-status ok";
             updateAutoExtractStatusBox();
