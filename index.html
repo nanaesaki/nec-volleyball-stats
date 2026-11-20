@@ -4,9 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NECレッドロケッツ川崎 × #4 廣田あい｜SV.LEAGUE 分析ダッシュボード</title>
+  <!-- Google Fonts: Zen Maru Gothic -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <!-- Chart.js & PDF.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
@@ -28,6 +30,8 @@
       --accent-blue-soft: rgba(14, 165, 233, 0.12);
       --accent-green: #15803d;
       --accent-green-soft: rgba(22, 163, 74, 0.12);
+      --accent-purple: #7c3aed;
+      --accent-purple-soft: rgba(124, 58, 237, 0.11);
       --shadow: 0 10px 28px rgba(225, 29, 72, 0.06);
       --radius: 20px;
     }
@@ -47,11 +51,12 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1220px;
       margin: 0 auto;
-      padding: 24px 18px 64px;
+      padding: 20px 18px 64px;
     }
 
+    /* ヘッダー・コントロールバー */
     .top-bar {
       position: relative;
       z-index: 20;
@@ -59,22 +64,22 @@
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       background: var(--bg-card);
       border: 1.5px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px 24px;
+      padding: 16px 20px;
       box-shadow: var(--shadow);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .brand-title {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
-      margin: 0 0 6px;
-      font-size: 1.32rem;
+      gap: 8px;
+      margin: 0;
+      font-size: 1.2rem;
       font-weight: 800;
       color: var(--text-main);
     }
@@ -113,7 +118,7 @@
     .sub-caption {
       margin: 0;
       color: var(--text-sub);
-      font-size: 0.86rem;
+      font-size: 0.82rem;
     }
 
     .controls-group {
@@ -125,7 +130,7 @@
       gap: 10px;
     }
 
-    select, input, textarea, button {
+    select, input, button {
       font-family: inherit;
       color: var(--text-main);
     }
@@ -134,13 +139,13 @@
       background: var(--bg-input);
       border: 1.5px solid var(--border);
       border-radius: 14px;
-      padding: 10px 14px;
-      font-size: 0.88rem;
+      padding: 9px 14px;
+      font-size: 0.86rem;
       min-width: 280px;
       cursor: pointer;
     }
 
-    select:focus, input:focus, textarea:focus {
+    select:focus, input:focus {
       outline: none;
       border-color: var(--accent-red);
       box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
@@ -149,12 +154,13 @@
     .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      padding: 10px 16px;
+      padding: 9px 15px;
       border-radius: 14px;
       border: 1.5px solid var(--border);
       background: var(--bg-card);
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.18s ease;
@@ -184,49 +190,54 @@
       color: var(--accent-red);
     }
 
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      border-radius: 12px;
+    }
+
     .status-note {
       position: relative;
       z-index: 10;
-      font-size: 0.82rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
       color: var(--text-sub);
       background: var(--bg-card);
-      border: 1.5px dashed var(--border-strong);
-      border-radius: 16px;
-      padding: 12px 16px;
-      margin-bottom: 18px;
-      box-shadow: 0 4px 14px rgba(225, 29, 72, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 14px;
+      margin-bottom: 14px;
     }
 
     .status-detail {
-      margin-top: 6px;
       font-size: 0.78rem;
       color: #8c7a84;
     }
 
+    /* タブナビゲーション */
     .mode-tabs {
       position: relative;
       z-index: 40;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 20px;
-      pointer-events: auto;
+      margin-bottom: 18px;
     }
 
     .tab-btn {
-      position: relative;
-      z-index: 45;
-      padding: 11px 20px;
+      padding: 10px 18px;
       border-radius: 999px;
       border: 1.5px solid var(--border);
       background: var(--bg-card);
       color: var(--text-sub);
       font-weight: 700;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       cursor: pointer;
-      pointer-events: auto;
       user-select: none;
-      -webkit-tap-highlight-color: transparent;
       transition: all 0.18s ease;
     }
 
@@ -240,13 +251,14 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* カード・グリッド */
     .card {
       background: var(--bg-card);
       border: 1.5px solid var(--border);
       border-radius: var(--radius);
-      padding: 22px;
+      padding: 20px;
       box-shadow: var(--shadow);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .card-header {
@@ -255,12 +267,12 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .card-title {
       margin: 0;
-      font-size: 1.04rem;
+      font-size: 1rem;
       font-weight: 800;
       display: flex;
       flex-wrap: wrap;
@@ -268,25 +280,25 @@
       gap: 8px;
     }
 
-    .grid-4 {
+    .grid-5 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 14px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+      gap: 12px;
+      margin-bottom: 8px;
     }
 
     .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 18px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .kpi-card {
       background: var(--bg-input);
       border: 1.5px solid var(--border);
       border-radius: 16px;
-      padding: 16px 18px;
+      padding: 14px 16px;
     }
 
     .kpi-card.highlight {
@@ -295,51 +307,54 @@
     }
 
     .kpi-label {
-      font-size: 0.78rem;
+      font-size: 0.77rem;
       color: var(--text-sub);
       margin-bottom: 4px;
-      font-weight: 500;
+      font-weight: 700;
     }
 
     .kpi-value {
-      font-size: 1.6rem;
+      font-size: 1.48rem;
       font-weight: 800;
       color: var(--text-main);
+      line-height: 1.25;
     }
 
     .kpi-sub {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-sub);
-      margin-top: 4px;
+      margin-top: 5px;
     }
 
+    /* 試合バナー */
     .match-banner {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      padding: 20px 24px;
+      padding: 18px 22px;
       border-radius: var(--radius);
       background: linear-gradient(125deg, #ffe4e9 0%, #fff5f7 55%, #fffbeb 100%);
       border: 1.5px solid rgba(225, 29, 72, 0.28);
       box-shadow: var(--shadow);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .score-box {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 14px;
-      font-size: 1.15rem;
+      gap: 12px;
+      font-size: 1.08rem;
       font-weight: 800;
     }
 
     .score-num {
-      font-size: 1.8rem;
+      font-size: 1.65rem;
       color: var(--accent-red);
       background: #ffffff;
-      padding: 4px 16px;
+      padding: 4px 15px;
       border-radius: 14px;
       border: 1.5px solid rgba(225, 29, 72, 0.22);
     }
@@ -348,11 +363,11 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
     .set-pill {
-      font-size: 0.78rem;
+      font-size: 0.77rem;
       padding: 4px 11px;
       border-radius: 999px;
       background: #ffffff;
@@ -361,6 +376,7 @@
       font-weight: 500;
     }
 
+    /* テーブル */
     .table-wrap {
       overflow-x: auto;
       border-radius: 14px;
@@ -370,12 +386,12 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       background: #ffffff;
     }
 
     th, td {
-      padding: 10px 12px;
+      padding: 10px 11px;
       text-align: left;
       border-bottom: 1px solid #f7e3e8;
       white-space: nowrap;
@@ -384,49 +400,23 @@
     th {
       color: var(--text-sub);
       font-weight: 700;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       background: var(--bg-card-soft);
     }
 
     tr.hirota-row { background: #fffbeb; }
     tr.hirota-row td:first-child { border-left: 4px solid #f59e0b; }
 
-    .comment-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
-    .comment-box {
-      background: var(--bg-input);
-      border: 1.5px solid var(--border);
-      border-radius: 16px;
-      padding: 16px 18px;
-      white-space: pre-line;
-      font-size: 0.88rem;
-    }
-
-    .comment-label {
-      font-size: 0.76rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 999px;
-    }
-
-    .label-nec { background: var(--accent-red-soft); color: var(--accent-red); }
-    .label-opp { background: var(--accent-blue-soft); color: #0369a1; }
-
-    .chart-box { position: relative; height: 280px; }
+    .chart-box { position: relative; height: 260px; }
 
     .empty-state {
       text-align: center;
-      padding: 32px 16px;
+      padding: 24px 16px;
       color: var(--text-sub);
-      font-size: 0.88rem;
+      font-size: 0.85rem;
     }
 
+    /* アップロード・登録フォーム */
     .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -449,13 +439,7 @@
       margin-bottom: 6px;
     }
 
-    .field-hint {
-      font-size: 0.75rem;
-      color: var(--text-sub);
-      margin-top: 4px;
-    }
-
-    input[type="text"], input[type="file"], textarea {
+    input[type="text"], input[type="file"] {
       width: 100%;
       background: #ffffff;
       border: 1.5px solid var(--border);
@@ -464,9 +448,34 @@
       font-size: 0.86rem;
     }
 
-    textarea {
-      min-height: 96px;
-      resize: vertical;
+    .auto-summary-box {
+      background: linear-gradient(135deg, #fffbeb 0%, #fff5f7 100%);
+      border: 1.5px solid rgba(245, 158, 11, 0.35);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      font-size: 0.84rem;
+    }
+
+    .override-drawer {
+      background: var(--bg-input);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+    }
+
+    .override-fields {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-strong);
+    }
+
+    .override-fields.open {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
     }
 
     .helper-code {
@@ -478,7 +487,7 @@
       overflow-x: auto;
       white-space: pre-wrap;
       color: #4a3742;
-      max-height: 360px;
+      max-height: 340px;
       overflow-y: auto;
     }
 
@@ -491,92 +500,131 @@
     }
 
     .pill-status {
-      font-size: 0.78rem;
+      font-size: 0.77rem;
       font-weight: 700;
       padding: 4px 10px;
       border-radius: 999px;
       background: #f3f4f6;
       color: #4b5563;
-      margin-top: 6px;
+      margin-top: 7px;
       display: inline-block;
     }
 
     .pill-status.ok { background: var(--accent-green-soft); color: var(--accent-green); }
     .pill-status.warn { background: var(--accent-gold-soft); color: #b45309; }
 
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 14px;
+      font-size: 0.96rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .section-divider::after {
+      content: "";
+      flex: 1;
+      height: 1.5px;
+      background: linear-gradient(90deg, var(--border-strong), transparent);
+    }
+
+    /* トースト通知 */
+    .toast-msg {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999;
+      background: #2c242b;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     @media (max-width: 640px) {
       select { min-width: 100%; }
-      .brand-title { font-size: 1.12rem; }
+      .brand-title { font-size: 1.08rem; }
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- ヘッダー -->
     <header class="top-bar">
       <div>
         <h1 class="brand-title">
           <span>NECレッドロケッツ川崎 × #4 廣田あい</span>
-          <span class="badge">SV.LEAGUE WOMEN</span>
-          <span class="badge badge-gold">推し選手トラッカー</span>
+          <span class="badge">SV.LEAGUE</span>
         </h1>
-        <p class="sub-caption">
-          PDFアップロード＆コメント登録から、1試合分析・蓄積通算分析までブラウザでやさしく管理
-        </p>
       </div>
       <div class="controls-group">
         <select id="matchSelect" aria-label="分析する試合を選択"></select>
         <a id="liveScoreLink" class="btn" href="https://www.svleague.jp/" target="_blank" rel="noopener noreferrer">
           Live Score ↗
         </a>
-        <button id="reloadJsonBtn" class="btn" type="button" title="backend/data/matches.json と保存データを再読み込み">
-          ↻ データ更新
+        <button id="reloadJsonBtn" class="btn" type="button" title="データを再読み込み">
+          ↻ 更新
         </button>
       </div>
     </header>
 
     <div id="dataSourceStatus" class="status-note">
-      <div id="statusMainText">データソースを確認しています...</div>
-      <div id="statusSubText" class="status-detail"></div>
+      <span id="statusMainText">読込中...</span>
+      <span id="statusSubText"></span>
     </div>
 
+    <!-- 3タブ切替 -->
     <div class="mode-tabs" role="tablist">
       <button id="tabSingleBtn" class="tab-btn active" type="button" role="tab" onclick="switchTab('single')">
-        ① 1試合ごとの詳細分析
+        ① 試合詳細
       </button>
       <button id="tabCumulativeBtn" class="tab-btn" type="button" role="tab" onclick="switchTab('cumulative')">
-        ② 蓄積・全試合の推移＆通算分析
+        ② 推移・通算
       </button>
       <button id="tabUploadBtn" class="tab-btn" type="button" role="tab" onclick="switchTab('upload')">
-        ③ PDF・URL・コメント登録（JSON作成）
+        ③ 帳票登録
       </button>
     </div>
 
-    <!-- TAB 1: SINGLE MATCH -->
+    <!-- TAB 1: 1試合ごとの詳細分析 -->
     <section id="panelSingle" class="tab-panel active">
       <div id="matchBanner" class="match-banner"></div>
 
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">
-            <span>★ #4 廣田 あい 選手 試合スタッツ</span>
-            <span class="badge badge-gold">OH / 推しフォーカス</span>
+            <span>★ #4 廣田 あい</span>
+            <span class="badge badge-gold">OH</span>
           </h2>
           <span id="hirotaParseNote" class="sub-caption"></span>
         </div>
-        <div id="hirotaKpis" class="grid-4"></div>
+        <div id="hirotaKpis" class="grid-5"></div>
       </div>
 
       <div class="grid-2">
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">チーム成績比較（NEC vs 対戦相手）</h2>
+            <h2 class="card-title">チーム比較</h2>
           </div>
           <div class="table-wrap">
             <table id="teamCompareTable">
               <thead>
                 <tr>
                   <th>指標</th>
-                  <th>NECレッドロケッツ川崎</th>
+                  <th>NEC川崎</th>
                   <th>対戦相手</th>
                 </tr>
               </thead>
@@ -586,7 +634,7 @@
         </div>
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">主要指標バランス比較（%）</h2>
+            <h2 class="card-title">主要指標バランス（%）</h2>
           </div>
           <div class="chart-box">
             <canvas id="singleTeamChart"></canvas>
@@ -596,8 +644,7 @@
 
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">NECレッドロケッツ川崎 選手別個人成績</h2>
-          <span class="sub-caption">※ #4 廣田あい選手をやさしいゴールド色でハイライト</span>
+          <h2 class="card-title">個人成績一覧（NEC川崎）</h2>
         </div>
         <div class="table-wrap">
           <table id="playersTable">
@@ -606,43 +653,86 @@
                 <th>No.</th>
                 <th>選手名</th>
                 <th>出場</th>
-                <th>アタック (得点/打数)</th>
+                <th>アタック</th>
                 <th>決定率</th>
+                <th>バック</th>
+                <th>バック率</th>
                 <th>ブロック</th>
-                <th>サーブ効果率</th>
-                <th>サーブレシーブ (優+良/受数)</th>
-                <th>レシーブ成功率</th>
+                <th>サーブ</th>
+                <th>効果率</th>
+                <th>レシーブ</th>
+                <th>成功率</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
       </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">試合後コメント（定性振り返り）</h2>
-        </div>
-        <div id="commentsArea" class="comment-grid"></div>
-      </div>
     </section>
 
-    <!-- TAB 2: CUMULATIVE / ALL MATCHES -->
+    <!-- TAB 2: 蓄積・全試合の推移＆通算分析 -->
     <section id="panelCumulative" class="tab-panel">
-      <div id="cumulativeSummaryKpis" class="grid-4"></div>
+      <div class="section-divider" style="margin-top: 4px;">
+        <span>★ #4 廣田 あい 通算スタッツ＆スキル推移</span>
+      </div>
+
+      <div id="cumulativeSummaryKpis" class="grid-5" style="margin-bottom: 18px;"></div>
 
       <div class="grid-2">
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">#4 廣田あい 選手｜アタック決定率＆得点推移</h2>
+            <h2 class="card-title">アタック決定率（%）＆ 得点</h2>
+            <span class="badge badge-gold">Attack</span>
           </div>
           <div class="chart-box">
-            <canvas id="hirotaTrendChart"></canvas>
+            <canvas id="hirotaAttackChart"></canvas>
           </div>
         </div>
+
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">チーム推移｜アタック決定率＆サーブレシーブ成功率</h2>
+            <h2 class="card-title">バックアタック決定率（%）＆ 得点</h2>
+            <span class="badge">Back Attack</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="hirotaBackAttackChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">ブロック決定本数</h2>
+            <span class="badge badge-blue">Block</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="hirotaBlockChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">サーブ効果率（%）＆ エース</h2>
+            <span class="badge badge-green">Serve</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="hirotaServeChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">サーブレシーブ成功率（%）＆ 受数</h2>
+            <span class="badge badge-gold">Reception</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="hirotaReceptionChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">チーム推移（アタック・レシーブ）</h2>
+            <span class="badge badge-blue">Team</span>
           </div>
           <div class="chart-box">
             <canvas id="teamTrendChart"></canvas>
@@ -652,20 +742,21 @@
 
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">蓄積試合一覧（全データ）</h2>
-          <span class="sub-caption">行をクリックするとその試合の「1試合詳細分析」へ移動します</span>
+          <h2 class="card-title">試合履歴（#4 廣田 あい）</h2>
+          <span class="sub-caption">行タップで試合詳細へ</span>
         </div>
         <div class="table-wrap">
           <table id="cumulativeMatchesTable">
             <thead>
               <tr>
                 <th>日付</th>
-                <th>節 / 対戦カード</th>
+                <th>対戦カード</th>
                 <th>結果</th>
-                <th>#4 廣田 アタック</th>
-                <th>#4 廣田 ブロック</th>
-                <th>#4 廣田 レシーブ</th>
-                <th>コメント有無</th>
+                <th>アタック</th>
+                <th>バック</th>
+                <th>ブロック</th>
+                <th>サーブ</th>
+                <th>レシーブ</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -674,72 +765,76 @@
       </div>
     </section>
 
-    <!-- TAB 3: UPLOAD PDF, LIVE SCORE URL & COMMENTS -->
+    <!-- TAB 3: PDF・URL登録（JSON作成） -->
     <section id="panelUpload" class="tab-panel">
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">
-            <span>① 帳票PDF・Live Score URL・コメントのアップロード</span>
-            <span class="badge badge-green">ブラウザで自動JSON化</span>
+            <span>帳票PDF・URL登録</span>
+            <span class="badge badge-green">自動抽出</span>
           </h2>
-          <span class="sub-caption">PDFなしでもURLやコメント・試合ラベル入力だけでJSON作成できます</span>
         </div>
 
         <div class="form-grid">
           <div class="upload-box">
-            <label class="field-label" for="pdfBInput">B帳票 PDF（選手個人成績・チーム技術成績）</label>
+            <label class="field-label" for="pdfBInput">B帳票 PDF（個人・チーム成績）</label>
             <input id="pdfBInput" type="file" accept="application/pdf,.pdf" />
-            <div class="field-hint">※ 選択すると自動で座標解析し、選手別スタッツ・#4 廣田あい選手成績を抽出します</div>
-            <div id="pdfBStatus" class="pill-status">未選択（任意）</div>
+            <div id="pdfBStatus" class="pill-status">未選択</div>
           </div>
 
           <div class="upload-box">
-            <label class="field-label" for="pdfAInput">A帳票 PDF（試合会場レポート・セットスコア・交代）</label>
+            <label class="field-label" for="pdfAInput">A帳票 PDF（試合結果・セットスコア）</label>
             <input id="pdfAInput" type="file" accept="application/pdf,.pdf" />
-            <div class="field-hint">※ 選択すると試合日・Match No.・セットスコア・セット時間を抽出します</div>
-            <div id="pdfAStatus" class="pill-status">未選択（任意）</div>
+            <div id="pdfAStatus" class="pill-status">未選択</div>
           </div>
         </div>
 
         <div class="form-grid">
           <div>
-            <label class="field-label" for="liveScoreInput">Live Score URL（速報ページリンク）</label>
-            <input id="liveScoreInput" type="text" placeholder="この試合のLive Score URLを入力してください" />
+            <label class="field-label" for="liveScoreInput">Live Score URL（任意）</label>
+            <input id="liveScoreInput" type="text" placeholder="https://www.svleague.jp/..." />
           </div>
-          <div>
-            <label class="field-label" for="matchDateOverride">試合日・節ラベル（例: 2026/11/14 第5節 GAME1）</label>
-            <input id="matchDateOverride" type="text" placeholder="例: 2026/11/08 第4節 GAME2 vs チーム名" />
-          </div>
-          <div>
-            <label class="field-label" for="matchScoreInput">セットカウント（例: 3-2 または 2-3）</label>
-            <input id="matchScoreInput" type="text" placeholder="例: 3-2（NECセット数-相手セット数）" />
-          </div>
-
         </div>
 
-        <div class="form-grid">
-          <div>
-            <label class="field-label" for="commentNecInput">NECレッドロケッツ川崎 コメント</label>
-            <textarea id="commentNecInput" placeholder="NECの監督・選手コメントを貼り付けてください"></textarea>
+        <!-- PDFからの自動取得結果プレビュー -->
+        <div id="autoExtractPreview" class="auto-summary-box">
+          <strong>📄 自動抽出ステータス：</strong> PDFを選択すると試合情報を自動取得します。
+        </div>
+
+        <!-- 自動取得できなかった場合や微調整したい場合のみ開く折りたたみ式補完フォーム -->
+        <div class="override-drawer">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px;">
+            <span style="font-size:0.82rem; font-weight:700; color:var(--text-sub);">
+              🛠 手動補完・微調整（未検出時のみ）
+            </span>
+            <button id="toggleOverrideBtn" class="btn btn-sm" type="button" onclick="toggleOverrideFields()">
+              ▼ 開く
+            </button>
           </div>
-          <div>
-            <label class="field-label" for="commentOppInput">対戦相手チーム コメント</label>
-            <textarea id="commentOppInput" placeholder="対戦相手チームのコメントを貼り付けてください"></textarea>
+          <div id="overrideFields" class="override-fields">
+            <div>
+              <label class="field-label" for="matchDateOverride">試合日・節・対戦相手</label>
+              <input id="matchDateOverride" type="text" placeholder="例: 2026/11/08 第4節 GAME2 vs デンソーエアリービーズ" />
+            </div>
+            <div>
+              <label class="field-label" for="matchScoreInput">セットカウント（NEC-相手）</label>
+              <input id="matchScoreInput" type="text" placeholder="例: 3-1" />
+            </div>
           </div>
         </div>
 
         <div class="action-bar">
           <button id="addMatchToDashboardBtn" class="btn btn-primary" type="button" onclick="handleCreateMatchJson()">
-            ✓ 試合データを作成してダッシュボードに反映
+            ✓ ダッシュボードに反映
           </button>
           <button id="downloadMatchesJsonBtn" class="btn btn-soft" type="button" onclick="handleDownloadMatchesJson()">
-            ⬇ 蓄積用 matches.json をダウンロード
+            ⬇ JSON保存
           </button>
           <button id="copyMatchesJsonBtn" class="btn" type="button" onclick="handleCopyMatchesJson()">
-            📋 matches.json をコピー
+            📋 コピー
           </button>
           <button id="clearLocalDataBtn" class="btn" type="button" onclick="handleClearLocalData()">
-            🗑 ブラウザ一時保存をクリア
+            🗑 一時データ削除
           </button>
         </div>
         <div id="uploadFeedback" class="status-detail" style="margin-top: 10px;"></div>
@@ -747,18 +842,71 @@
 
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">② 生成された JSON データプレビュー（GitHub保存用）</h2>
-          <span class="sub-caption">ダウンロードまたはコピーしたJSONを <code>backend/data/matches.json</code> に貼り付けると全員・全端末で共有されます</span>
+          <h2 class="card-title">JSONプレビュー（backend/data/matches.json 用）</h2>
         </div>
         <div id="generatedJsonPreview" class="helper-code">まだデータがありません。</div>
       </div>
     </section>
   </div>
 
+  <div id="toastMsg" class="toast-msg"></div>
+
   <script>
-    const LOCAL_STORAGE_KEY = "nec_hirota_uploaded_matches_v1";
+    const LOCAL_STORAGE_KEY = "nec_hirota_uploaded_matches_v2";
 
     const FALLBACK_MATCHES = [
+      {
+        id: "145",
+        meta: {
+          match_no: 145,
+          round_label: "第4節 GAME1",
+          date: "2026/11/07",
+          venue: "とどろきアリーナ",
+          home_team: "NECレッドロケッツ川崎",
+          away_team: "デンソーエアリービーズ",
+          score_home_sets: 3,
+          score_away_sets: 1,
+          sets_detail: [
+            { set: 1, home: 25, away: 21 },
+            { set: 2, home: 25, away: 22 },
+            { set: 3, home: 25, away: 27 },
+            { set: 4, home: 25, away: 20 }
+          ]
+        },
+        target_side: "home",
+        sources: { live_score_url: "https://www.svleague.jp/" },
+        parsed_b: {
+          home_team: {
+            team_name: "NECレッドロケッツ川崎",
+            team_total: {
+              attack_att: 148, attack_pts: 63, attack_pct: 42.6,
+              back_att: 28, back_pts: 11, back_pct: 39.3,
+              block_pts: 9,
+              serve_att: 98, serve_pts: 4, serve_err: 7, serve_eff: 11.5,
+              rec_att: 82, rec_exc: 24, rec_good: 26, rec_pct: 45.1
+            },
+            players: [
+              { number: 1, name: "山田 二千華", sets_played: 4, attack_att: 21, attack_pts: 11, attack_pct: 52.4, back_att: 0, back_pts: 0, back_pct: null, block_pts: 3, serve_att: 15, serve_pts: 1, serve_eff: 13.3, rec_att: 1, rec_exc: 0, rec_good: 1, rec_pct: 50.0 },
+              { number: 3, name: "L 大工園 彩夏", sets_played: 4, attack_att: 0, attack_pts: 0, attack_pct: null, back_att: 0, back_pts: 0, back_pct: null, block_pts: 0, serve_att: 0, serve_pts: 0, serve_eff: null, rec_att: 34, rec_exc: 13, rec_good: 11, rec_pct: 54.4 },
+              { number: 4, name: "廣田 あい", sets_played: 4, attack_att: 49, attack_pts: 21, attack_pct: 42.9, back_att: 14, back_pts: 6, back_pct: 42.9, block_pts: 2, serve_att: 18, serve_pts: 2, serve_eff: 15.3, rec_att: 16, rec_exc: 4, rec_good: 6, rec_pct: 43.8 },
+              { number: 7, name: "甲 萌香", sets_played: 4, attack_att: 16, attack_pts: 8, attack_pct: 50.0, back_att: 0, back_pts: 0, back_pct: null, block_pts: 2, serve_att: 14, serve_pts: 0, serve_eff: 8.9, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 10, name: "中川 つかさ(C)", sets_played: 4, attack_att: 3, attack_pts: 2, attack_pct: 66.7, back_att: 0, back_pts: 0, back_pct: null, block_pts: 1, serve_att: 19, serve_pts: 1, serve_eff: 11.8, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 15, name: "シルビア・チネロ・ヌワカロール", sets_played: 4, attack_att: 34, attack_pts: 13, attack_pct: 38.2, back_att: 10, back_pts: 4, back_pct: 40.0, block_pts: 1, serve_att: 16, serve_pts: 0, serve_eff: 9.4, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 18, name: "シアラ・モーガン・ディーベル", sets_played: 4, attack_att: 25, attack_pts: 8, attack_pct: 32.0, back_att: 4, back_pts: 1, back_pct: 25.0, block_pts: 0, serve_att: 16, serve_pts: 0, serve_eff: 10.9, rec_att: 31, rec_exc: 7, rec_good: 8, rec_pct: 35.5 }
+            ]
+          },
+          away_team: {
+            team_name: "デンソーエアリービーズ",
+            team_total: {
+              attack_att: 152, attack_pts: 57, attack_pct: 37.5,
+              back_att: 24, back_pts: 8, back_pct: 33.3,
+              block_pts: 7,
+              serve_att: 91, serve_pts: 3, serve_err: 9, serve_eff: 8.8,
+              rec_att: 91, rec_exc: 20, rec_good: 28, rec_pct: 37.4
+            }
+          }
+        }
+      },
       {
         id: "168",
         meta: {
@@ -771,22 +919,20 @@
           score_home_sets: 0,
           score_away_sets: 3,
           sets_detail: [
-            { set: 1, home: 23, away: 25, duration: "0:25" },
-            { set: 2, home: 22, away: 25, duration: "0:32" },
-            { set: 3, home: 28, away: 30, duration: "0:30" }
+            { set: 1, home: 23, away: 25 },
+            { set: 2, home: 22, away: 25 },
+            { set: 3, home: 28, away: 30 }
           ]
         },
         target_side: "away",
-        sources: { form_a_url: "", form_b_url: "", live_score_url: "" },
-        comments: {
-          home: "岡山：3セットを通し、大きく全体が乱れる時間は少なかったですが、チーム力を一人ひとりが理解し、大事なポイントで技術力を発揮することを貫けませんでした。特に第3セット、リードする中で相手に隙をつかれた時の技術力の安定が必要だと感じました。今日の反省を踏まえて、次週挑戦したいと思います。\n雨の中、会場に足を運んで後押しして下さった多くのファンの皆さまに感謝いたします。また配信での応援も、ありがとうございました。",
-          away: "NEC：昨日の敗戦から今日どのようなメンタリティで、どのような戦いができるかが問われる一戦でした。\n昨日と同じような展開になりかけた第3セットに途中出場した大川、山田がゲームチェンジャーになり、ビハインドから追いつき勝ちきったことは、彼女達の普段の献身がよく現れたところだと思います。\nよく勝ちきった反面、第3セットにクオリティが一気に下がってしまうところは大きな課題でもあるので、変化を加えながらもゲーム終了まで高いパフォーマンスを維持できるよう練習していきたいです。\nまた岡山シーガルズのボールコントロールのクオリティは、我々も見習うべきところであると感じさせてもらいました。\n来週もアウェーゲームになりますが、クルーの皆様の応援は日本全国どこに行っても届いております。\n本日も心強い後押しありがとうございました。"
-        },
+        sources: { live_score_url: "" },
         parsed_b: {
           home_team: {
             team_name: "岡山シーガルズ",
             team_total: {
-              attack_att: 119, attack_pts: 50, attack_pct: 42.0, block_pts: 8,
+              attack_att: 119, attack_pts: 50, attack_pct: 42.0,
+              back_att: 15, back_pts: 5, back_pct: 33.3,
+              block_pts: 8,
               serve_att: 74, serve_pts: 2, serve_err: 8, serve_eff: 8.1,
               rec_att: 75, rec_exc: 15, rec_good: 19, rec_pct: 32.7
             }
@@ -794,25 +940,24 @@
           away_team: {
             team_name: "NECレッドロケッツ川崎",
             team_total: {
-              attack_att: 123, attack_pts: 58, attack_pct: 47.2, block_pts: 4,
+              attack_att: 123, attack_pts: 58, attack_pct: 47.2,
+              back_att: 22, back_pts: 10, back_pct: 45.5,
+              block_pts: 4,
               serve_att: 79, serve_pts: 1, serve_err: 4, serve_eff: 12.7,
               rec_att: 66, rec_exc: 16, rec_good: 24, rec_pct: 42.4
             },
             players: [
-              { number: 1, name: "山田 二千華", sets_played: 1, attack_att: 3, attack_pts: 1, attack_pct: 33.3, block_pts: 2, serve_eff: 16.7, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
-              { number: 3, name: "L 大工園 彩夏", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: null, rec_att: 29, rec_exc: 10, rec_good: 10, rec_pct: 51.7 },
-              { number: 4, name: "廣田 あい", sets_played: 3, attack_att: 43, attack_pts: 20, attack_pct: 46.5, block_pts: 1, serve_eff: 6.8, rec_att: 7, rec_exc: 0, rec_good: 3, rec_pct: 21.4 },
-              { number: 7, name: "甲 萌香", sets_played: 3, attack_att: 5, attack_pts: 4, attack_pct: 80.0, block_pts: 0, serve_eff: 8.3, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
-              { number: 10, name: "中川 つかさ(C)", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: 6.8, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
-              { number: 11, name: "古谷 ちなみ", sets_played: 0, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: null, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
-              { number: 12, name: "佐々木 遥子", sets_played: 2, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: 25.0, rec_att: 1, rec_exc: 1, rec_good: 0, rec_pct: 100.0 },
-              { number: 13, name: "髙橋 美鈴", sets_played: 3, attack_att: 6, attack_pts: 3, attack_pct: 50.0, block_pts: 0, serve_eff: null, rec_att: 1, rec_exc: 0, rec_good: 1, rec_pct: 50.0 },
-              { number: 14, name: "長谷部 奈香", sets_played: 0, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: null, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
-              { number: 15, name: "シルビア・チネロ・ヌワカロール", sets_played: 3, attack_att: 22, attack_pts: 13, attack_pct: 59.1, block_pts: 1, serve_eff: 19.4, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
-              { number: 16, name: "大川 愛海", sets_played: 3, attack_att: 9, attack_pts: 6, attack_pct: 66.7, block_pts: 0, serve_eff: 15.0, rec_att: 10, rec_exc: 2, rec_good: 5, rec_pct: 45.0 },
-              { number: 18, name: "シアラ・モーガン・ディーベル", sets_played: 3, attack_att: 29, attack_pts: 10, attack_pct: 34.5, block_pts: 0, serve_eff: 14.3, rec_att: 18, rec_exc: 3, rec_good: 5, rec_pct: 30.6 },
-              { number: 19, name: "ミア・シェイファー", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, block_pts: 0, serve_eff: 8.3, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
-              { number: 22, name: "イ ダヒョン", sets_played: 1, attack_att: 6, attack_pts: 1, attack_pct: 16.7, block_pts: 0, serve_eff: 20.0, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null }
+              { number: 1, name: "山田 二千華", sets_played: 1, attack_att: 3, attack_pts: 1, attack_pct: 33.3, back_att: 0, back_pts: 0, back_pct: null, block_pts: 2, serve_att: 3, serve_pts: 0, serve_eff: 16.7, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 3, name: "L 大工園 彩夏", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, back_att: 0, back_pts: 0, back_pct: null, block_pts: 0, serve_att: 0, serve_pts: 0, serve_eff: null, rec_att: 29, rec_exc: 10, rec_good: 10, rec_pct: 51.7 },
+              { number: 4, name: "廣田 あい", sets_played: 3, attack_att: 43, attack_pts: 20, attack_pct: 46.5, back_att: 11, back_pts: 5, back_pct: 45.5, block_pts: 1, serve_att: 11, serve_pts: 0, serve_eff: 6.8, rec_att: 7, rec_exc: 0, rec_good: 3, rec_pct: 21.4 },
+              { number: 7, name: "甲 萌香", sets_played: 3, attack_att: 5, attack_pts: 4, attack_pct: 80.0, back_att: 0, back_pts: 0, back_pct: null, block_pts: 0, serve_att: 9, serve_pts: 0, serve_eff: 8.3, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 10, name: "中川 つかさ(C)", sets_played: 3, attack_att: 0, attack_pts: 0, attack_pct: null, back_att: 0, back_pts: 0, back_pct: null, block_pts: 0, serve_att: 11, serve_pts: 0, serve_eff: 6.8, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 12, name: "佐々木 遥子", sets_played: 2, attack_att: 0, attack_pts: 0, attack_pct: null, back_att: 0, back_pts: 0, back_pct: null, block_pts: 0, serve_att: 2, serve_pts: 0, serve_eff: 25.0, rec_att: 1, rec_exc: 1, rec_good: 0, rec_pct: 100.0 },
+              { number: 13, name: "髙橋 美鈴", sets_played: 3, attack_att: 6, attack_pts: 3, attack_pct: 50.0, back_att: 0, back_pts: 0, back_pct: null, block_pts: 0, serve_att: 0, serve_pts: 0, serve_eff: null, rec_att: 1, rec_exc: 0, rec_good: 1, rec_pct: 50.0 },
+              { number: 15, name: "シルビア・チネロ・ヌワカロール", sets_played: 3, attack_att: 22, attack_pts: 13, attack_pct: 59.1, back_att: 7, back_pts: 4, back_pct: 57.1, block_pts: 1, serve_att: 18, serve_pts: 1, serve_eff: 19.4, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null },
+              { number: 16, name: "大川 愛海", sets_played: 3, attack_att: 9, attack_pts: 6, attack_pct: 66.7, back_att: 1, back_pts: 0, back_pct: 0.0, block_pts: 0, serve_att: 5, serve_pts: 0, serve_eff: 15.0, rec_att: 10, rec_exc: 2, rec_good: 5, rec_pct: 45.0 },
+              { number: 18, name: "シアラ・モーガン・ディーベル", sets_played: 3, attack_att: 29, attack_pts: 10, attack_pct: 34.5, back_att: 3, back_pts: 1, back_pct: 33.3, block_pts: 0, serve_att: 14, serve_pts: 0, serve_eff: 14.3, rec_att: 18, rec_exc: 3, rec_good: 5, rec_pct: 30.6 },
+              { number: 22, name: "イ ダヒョン", sets_played: 1, attack_att: 6, attack_pts: 1, attack_pct: 16.7, back_att: 0, back_pts: 0, back_pct: null, block_pts: 0, serve_att: 6, serve_pts: 0, serve_eff: 20.0, rec_att: 0, rec_exc: 0, rec_good: 0, rec_pct: null }
             ]
           }
         }
@@ -821,13 +966,21 @@
 
     let allMatches = [...FALLBACK_MATCHES];
     let cachedRepoMatches = [];
-    let currentMatchId = FALLBACK_MATCHES[0].id;
+    let currentMatchId = FALLBACK_MATCHES[FALLBACK_MATCHES.length - 1].id;
     let parsedDraftB = null;
     let parsedDraftA = null;
 
     let singleChartInstance = null;
-    let hirotaTrendChartInstance = null;
-    let teamTrendChartInstance = null;
+    const trendCharts = {};
+
+    function showToast(msg) {
+      const el = document.getElementById("toastMsg");
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove("show"), 2800);
+    }
 
     function normalizeStr(s) {
       return String(s || "").normalize("NFKC").replace(/\s+/g, " ").trim();
@@ -840,6 +993,21 @@
       return Number.isNaN(n) ? null : n;
     }
 
+    function parseRateSafe(rawVal) {
+      const raw = normalizeStr(rawVal).replace(/\s+/g, "");
+      if (!raw || raw === "-") return null;
+      const decMatches = raw.match(/-?\d+\.\d+/g);
+      if (decMatches && decMatches.length >= 2) {
+        return parseFloat(decMatches[0]);
+      }
+      const val = parseFloat(raw);
+      if (Number.isNaN(val)) return null;
+      if (Math.abs(val) > 100 && /^\d{2,3}\d\.\d$/.test(raw)) {
+        return parseFloat(raw.slice(0, 2) + "." + raw.slice(2));
+      }
+      return val;
+    }
+
     function ensurePdfJs() {
       return new Promise((resolve, reject) => {
         if (window.pdfjsLib) {
@@ -848,34 +1016,7 @@
           resolve(window.pdfjsLib);
           return;
         }
-        const existing = document.getElementById("pdfjsDynamicScript");
-        if (existing) {
-          existing.addEventListener("load", () => {
-            if (window.pdfjsLib) {
-              window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-              resolve(window.pdfjsLib);
-            } else {
-              reject(new Error("PDF.jsの初期化に失敗しました。"));
-            }
-          });
-          existing.addEventListener("error", () => reject(new Error("PDF.jsの読み込みに失敗しました。")));
-          return;
-        }
-        const sc = document.createElement("script");
-        sc.id = "pdfjsDynamicScript";
-        sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-        sc.onload = () => {
-          if (window.pdfjsLib) {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-              "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-            resolve(window.pdfjsLib);
-          } else {
-            reject(new Error("PDF.jsの初期化に失敗しました。"));
-          }
-        };
-        sc.onerror = () => reject(new Error("PDF.jsの読み込みに失敗しました。"));
-        document.head.appendChild(sc);
+        reject(new Error("PDF.jsが読み込まれていません。"));
       });
     }
 
@@ -903,6 +1044,8 @@
       return allPages;
     }
 
+    const TEAM_REGEX = /(NECレッドロケッツ(?:川崎)?|岡山シーガルズ|JTマーヴェラス|大阪マーヴェラス|久光スプリングス|SAGA久光スプリングス|東レアローズ(?:滋賀)?|デンソーエアリービーズ|PFUブルーキャッツ(?:石川かほく)?|日立Astemoリヴァーレ|トヨタ車体クインシーズ|クインシーズ刈谷|KUROBEアクアフェアリーズ|アランマーレ山形|ブレス浜松|群馬グリーンウイングス|ヴィクトリーナ姫路|埼玉上尾メディックス)/i;
+
     async function parseFormAPdf(file) {
       const pages = await extractPdfItems(file);
       const p1 = pages[0];
@@ -921,7 +1064,6 @@
       const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
 
-      // Extract venue (e.g., 会場:山陽ふれあい公園総合体育館 or arena name)
       let venueVal = null;
       const venueLabeled = fullText.match(/会場[:：\s]*([^\s\/／|｜]+)/);
       if (venueLabeled) {
@@ -934,47 +1076,25 @@
         if (venueGuess) venueVal = venueGuess.str.trim();
       }
 
-      // Extract Home / Away team names from A-form
       let homeTeamVal = null;
       let awayTeamVal = null;
-      const teamPattern = /(NECレッドロケッツ(?:川崎)?|岡山シーガルズ|JTマーヴェラス|大阪マーヴェラス|久光スプリングス|SAGA久光スプリングス|東レアローズ(?:滋賀)?|デンソーエアリービーズ|PFUブルーキャッツ(?:石川かほく)?|日立Astemoリヴァーレ|トヨタ車体クインシーズ|クインシーズ刈谷|KUROBEアクアフェアリーズ|アランマーレ山形|ブレス浜松|群馬グリーンウイングス|ヴィクトリーナ姫路|埼玉上尾メディックス)/i;
       const necItem = normItems.find(it => it.str.includes("NECレッドロケッツ"));
       if (necItem) {
         const sameBandTeams = normItems.filter(it =>
           it.page === necItem.page &&
           Math.abs(it.ny - necItem.ny) <= 28 &&
           it !== necItem &&
-          teamPattern.test(it.str) &&
+          TEAM_REGEX.test(it.str) &&
           !it.str.includes("NECレッドロケッツ")
         );
         if (sameBandTeams.length > 0) {
-          sameBandTeams.sort((a, b) => Math.abs(a.ny - necItem.ny) - Math.abs(b.ny - necItem.ny) || Math.abs(a.nx - necItem.nx) - Math.abs(b.nx - necItem.nx));
+          sameBandTeams.sort((a, b) => Math.abs(a.ny - necItem.ny) - Math.abs(b.ny - necItem.ny));
           const pair = [necItem, sameBandTeams[0]].sort((a, b) => a.nx - b.nx);
           homeTeamVal = pair[0].str.trim();
           awayTeamVal = pair[1].str.trim();
         }
       }
-      if (!homeTeamVal || !awayTeamVal) {
-        const foundTeams = [];
-        for (const it of normItems) {
-          const m = it.str.match(teamPattern);
-          if (m && !foundTeams.some(x => x.name === m[1])) {
-            foundTeams.push({ name: m[1], nx: it.nx, ny: it.ny });
-          }
-        }
-        if (foundTeams.length >= 2) {
-          const necFound = foundTeams.find(x => x.name.includes("NEC"));
-          const oppFound = foundTeams.find(x => !x.name.includes("NEC"));
-          if (necFound && oppFound) {
-            const pair = [necFound, oppFound].sort((a, b) => a.nx - b.nx);
-            homeTeamVal = pair[0].name;
-            awayTeamVal = pair[1].name;
-          }
-        }
-      }
 
-      // Locate "第1セット" .. "第5セット" anchors in the top summary score table
-      // Unplayed sets (e.g. 第5セット【】) have blank left/right score cells -> null (none)
       const setLabelItems = normItems
         .map((it, idx) => {
           const m = it.str.match(/第([1-5])\s*セット/);
@@ -991,8 +1111,6 @@
         if (matchingLabels.length === 0) continue;
         const anchor = matchingLabels[0];
 
-        // Find home (left of anchor) and away (right of anchor) score numbers in the same set cell row
-        // Exclude time values like 0:26 or [0:26] and outer match set-count columns
         const rowNums = normItems
           .filter(it =>
             it.page === anchor.page &&
@@ -1014,26 +1132,17 @@
         const hPts = leftCandidates.length > 0 ? leftCandidates[0].val : null;
         const aPts = rightCandidates.length > 0 ? rightCandidates[0].val : null;
 
-        // Judge unplayed sets by null (none) score on either side
-        if (hPts === null || aPts === null) {
-          continue;
-        }
+        if (hPts === null || aPts === null) continue;
 
-        setsDetail.push({
-          set: sNum,
-          home: hPts,
-          away: aPts,
-          duration: ""
-        });
+        setsDetail.push({ set: sNum, home: hPts, away: aPts });
       }
 
       let scoreHomeSets = null;
       let scoreAwaySets = null;
-      const validSets = setsDetail.filter(s => typeof s.home === "number" && typeof s.away === "number" && (s.home > 0 || s.away > 0));
-      if (validSets.length > 0) {
+      if (setsDetail.length > 0) {
         let hWin = 0;
         let aWin = 0;
-        for (const s of validSets) {
+        for (const s of setsDetail) {
           if (s.home > s.away) hWin++;
           else if (s.away > s.home) aWin++;
         }
@@ -1052,8 +1161,7 @@
         away_team: awayTeamVal,
         score_home_sets: scoreHomeSets,
         score_away_sets: scoreAwaySets,
-        sets_detail: setsDetail,
-        raw_preview: fullText.slice(0, 260)
+        sets_detail: setsDetail
       };
     }
 
@@ -1098,13 +1206,20 @@
         { key: "attack_att", min: 224, max: 241 },
         { key: "attack_pts", min: 241, max: 256 },
         { key: "attack_err", min: 256, max: 270 },
-        { key: "attack_pct", min: 270, max: 292 },
-        { key: "block_pts", min: 374, max: 392 },
-        { key: "serve_eff", min: 458, max: 484 },
-        { key: "rec_att", min: 488, max: 506 },
+        { key: "attack_pct", min: 270, max: 294 },
+        { key: "back_att", min: 294, max: 312 },
+        { key: "back_pts", min: 312, max: 328 },
+        { key: "back_err", min: 328, max: 344 },
+        { key: "back_pct", min: 344, max: 374 },
+        { key: "block_pts", min: 374, max: 394 },
+        { key: "serve_att", min: 394, max: 416 },
+        { key: "serve_pts", min: 416, max: 434 },
+        { key: "serve_err", min: 434, max: 456 },
+        { key: "serve_eff", min: 456, max: 486 },
+        { key: "rec_att", min: 486, max: 506 },
         { key: "rec_exc", min: 506, max: 521 },
         { key: "rec_good", min: 521, max: 536 },
-        { key: "rec_pct", min: 536, max: 558 }
+        { key: "rec_pct", min: 536, max: 562 }
       ];
 
       function extractPlayersInBand(yMin, yMax) {
@@ -1125,34 +1240,32 @@
             const name = bag.name;
             if (!name || name.includes("出場セット") || name === "セット") continue;
 
+            const backAtt = toNum(bag.back_att) ?? 0;
+            const backPts = toNum(bag.back_pts) ?? 0;
+            let backPct = parseRateSafe(bag.back_pct);
+            if (backPct === null && backAtt > 0) {
+              backPct = Number(((backPts / backAtt) * 100).toFixed(1));
+            }
+
             const rec = {
               number: /^\d+$/.test(bag.number) ? parseInt(bag.number, 10) : null,
               name,
               sets_played: toNum(bag.sets_played) ?? 0,
               attack_att: toNum(bag.attack_att) ?? 0,
               attack_pts: toNum(bag.attack_pts) ?? 0,
-              attack_pct: toNum(bag.attack_pct, true),
+              attack_pct: parseRateSafe(bag.attack_pct),
+              back_att: backAtt,
+              back_pts: backPts,
+              back_pct: backPct,
               block_pts: toNum(bag.block_pts) ?? 0,
-              serve_eff: (() => {
-                const raw = normalizeStr(bag.serve_eff).replace(/\s+/g, "");
-                if (!raw || raw === "-") return null;
-                // If two decimal numbers merged without space, e.g., "47.10.8" -> "47.1"
-                const decMatches = raw.match(/-?\d+\.\d+/g);
-                if (decMatches && decMatches.length >= 2) {
-                  return parseFloat(decMatches[0]);
-                }
-                const val = parseFloat(raw);
-                if (Number.isNaN(val)) return null;
-                // If an unspaced decimal like 4710.8 occurred from 47.1 and 0.8
-                if (Math.abs(val) > 100 && /^\d{2,3}\d\.\d$/.test(raw)) {
-                  return parseFloat(raw.slice(0, 2) + "." + raw.slice(2));
-                }
-                return val;
-              })(),
+              serve_att: toNum(bag.serve_att) ?? 0,
+              serve_pts: toNum(bag.serve_pts) ?? 0,
+              serve_err: toNum(bag.serve_err) ?? 0,
+              serve_eff: parseRateSafe(bag.serve_eff),
               rec_att: toNum(bag.rec_att) ?? 0,
               rec_exc: toNum(bag.rec_exc) ?? 0,
               rec_good: toNum(bag.rec_good) ?? 0,
-              rec_pct: toNum(bag.rec_pct, true)
+              rec_pct: parseRateSafe(bag.rec_pct)
             };
 
             if (name.includes("チーム合計")) {
@@ -1171,19 +1284,18 @@
       const necIsAway = awayBlock.players.some(p => p.name.replace(/\s+/g, "").includes("廣田あい"));
       const necIsHome = homeBlock.players.some(p => p.name.replace(/\s+/g, "").includes("廣田あい"));
 
-      const bTeamPattern = /(NECレッドロケッツ(?:川崎)?|岡山シーガルズ|JTマーヴェラス|大阪マーヴェラス|久光スプリングス|SAGA久光スプリングス|東レアローズ(?:滋賀)?|デンソーエアリービーズ|PFUブルーキャッツ(?:石川かほく)?|日立Astemoリヴァーレ|トヨタ車体クインシーズ|クインシーズ刈谷|KUROBEアクアフェアリーズ|アランマーレ山形|ブレス浜松|群馬グリーンウイングス|ヴィクトリーナ姫路|埼玉上尾メディックス)/i;
-      const bFoundTeams = [];
+      const foundTeams = [];
       for (const it of normItems) {
-        const m = it.str.match(bTeamPattern);
-        if (m && !bFoundTeams.some(x => x.name === m[1])) {
-          bFoundTeams.push({ name: m[1], nx: it.nx, ny: it.ny });
+        const m = it.str.match(TEAM_REGEX);
+        if (m && !foundTeams.some(x => x.name === m[1])) {
+          foundTeams.push({ name: m[1] });
         }
       }
-      const bOppTeamObj = bFoundTeams.find(x => !x.name.includes("NEC"));
-      const bOppName = bOppTeamObj ? bOppTeamObj.name : null;
+      const oppObj = foundTeams.find(x => !x.name.includes("NEC"));
+      const oppName = oppObj ? oppObj.name : null;
 
-      const homeTeamName = necIsHome ? "NECレッドロケッツ川崎" : (bOppName || "対戦相手");
-      const awayTeamName = necIsAway ? "NECレッドロケッツ川崎" : (bOppName || "対戦相手");
+      const homeTeamName = necIsHome ? "NECレッドロケッツ川崎" : (oppName || "対戦相手");
+      const awayTeamName = necIsAway ? "NECレッドロケッツ川崎" : (oppName || "対戦相手");
 
       return {
         meta: {
@@ -1214,9 +1326,7 @@
     function saveLocalSavedMatches(list) {
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
-      } catch {
-        // Ignore storage quota errors in restricted contexts
-      }
+      } catch {}
     }
 
     function isNecHome(match) {
@@ -1285,7 +1395,14 @@
     }
 
     function getMatchesJsonUrl() {
-      return new URL("./backend/data/matches.json", window.location.href).href;
+      try {
+        if (window.location.protocol === "blob:" || !window.location.href.startsWith("http")) {
+          return "./backend/data/matches.json";
+        }
+        return new URL("./backend/data/matches.json", window.location.href).href;
+      } catch {
+        return "./backend/data/matches.json";
+      }
     }
 
     function syncLiveScoreLinkForCurrentMatch() {
@@ -1299,7 +1416,7 @@
         liveLink.style.opacity = "1";
       } else {
         liveLink.href = "https://www.svleague.jp/";
-        liveLink.textContent = "Live Score (未設定) ↗";
+        liveLink.textContent = "Live Score ↗";
         liveLink.style.opacity = "0.75";
       }
     }
@@ -1335,47 +1452,35 @@
 
       if (btn) {
         btn.disabled = true;
-        btn.textContent = "↻ 更新中...";
+        btn.textContent = "↻ 更新中";
       }
 
       let repoMatches = [];
       let repoStatusMsg = "";
-      let loadedFromUrl = targetUrl;
 
       try {
-        let res = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: "no-store" });
-        if (!res.ok) {
-          const altUrl = new URL("./matches.json", window.location.href).href;
-          const altRes = await fetch(`${altUrl}?t=${Date.now()}`, { cache: "no-store" });
-          if (altRes.ok) {
-            res = altRes;
-            loadedFromUrl = altUrl;
-          }
-        }
+        const res = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const jsonData = await res.json();
         repoMatches = Array.isArray(jsonData) ? jsonData : (Array.isArray(jsonData?.matches) ? jsonData.matches : []);
-        repoStatusMsg = `GitHub側 matches.json: ${repoMatches.length}件`;
-      } catch (err) {
-        repoStatusMsg = `GitHub側 matches.json: 未読込 (${err.message})`;
+        repoStatusMsg = `GitHub: ${repoMatches.length}件`;
+      } catch {
+        repoStatusMsg = "サンプル表示中";
       }
 
       mergeAndSortMatches(repoMatches);
       const localMatches = loadLocalSavedMatches();
 
       if (mainEl) {
-        mainEl.textContent = `✓ ${nowLabel} 反映完了：合計 ${allMatches.length} 試合（${repoStatusMsg} ／ ブラウザ一時保存: ${localMatches.length}件）`;
+        mainEl.textContent = `計 ${allMatches.length} 試合（${repoStatusMsg} ／ ローカル: ${localMatches.length}件）`;
       }
       if (subEl) {
-        subEl.textContent = `読込先: ${loadedFromUrl} ｜ 登録済ID: ${allMatches.map(m => m.id).join(", ")}`;
+        subEl.textContent = `更新: ${nowLabel}`;
       }
 
       if (btn) {
         btn.disabled = false;
-        btn.textContent = isManualClick ? "✓ データ更新" : "↻ データ更新";
-        setTimeout(() => {
-          if (btn) btn.textContent = "↻ データ更新";
-        }, 1200);
+        btn.textContent = "↻ 更新";
       }
 
       updateJsonPreview();
@@ -1407,6 +1512,7 @@
       syncLiveScoreLinkForCurrentMatch();
     }
 
+    // ① 1試合ごとの詳細分析描画
     function renderSingleMatch() {
       const match = allMatches.find(m => String(m.id) === String(currentMatchId)) || allMatches[0];
       const meta = match.meta || {};
@@ -1434,58 +1540,67 @@
         ? validSetPills.map(s => {
             const nPts = isNecHome(match) ? s.home : s.away;
             const oPts = isNecHome(match) ? s.away : s.home;
-            return `<span class="set-pill">Set${s.set}: NEC ${nPts}-${oPts}</span>`;
+            return `<span class="set-pill">Set${s.set}: ${nPts}-${oPts}</span>`;
           }).join("")
-        : `<span class="set-pill">セット詳細: コメント・帳票登録データ</span>`;
+        : `<span class="set-pill">セット詳細未登録</span>`;
 
       if (banner) {
         banner.innerHTML = `
           <div>
             <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px;">
               <span class="badge">${fmtNum(meta.date, "日付未設定")}</span>
-              <span class="badge badge-blue">${fmtNum(meta.round_label, meta.match_no ? `Match No.${meta.match_no}` : `ID:${match.id}`)}</span>
-              <span class="sub-caption">会場: ${fmtNum(meta.venue, "未設定")}</span>
+              <span class="badge badge-blue">${fmtNum(meta.round_label, meta.match_no ? `No.${meta.match_no}` : `ID:${match.id}`)}</span>
+              <span class="sub-caption">${fmtNum(meta.venue, "")}</span>
             </div>
             <div class="set-pills">${setsHtml}</div>
           </div>
           <div class="score-box">
-            <span>NECレッドロケッツ川崎</span>
+            <span>NEC川崎</span>
             <span class="score-num">${necSets} - ${oppSets}</span>
             <span>${escapeHtml(getOpponentName(match))}</span>
           </div>
         `;
       }
 
+      // #4 廣田あい選手 5スキルKPIカード
       const hirotaKpis = document.getElementById("hirotaKpis");
       const hirotaNote = document.getElementById("hirotaParseNote");
       if (hirotaKpis) {
         if (hirota) {
           if (hirotaNote) hirotaNote.textContent = `出場 ${fmtNum(hirota.sets_played, 0)} セット`;
+          const backPct = hirota.back_pct !== null && hirota.back_pct !== undefined
+            ? fmtPct(hirota.back_pct)
+            : (hirota.back_att > 0 ? `${((hirota.back_pts / hirota.back_att) * 100).toFixed(1)}%` : "-");
           hirotaKpis.innerHTML = `
             <div class="kpi-card highlight">
-              <div class="kpi-label">アタック決定率 / 得点</div>
+              <div class="kpi-label">アタック決定率</div>
               <div class="kpi-value">${fmtPct(hirota.attack_pct)}</div>
               <div class="kpi-sub">${fmtNum(hirota.attack_pts, 0)} 得点 / ${fmtNum(hirota.attack_att, 0)} 打数</div>
             </div>
             <div class="kpi-card highlight">
-              <div class="kpi-label">ブロック決定本数</div>
+              <div class="kpi-label">バックアタック</div>
+              <div class="kpi-value">${backPct}</div>
+              <div class="kpi-sub">${fmtNum(hirota.back_pts, 0)} 得点 / ${fmtNum(hirota.back_att, 0)} 打数</div>
+            </div>
+            <div class="kpi-card highlight">
+              <div class="kpi-label">ブロック</div>
               <div class="kpi-value">${fmtNum(hirota.block_pts, 0)} 本</div>
-              <div class="kpi-sub">ネット際ディフェンス貢献</div>
+              <div class="kpi-sub">平均 ${(Number(hirota.sets_played) > 0 ? (Number(hirota.block_pts || 0) / Number(hirota.sets_played)).toFixed(2) : "0.00")} 本/set</div>
             </div>
             <div class="kpi-card">
               <div class="kpi-label">サーブ効果率</div>
               <div class="kpi-value">${fmtPct(hirota.serve_eff)}</div>
-              <div class="kpi-sub">サービスエース・効果・ミス反映</div>
+              <div class="kpi-sub">得点 ${fmtNum(hirota.serve_pts, 0)} / 打数 ${fmtNum(hirota.serve_att, "-")}</div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-label">サーブレシーブ成功率</div>
+              <div class="kpi-label">サーブレシーブ</div>
               <div class="kpi-value">${fmtPct(hirota.rec_pct)}</div>
-              <div class="kpi-sub">優 ${fmtNum(hirota.rec_exc, 0)} + 良 ${fmtNum(hirota.rec_good, 0)} / 受数 ${fmtNum(hirota.rec_att, 0)}</div>
+              <div class="kpi-sub">優${fmtNum(hirota.rec_exc, 0)}+良${fmtNum(hirota.rec_good, 0)} / ${fmtNum(hirota.rec_att, 0)}受</div>
             </div>
           `;
         } else {
-          if (hirotaNote) hirotaNote.textContent = "B帳票未反映または出場記録なし";
-          hirotaKpis.innerHTML = `<div class="kpi-card"><div class="kpi-label">#4 廣田 あい</div><div class="kpi-sub">この試合のB帳票個人成績はまだ登録されていません（コメントやA帳票情報は反映されています）。</div></div>`;
+          if (hirotaNote) hirotaNote.textContent = "記録なし";
+          hirotaKpis.innerHTML = `<div class="kpi-card"><div class="kpi-sub">この試合の個人成績は未登録です。</div></div>`;
         }
       }
 
@@ -1496,6 +1611,7 @@
         const rowsSpec = [
           { label: "アタック決定率", n: fmtPct(nTot.attack_pct), o: fmtPct(oTot.attack_pct) },
           { label: "アタック得点 / 打数", n: `${fmtNum(nTot.attack_pts, "-")} / ${fmtNum(nTot.attack_att, "-")}`, o: `${fmtNum(oTot.attack_pts, "-")} / ${fmtNum(oTot.attack_att, "-")}` },
+          { label: "バックアタック決定率", n: fmtPct(nTot.back_pct), o: fmtPct(oTot.back_pct) },
           { label: "ブロック決定本数", n: `${fmtNum(nTot.block_pts, "-")} 本`, o: `${fmtNum(oTot.block_pts, "-")} 本` },
           { label: "サーブ効果率", n: fmtPct(nTot.serve_eff), o: fmtPct(oTot.serve_eff) },
           { label: "サーブレシーブ成功率", n: fmtPct(nTot.rec_pct), o: fmtPct(oTot.rec_pct) }
@@ -1524,7 +1640,10 @@
                 <td>${fmtNum(p.sets_played, 0)}</td>
                 <td>${fmtNum(p.attack_pts, 0)} / ${fmtNum(p.attack_att, 0)}</td>
                 <td>${fmtPct(p.attack_pct)}</td>
+                <td>${fmtNum(p.back_pts, 0)} / ${fmtNum(p.back_att, 0)}</td>
+                <td>${fmtPct(p.back_pct)}</td>
                 <td>${fmtNum(p.block_pts, 0)}</td>
+                <td>${fmtNum(p.serve_pts, 0)} / ${fmtNum(p.serve_att, "-")}</td>
                 <td>${fmtPct(p.serve_eff)}</td>
                 <td>${fmtNum(p.rec_exc, 0)}+${fmtNum(p.rec_good, 0)}/${fmtNum(p.rec_att, 0)}</td>
                 <td>${fmtPct(p.rec_pct)}</td>
@@ -1532,24 +1651,8 @@
             `;
           }).join("");
         } else {
-          tbodyPlayers.innerHTML = `<tr><td colspan="9" class="empty-state">この試合の個人成績データは未登録です（③タブからB帳票PDFをアップロードすると反映されます）。</td></tr>`;
+          tbodyPlayers.innerHTML = `<tr><td colspan="12" class="empty-state">個人成績データ未登録</td></tr>`;
         }
-      }
-
-      const commentsArea = document.getElementById("commentsArea");
-      if (commentsArea) {
-        const cNec = match.comments?.away || match.comments?.nec || "";
-        const cOpp = match.comments?.home || match.comments?.opp || "";
-        commentsArea.innerHTML = `
-          <div class="comment-box">
-            <span class="comment-label label-nec">NECレッドロケッツ川崎 コメント</span>
-            <div>${cNec ? escapeHtml(cNec) : "コメント未入力"}</div>
-          </div>
-          <div class="comment-box">
-            <span class="comment-label label-opp">${escapeHtml(getOpponentName(match))} コメント</span>
-            <div>${cOpp ? escapeHtml(cOpp) : "コメント未入力"}</div>
-          </div>
-        `;
       }
     }
 
@@ -1569,18 +1672,28 @@
         singleChartInstance = new Chart(ctx, {
           type: "bar",
           data: {
-            labels: ["アタック決定率(%)", "サーブ効果率(%)", "サーブレシーブ成功率(%)"],
+            labels: ["アタック決定率", "バックアタック決定率", "サーブ効果率", "サーブレシーブ成功率"],
             datasets: [
               {
-                label: "NECレッドロケッツ川崎",
-                data: [safeRateForChart(nTot.attack_pct), safeRateForChart(nTot.serve_eff), safeRateForChart(nTot.rec_pct)],
-                backgroundColor: "rgba(225, 29, 72, 0.72)",
+                label: "NEC川崎",
+                data: [
+                  safeRateForChart(nTot.attack_pct),
+                  safeRateForChart(nTot.back_pct),
+                  safeRateForChart(nTot.serve_eff),
+                  safeRateForChart(nTot.rec_pct)
+                ],
+                backgroundColor: "rgba(225, 29, 72, 0.74)",
                 borderRadius: 8
               },
               {
                 label: oppName,
-                data: [safeRateForChart(oTot.attack_pct), safeRateForChart(oTot.serve_eff), safeRateForChart(oTot.rec_pct)],
-                backgroundColor: "rgba(56, 189, 248, 0.72)",
+                data: [
+                  safeRateForChart(oTot.attack_pct),
+                  safeRateForChart(oTot.back_pct),
+                  safeRateForChart(oTot.serve_eff),
+                  safeRateForChart(oTot.rec_pct)
+                ],
+                backgroundColor: "rgba(56, 189, 248, 0.74)",
                 borderRadius: 8
               }
             ]
@@ -1595,23 +1708,90 @@
             plugins: { legend: { labels: { color: "#2c242b" } } }
           }
         });
-      } catch {
-        // Ignore chart errors so UI never blocks
-      }
+      } catch {}
     }
 
+    function buildDualLineChart(canvasId, labels, ds1, ds2, y1Color = "#b45309", y2Color = "#be123c") {
+      if (!window.Chart) return;
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return;
+      if (trendCharts[canvasId]) {
+        trendCharts[canvasId].destroy();
+      }
+      const datasets = [
+        {
+          ...ds1,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          yAxisID: "y"
+        }
+      ];
+      const scales = {
+        y: {
+          type: "linear",
+          position: "left",
+          ticks: { color: y1Color },
+          grid: { color: "rgba(225, 29, 72, 0.08)" }
+        },
+        x: {
+          ticks: { color: "#6b5b64" },
+          grid: { display: false }
+        }
+      };
+
+      if (ds2) {
+        datasets.push({
+          ...ds2,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          yAxisID: "y1"
+        });
+        scales.y1 = {
+          type: "linear",
+          position: "right",
+          beginAtZero: true,
+          ticks: { color: y2Color },
+          grid: { drawOnChartArea: false }
+        };
+      } else {
+        scales.y.beginAtZero = true;
+      }
+
+      trendCharts[canvasId] = new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales,
+          plugins: { legend: { labels: { color: "#2c242b" } } }
+        }
+      });
+    }
+
+    // ② 蓄積・全試合の推移＆通算分析描画
     function renderCumulativeView() {
       const totalMatches = allMatches.length;
       let wins = 0;
       let losses = 0;
-      let hirotaAttPts = 0;
-      let hirotaAttAtt = 0;
-      let hirotaBlk = 0;
+
+      let attPts = 0, attAtt = 0;
+      let backPts = 0, backAtt = 0;
+      let blkTotal = 0;
+      let srvEffSum = 0, srvCount = 0, srvPtsTotal = 0;
+      let recExcGood = 0, recAttTotal = 0, recPctSum = 0, recPctCount = 0;
+
       const labels = [];
-      const hirotaPctSeries = [];
-      const hirotaPtsSeries = [];
-      const necAttPctSeries = [];
-      const necRecPctSeries = [];
+      const hAttPct = [], hAttPts = [];
+      const hBackPct = [], hBackPts = [];
+      const hBlkPts = [];
+      const hSrvEff = [], hSrvPts = [];
+      const hRecPct = [], hRecAtt = [];
+      const tAttPct = [], tRecPct = [];
 
       for (const m of allMatches) {
         const meta = m.meta || {};
@@ -1626,145 +1806,228 @@
 
         const h = getHirotaStat(m);
         if (h) {
-          hirotaAttPts += Number(h.attack_pts) || 0;
-          hirotaAttAtt += Number(h.attack_att) || 0;
-          hirotaBlk += Number(h.block_pts) || 0;
-          hirotaPctSeries.push(h.attack_pct !== null && h.attack_pct !== undefined ? Number(h.attack_pct) : null);
-          hirotaPtsSeries.push((Number(h.attack_pts) || 0) + (Number(h.block_pts) || 0));
+          attPts += Number(h.attack_pts) || 0;
+          attAtt += Number(h.attack_att) || 0;
+          hAttPct.push(h.attack_pct !== null && h.attack_pct !== undefined ? Number(h.attack_pct) : null);
+          hAttPts.push(Number(h.attack_pts) || 0);
+
+          const bA = Number(h.back_att) || 0;
+          const bP = Number(h.back_pts) || 0;
+          backAtt += bA;
+          backPts += bP;
+          const bPctVal = (h.back_pct !== null && h.back_pct !== undefined)
+            ? Number(h.back_pct)
+            : (bA > 0 ? Number(((bP / bA) * 100).toFixed(1)) : null);
+          hBackPct.push(bPctVal);
+          hBackPts.push(bP);
+
+          const blkVal = Number(h.block_pts) || 0;
+          blkTotal += blkVal;
+          hBlkPts.push(blkVal);
+
+          if (h.serve_eff !== null && h.serve_eff !== undefined) {
+            srvEffSum += Number(h.serve_eff);
+            srvCount += 1;
+            hSrvEff.push(Number(h.serve_eff));
+          } else {
+            hSrvEff.push(null);
+          }
+          const sP = Number(h.serve_pts) || 0;
+          srvPtsTotal += sP;
+          hSrvPts.push(sP);
+
+          const rA = Number(h.rec_att) || 0;
+          recAttTotal += rA;
+          recExcGood += (Number(h.rec_exc) || 0) + (Number(h.rec_good) || 0);
+          if (h.rec_pct !== null && h.rec_pct !== undefined) {
+            recPctSum += Number(h.rec_pct);
+            recPctCount += 1;
+            hRecPct.push(Number(h.rec_pct));
+          } else {
+            hRecPct.push(null);
+          }
+          hRecAtt.push(rA);
         } else {
-          hirotaPctSeries.push(null);
-          hirotaPtsSeries.push(null);
+          hAttPct.push(null); hAttPts.push(null);
+          hBackPct.push(null); hBackPts.push(null);
+          hBlkPts.push(null);
+          hSrvEff.push(null); hSrvPts.push(null);
+          hRecPct.push(null); hRecAtt.push(null);
         }
 
         const nTot = getNecBlock(m).team_total || {};
-        necAttPctSeries.push(nTot.attack_pct !== null && nTot.attack_pct !== undefined ? Number(nTot.attack_pct) : null);
-        necRecPctSeries.push(nTot.rec_pct !== null && nTot.rec_pct !== undefined ? Number(nTot.rec_pct) : null);
+        tAttPct.push(nTot.attack_pct !== null && nTot.attack_pct !== undefined ? Number(nTot.attack_pct) : null);
+        tRecPct.push(nTot.rec_pct !== null && nTot.rec_pct !== undefined ? Number(nTot.rec_pct) : null);
       }
 
-      const cumAttPct = hirotaAttAtt > 0 ? ((hirotaAttPts / hirotaAttAtt) * 100).toFixed(1) + "%" : "-";
+      const cumAttPct = attAtt > 0 ? ((attPts / attAtt) * 100).toFixed(1) + "%" : "-";
+      const cumBackPct = backAtt > 0 ? ((backPts / backAtt) * 100).toFixed(1) + "%" : "-";
+      const avgSrvEff = srvCount > 0 ? (srvEffSum / srvCount).toFixed(1) + "%" : "-";
+      const avgRecPct = recPctCount > 0 ? (recPctSum / recPctCount).toFixed(1) + "%" : "-";
 
       const kpiEl = document.getElementById("cumulativeSummaryKpis");
       if (kpiEl) {
         kpiEl.innerHTML = `
           <div class="kpi-card">
-            <div class="kpi-label">蓄積試合数 / 戦績</div>
+            <div class="kpi-label">戦績</div>
             <div class="kpi-value">${totalMatches} 試合</div>
-            <div class="kpi-sub">${wins} 勝 ${losses} 敗（スコア反映分）</div>
+            <div class="kpi-sub">${wins} 勝 ${losses} 敗</div>
           </div>
           <div class="kpi-card highlight">
-            <div class="kpi-label">#4 廣田あい 通算アタック決定率</div>
+            <div class="kpi-label">アタック決定率</div>
             <div class="kpi-value">${cumAttPct}</div>
-            <div class="kpi-sub">${hirotaAttPts} 得点 / ${hirotaAttAtt} 打数</div>
+            <div class="kpi-sub">${attPts} 得点 / ${attAtt} 打数</div>
           </div>
           <div class="kpi-card highlight">
-            <div class="kpi-label">#4 廣田あい 累計ブロック</div>
-            <div class="kpi-value">${hirotaBlk} 本</div>
-            <div class="kpi-sub">蓄積データ合計</div>
+            <div class="kpi-label">バックアタック</div>
+            <div class="kpi-value">${cumBackPct}</div>
+            <div class="kpi-sub">${backPts} 得点 / ${backAtt} 打数</div>
+          </div>
+          <div class="kpi-card highlight">
+            <div class="kpi-label">ブロック / サーブ</div>
+            <div class="kpi-value">${blkTotal} 本 / ${avgSrvEff}</div>
+            <div class="kpi-sub">エース計 ${srvPtsTotal} 本</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">JSONエクスポート対応</div>
-            <div class="kpi-value" style="font-size:1.25rem;">ブラウザ完結</div>
-            <div class="kpi-sub">PDF読込 → JSON作成・保存</div>
+            <div class="kpi-label">サーブレシーブ</div>
+            <div class="kpi-value">${avgRecPct}</div>
+            <div class="kpi-sub">優+良 ${recExcGood} / ${recAttTotal}受</div>
           </div>
         `;
       }
 
       try {
-        if (window.Chart) {
-          const ctxH = document.getElementById("hirotaTrendChart");
-          if (ctxH) {
-            if (hirotaTrendChartInstance) hirotaTrendChartInstance.destroy();
-            hirotaTrendChartInstance = new Chart(ctxH, {
-              type: "line",
-              data: {
-                labels,
-                datasets: [
-                  {
-                    label: "#4 廣田あい アタック決定率(%)",
-                    data: hirotaPctSeries,
-                    borderColor: "#d97706",
-                    backgroundColor: "rgba(245, 158, 11, 0.18)",
-                    tension: 0.3,
-                    yAxisID: "y"
-                  },
-                  {
-                    label: "#4 廣田あい アタック+ブロック得点",
-                    data: hirotaPtsSeries,
-                    borderColor: "#e11d48",
-                    backgroundColor: "rgba(225, 29, 72, 0.18)",
-                    tension: 0.3,
-                    yAxisID: "y1"
-                  }
-                ]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: { type: "linear", position: "left", ticks: { color: "#b45309" }, grid: { color: "rgba(225,29,72,0.08)" } },
-                  y1: { type: "linear", position: "right", beginAtZero: true, ticks: { color: "#be123c" }, grid: { drawOnChartArea: false } },
-                  x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
-                },
-                plugins: { legend: { labels: { color: "#2c242b" } } }
-              }
-            });
-          }
+        // 1. アタック決定率＆得点推移
+        buildDualLineChart(
+          "hirotaAttackChart",
+          labels,
+          {
+            label: "アタック決定率(%)",
+            data: hAttPct,
+            borderColor: "#d97706",
+            backgroundColor: "rgba(245, 158, 11, 0.16)"
+          },
+          {
+            label: "アタック得点",
+            data: hAttPts,
+            borderColor: "#e11d48",
+            backgroundColor: "rgba(225, 29, 72, 0.16)"
+          },
+          "#b45309",
+          "#be123c"
+        );
 
-          const ctxT = document.getElementById("teamTrendChart");
-          if (ctxT) {
-            if (teamTrendChartInstance) teamTrendChartInstance.destroy();
-            teamTrendChartInstance = new Chart(ctxT, {
-              type: "line",
-              data: {
-                labels,
-                datasets: [
-                  {
-                    label: "NEC チームアタック決定率(%)",
-                    data: necAttPctSeries,
-                    borderColor: "#e11d48",
-                    backgroundColor: "rgba(225, 29, 72, 0.18)",
-                    tension: 0.3
-                  },
-                  {
-                    label: "NEC サーブレシーブ成功率(%)",
-                    data: necRecPctSeries,
-                    borderColor: "#0284c7",
-                    backgroundColor: "rgba(2, 132, 199, 0.18)",
-                    tension: 0.3
-                  }
-                ]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: { beginAtZero: true, ticks: { color: "#6b5b64" }, grid: { color: "rgba(225,29,72,0.08)" } },
-                  x: { ticks: { color: "#6b5b64" }, grid: { display: false } }
-                },
-                plugins: { legend: { labels: { color: "#2c242b" } } }
-              }
-            });
-          }
-        }
-      } catch {
-        // Ignore chart errors
-      }
+        // 2. バックアタック決定率＆得点推移
+        buildDualLineChart(
+          "hirotaBackAttackChart",
+          labels,
+          {
+            label: "バックアタック決定率(%)",
+            data: hBackPct,
+            borderColor: "#7c3aed",
+            backgroundColor: "rgba(124, 58, 237, 0.15)"
+          },
+          {
+            label: "バックアタック得点",
+            data: hBackPts,
+            borderColor: "#f59e0b",
+            backgroundColor: "rgba(245, 158, 11, 0.16)"
+          },
+          "#6d28d9",
+          "#b45309"
+        );
+
+        // 3. ブロック決定本数推移
+        buildDualLineChart(
+          "hirotaBlockChart",
+          labels,
+          {
+            label: "ブロック決定本数",
+            data: hBlkPts,
+            borderColor: "#0284c7",
+            backgroundColor: "rgba(2, 132, 199, 0.18)",
+            fill: true
+          },
+          null,
+          "#0369a1"
+        );
+
+        // 4. サーブ効果率＆サーブ得点（エース）推移
+        buildDualLineChart(
+          "hirotaServeChart",
+          labels,
+          {
+            label: "サーブ効果率(%)",
+            data: hSrvEff,
+            borderColor: "#15803d",
+            backgroundColor: "rgba(22, 163, 74, 0.16)"
+          },
+          {
+            label: "サーブ得点(エース)",
+            data: hSrvPts,
+            borderColor: "#e11d48",
+            backgroundColor: "rgba(225, 29, 72, 0.16)"
+          },
+          "#15803d",
+          "#be123c"
+        );
+
+        // 5. サーブレシーブ成功率＆受数推移
+        buildDualLineChart(
+          "hirotaReceptionChart",
+          labels,
+          {
+            label: "サーブレシーブ成功率(%)",
+            data: hRecPct,
+            borderColor: "#d97706",
+            backgroundColor: "rgba(245, 158, 11, 0.16)"
+          },
+          {
+            label: "サーブレシーブ受数",
+            data: hRecAtt,
+            borderColor: "#0284c7",
+            backgroundColor: "rgba(2, 132, 199, 0.16)"
+          },
+          "#b45309",
+          "#0369a1"
+        );
+
+        // 6. チーム推移
+        buildDualLineChart(
+          "teamTrendChart",
+          labels,
+          {
+            label: "アタック決定率(%)",
+            data: tAttPct,
+            borderColor: "#e11d48",
+            backgroundColor: "rgba(225, 29, 72, 0.16)"
+          },
+          {
+            label: "サーブレシーブ成功率(%)",
+            data: tRecPct,
+            borderColor: "#0284c7",
+            backgroundColor: "rgba(2, 132, 199, 0.16)"
+          },
+          "#be123c",
+          "#0369a1"
+        );
+      } catch {}
 
       const tbodyCum = document.querySelector("#cumulativeMatchesTable tbody");
       if (tbodyCum) {
         tbodyCum.innerHTML = allMatches.map(m => {
           const meta = m.meta || {};
           const h = getHirotaStat(m);
-          const hasComment = Boolean((m.comments?.away || m.comments?.nec || m.comments?.home || m.comments?.opp));
           return `
             <tr style="cursor:pointer;" onclick="selectMatchAndSwitch('${String(m.id)}')">
               <td><strong>${escapeHtml(fmtNum(meta.date, `ID:${m.id}`))}</strong></td>
               <td>${escapeHtml(fmtNum(meta.round_label, ""))} vs ${escapeHtml(getOpponentName(m))}</td>
               <td>${escapeHtml(getMatchResultLabel(m))}</td>
-              <td>${h ? `${fmtPct(h.attack_pct)} (${h.attack_pts}/${h.attack_att})` : "コメント等のみ"}</td>
+              <td>${h ? `${fmtPct(h.attack_pct)} (${h.attack_pts}/${h.attack_att})` : "-"}</td>
+              <td>${h ? `${fmtPct(h.back_pct)} (${fmtNum(h.back_pts, 0)}/${fmtNum(h.back_att, 0)})` : "-"}</td>
               <td>${h ? `${fmtNum(h.block_pts, 0)} 本` : "-"}</td>
+              <td>${h ? `${fmtPct(h.serve_eff)} (得点${fmtNum(h.serve_pts, 0)})` : "-"}</td>
               <td>${h ? `${fmtPct(h.rec_pct)} (${h.rec_att}受)` : "-"}</td>
-              <td>${hasComment ? "✓ あり" : "-"}</td>
             </tr>
           `;
         }).join("");
@@ -1798,6 +2061,54 @@
       }
     }
 
+    function toggleOverrideFields(forceOpen = null) {
+      const box = document.getElementById("overrideFields");
+      const btn = document.getElementById("toggleOverrideBtn");
+      if (!box || !btn) return;
+      const shouldOpen = forceOpen !== null ? forceOpen : !box.classList.contains("open");
+      box.classList.toggle("open", shouldOpen);
+      btn.textContent = shouldOpen ? "▲ 閉じる" : "▼ 開く";
+    }
+
+    function updateAutoExtractStatusBox() {
+      const box = document.getElementById("autoExtractPreview");
+      if (!box) return;
+      if (!parsedDraftA && !parsedDraftB) {
+        box.innerHTML = `<strong>📄 自動抽出ステータス：</strong> PDFを選択すると試合情報を自動取得します。`;
+        return;
+      }
+
+      const bMeta = parsedDraftB?.meta || {};
+      const aMeta = parsedDraftA || {};
+      const dateVal = bMeta.date || aMeta.date;
+      const roundVal = bMeta.round_label || aMeta.round_label;
+      const targetSide = parsedDraftB?.target_side || "away";
+      const oppName = targetSide === "home"
+        ? (aMeta.away_team || bMeta.away_team)
+        : (aMeta.home_team || bMeta.home_team);
+      const setsStr = (typeof aMeta.score_home_sets === "number" && typeof aMeta.score_away_sets === "number")
+        ? `${targetSide === "home" ? aMeta.score_home_sets : aMeta.score_away_sets}-${targetSide === "home" ? aMeta.score_away_sets : aMeta.score_home_sets}`
+        : null;
+
+      const missingItems = [];
+      if (!dateVal) missingItems.push("試合日");
+      if (!roundVal) missingItems.push("節");
+      if (!oppName || oppName === "対戦相手") missingItems.push("対戦相手");
+      if (!setsStr) missingItems.push("セットカウント");
+
+      box.innerHTML = `
+        <div><strong>✓ 抽出結果：</strong> ${escapeHtml(dateVal || "日付未検出")} ${escapeHtml(roundVal || "")} ／ vs <strong>${escapeHtml(oppName || "未検出")}</strong>（<strong>${escapeHtml(setsStr || "スコア未検出")}</strong>）</div>
+        ${missingItems.length > 0
+          ? `<div style="color:#b45309; margin-top:4px; font-weight:700;">⚠ 未検出項目（${missingItems.join("・")}）があります。下の欄から補完できます。</div>`
+          : `<div style="color:#15803d; margin-top:4px; font-weight:700;">✓ すべて自動取得完了</div>`
+        }
+      `;
+
+      if (missingItems.length > 0) {
+        toggleOverrideFields(true);
+      }
+    }
+
     function escapeHtml(str) {
       return String(str || "")
         .replace(/&/g, "&amp;")
@@ -1811,13 +2122,12 @@
       const liveUrl = normalizeStr(document.getElementById("liveScoreInput")?.value || "");
       const overrideLabel = normalizeStr(document.getElementById("matchDateOverride")?.value || "");
       const scoreInputRaw = normalizeStr(document.getElementById("matchScoreInput")?.value || "");
-      const commentNec = (document.getElementById("commentNecInput")?.value || "").trim();
-      const commentOpp = (document.getElementById("commentOppInput")?.value || "").trim();
 
-      if (!parsedDraftB && !parsedDraftA && !liveUrl && !commentNec && !commentOpp && !overrideLabel && !scoreInputRaw) {
+      if (!parsedDraftB && !parsedDraftA && !liveUrl && !overrideLabel && !scoreInputRaw) {
         if (feedbackEl) {
-          feedbackEl.textContent = "⚠ 少なくともPDFファイル、Live Score URL、試合日・節ラベル、セットカウント、またはコメントのいずれかを入力してください。";
+          feedbackEl.textContent = "⚠ A帳票またはB帳票のPDFファイルを選択してください。";
         }
+        showToast("⚠ PDFファイルを選択してください");
         return;
       }
 
@@ -1834,9 +2144,7 @@
         if (dMatch) dateVal = dMatch[1];
         const vsMatch = overrideLabel.match(/(?:vs|VS|対)\s*(.+)$/i);
         if (vsMatch) {
-          const cleanedOpp = vsMatch[1]
-            .replace(/[(（](?:ホーム|アウェー|HOME|AWAY)[)）]/gi, "")
-            .trim();
+          const cleanedOpp = vsMatch[1].replace(/[(（](?:ホーム|アウェー|HOME|AWAY)[)）]/gi, "").trim();
           if (cleanedOpp) oppVal = cleanedOpp;
         }
         const rest = overrideLabel
@@ -1847,29 +2155,15 @@
       }
 
       const targetSide = parsedDraftB?.target_side || "away";
-      let setsDetail = Array.isArray(aMeta.sets_detail) ? [...aMeta.sets_detail] : [];
+      const setsDetail = Array.isArray(aMeta.sets_detail) ? [...aMeta.sets_detail] : [];
 
       let scoreHomeSets = aMeta.score_home_sets ?? null;
       let scoreAwaySets = aMeta.score_away_sets ?? null;
-
-      if (setsDetail.length > 0) {
-        let hW = 0;
-        let aW = 0;
-        for (const s of setsDetail) {
-          if (s.home > s.away) hW++;
-          else if (s.away > s.home) aW++;
-        }
-        if (hW + aW > 0) {
-          scoreHomeSets = hW;
-          scoreAwaySets = aW;
-        }
-      }
 
       const scoreMatch = scoreInputRaw.match(/(\d)\s*[-－–:：]\s*(\d)/);
       if (scoreMatch) {
         const s1 = parseInt(scoreMatch[1], 10);
         const s2 = parseInt(scoreMatch[2], 10);
-        // Input convention: NEC sets - Opponent sets
         if (targetSide === "home") {
           scoreHomeSets = s1;
           scoreAwaySets = s2;
@@ -1900,26 +2194,16 @@
           score_away_sets: scoreAwaySets,
           sets_detail: setsDetail
         },
-        target_side: parsedDraftB?.target_side || "away",
+        target_side: targetSide,
         sources: {
           live_score_url: liveUrl || "",
           form_a_name: parsedDraftA ? "uploaded_form_a.pdf" : null,
           form_b_name: parsedDraftB ? "uploaded_form_b.pdf" : null
         },
-        comments: {
-          away: commentNec,
-          home: commentOpp
-        },
         parsed_b: parsedDraftB ? {
           ...parsedDraftB,
-          home_team: {
-            ...(parsedDraftB.home_team || {}),
-            team_name: resolvedHomeTeam
-          },
-          away_team: {
-            ...(parsedDraftB.away_team || {}),
-            team_name: resolvedAwayTeam
-          }
+          home_team: { ...(parsedDraftB.home_team || {}), team_name: resolvedHomeTeam },
+          away_team: { ...(parsedDraftB.away_team || {}), team_name: resolvedAwayTeam }
         } : {
           home_team: { team_name: resolvedHomeTeam, team_total: {}, players: [] },
           away_team: { team_name: resolvedAwayTeam, team_total: {}, players: [] }
@@ -1939,8 +2223,9 @@
       renderCumulativeView();
 
       if (feedbackEl) {
-        feedbackEl.textContent = `✓ 新しい試合データ（ID: ${newId}）を作成しました！下の「生成された JSON データプレビュー」と①タブに反映済みです。「⬇ 蓄積用 matches.json をダウンロード」から保存できます。`;
+        feedbackEl.textContent = `✓ 試合データ（ID: ${newId}）をダッシュボードに反映しました。`;
       }
+      showToast(`✓ 試合データ（ID: ${newId}）を反映しました`);
     }
 
     function handleDownloadMatchesJson() {
@@ -1955,39 +2240,49 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      showToast("⬇ matches.json をダウンロードしました");
     }
 
-    async function handleCopyMatchesJson() {
+    function handleCopyMatchesJson() {
       updateJsonPreview();
       const text = document.getElementById("generatedJsonPreview")?.textContent || "[]";
       const feedbackEl = document.getElementById("uploadFeedback");
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
       try {
-        await navigator.clipboard.writeText(text);
+        document.execCommand("copy");
         if (feedbackEl) {
-          feedbackEl.textContent = "✓ matches.json の内容をクリップボードにコピーしました。GitHubの backend/data/matches.json に貼り付けて保存できます。";
+          feedbackEl.textContent = "✓ matches.json をクリップボードにコピーしました。";
         }
+        showToast("📋 matches.json をコピーしました");
       } catch {
         if (feedbackEl) {
-          feedbackEl.textContent = "ℹ 下のプレビュー枠から手動でテキストを選択してコピーしてください。";
+          feedbackEl.textContent = "ℹ 下のプレビュー枠からテキストを選択してコピーしてください。";
         }
+      } finally {
+        document.body.removeChild(ta);
       }
     }
 
     function handleClearLocalData() {
       try {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
-      } catch {
-        // Ignore
-      }
+      } catch {}
       parsedDraftA = null;
       parsedDraftB = null;
       const stB = document.getElementById("pdfBStatus");
       const stA = document.getElementById("pdfAStatus");
       const fb = document.getElementById("uploadFeedback");
-      if (stB) { stB.textContent = "未選択（任意）"; stB.className = "pill-status"; }
-      if (stA) { stA.textContent = "未選択（任意）"; stA.className = "pill-status"; }
+      if (stB) { stB.textContent = "未選択"; stB.className = "pill-status"; }
+      if (stA) { stA.textContent = "未選択"; stA.className = "pill-status"; }
       if (fb) { fb.textContent = "✓ ブラウザの一時保存データをクリアしました。"; }
+      updateAutoExtractStatusBox();
       loadMatchesFromRepo(false);
+      showToast("🗑 一時保存データをクリアしました");
     }
 
     function bindEvents() {
@@ -2017,9 +2312,10 @@
             parsedDraftB = await parseFormBPdf(file);
             const hirota = (parsedDraftB.away_team?.players || []).concat(parsedDraftB.home_team?.players || [])
               .find(p => String(p.name || "").replace(/\s+/g, "").includes("廣田あい"));
-            const info = hirota ? `／ #4 廣田: ${hirota.attack_pts}/${hirota.attack_att} (${fmtPct(hirota.attack_pct)}), Blk ${hirota.block_pts}` : "";
+            const info = hirota ? `／ #4 廣田: Att ${fmtPct(hirota.attack_pct)}, Back ${fmtPct(hirota.back_pct)}, Blk ${hirota.block_pts}` : "";
             st.textContent = `✓ B帳票読込完了${info}`;
             st.className = "pill-status ok";
+            updateAutoExtractStatusBox();
           } catch (err) {
             parsedDraftB = null;
             st.textContent = `⚠ 読込エラー: ${err.message}`;
@@ -2043,6 +2339,7 @@
             const setInfo = setCount > 0 ? ` / ${setCount}セット抽出` : " / セットスコア未検出";
             st.textContent = `✓ A帳票読込完了（${info}${setInfo}）`;
             st.className = setCount > 0 ? "pill-status ok" : "pill-status warn";
+            updateAutoExtractStatusBox();
           } catch (err) {
             parsedDraftA = null;
             st.textContent = `⚠ 読込エラー: ${err.message}`;
