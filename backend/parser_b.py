@@ -5,32 +5,35 @@ import urllib.request
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextContainer
 
-# Match No. 105 等のSV.LEAGUE帳票Bレイアウトに合わせた列範囲（x0〜x1の中心xcで判定）
+# 帳票Bの列並び（左から右へ）に合わせて調整したX座標レンジ（中心xcで判定）
 B_FORM_COLUMNS = [
     ("number", 35, 58),
     ("player_name", 58, 168),
-    ("sets_played", 168, 182),
-    ("set_marks", 182, 232),
+    ("sets_played", 168, 184),
+    ("set_marks", 184, 232),
+    # アタック：打数 / 得点 / 失点 / 決定率 / セット平均
     ("attack_att", 232, 248),
     ("attack_pts", 248, 264),
     ("attack_err", 264, 280),
     ("attack_pct", 280, 302),
     ("attack_per_set", 302, 322),
+    # バックアタック：打数 / 得点 / 決定率（PDFの並び順）
     ("back_att", 322, 338),
     ("back_pts", 338, 354),
-    ("back_pct", 354, 376),
-    ("back_err", 376, 392),
-    ("back_per_set", 392, 412),
-    ("block_pts", 412, 428),
-    ("block_per_set", 428, 448),
-    ("serve_att", 448, 466),
-    ("serve_pts", 466, 482),
-    ("serve_err", 482, 498),
-    ("serve_eff", 498, 520),
-    ("rec_att", 520, 538),
-    ("rec_exc", 538, 554),
-    ("rec_good", 554, 570),
-    ("rec_pct", 570, 600),
+    ("back_pct", 354, 378),
+    # ブロック：得点 / セット平均
+    ("block_pts", 378, 396),
+    ("block_per_set", 396, 416),
+    # サーブ：打数 / 得点 / 失点 / 効果率
+    ("serve_att", 416, 434),
+    ("serve_pts", 434, 450),
+    ("serve_err", 450, 466),
+    ("serve_eff", 466, 492),
+    # サーブレシーブ：受数 / 優 / 良 / 成功率
+    ("rec_att", 492, 510),
+    ("rec_exc", 510, 526),
+    ("rec_good", 526, 542),
+    ("rec_pct", 542, 580),
 ]
 
 
@@ -75,7 +78,7 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
     for x0, y0, x1, y1, txt in sorted(items, key=lambda x: (-x[1], x[0])):
         placed = False
         for r in rows:
-            if abs(r["y"] - y0) < 3.0:
+            if abs(r["y"] - y0) < 2.5:
                 r["cells"].append((x0, x1, txt))
                 placed = True
                 break
@@ -132,7 +135,6 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
                     "attack_pct": to_number(raw["attack_pct"], is_float=True),
                     "back_att": to_number(raw["back_att"]),
                     "back_pts": to_number(raw["back_pts"]),
-                    "back_err": to_number(raw["back_err"]),
                     "back_pct": to_number(raw["back_pct"], is_float=True),
                     "block_pts": to_number(raw["block_pts"]),
                     "serve_att": to_number(raw["serve_att"]),
