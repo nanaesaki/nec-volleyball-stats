@@ -1199,27 +1199,27 @@
         }
       }
 
+      // SV.LEAGUE帳票Bの横並びに合わせて調整した列範囲（nx基準）
       const COLS = [
-        { key: "number", min: 38, max: 57 },
-        { key: "name", min: 57, max: 166 },
-        { key: "sets_played", min: 166, max: 180 },
-        { key: "attack_att", min: 224, max: 241 },
-        { key: "attack_pts", min: 241, max: 256 },
-        { key: "attack_err", min: 256, max: 270 },
-        { key: "attack_pct", min: 270, max: 294 },
-        { key: "back_att", min: 294, max: 312 },
-        { key: "back_pts", min: 312, max: 328 },
-        { key: "back_err", min: 328, max: 344 },
-        { key: "back_pct", min: 344, max: 374 },
-        { key: "block_pts", min: 374, max: 394 },
-        { key: "serve_att", min: 394, max: 416 },
-        { key: "serve_pts", min: 416, max: 434 },
-        { key: "serve_err", min: 434, max: 456 },
-        { key: "serve_eff", min: 456, max: 486 },
-        { key: "rec_att", min: 486, max: 506 },
-        { key: "rec_exc", min: 506, max: 521 },
-        { key: "rec_good", min: 521, max: 536 },
-        { key: "rec_pct", min: 536, max: 562 }
+        { key: "number", min: 35, max: 58 },
+        { key: "name", min: 58, max: 168 },
+        { key: "sets_played", min: 168, max: 184 },
+        { key: "attack_att", min: 224, max: 242 },
+        { key: "attack_pts", min: 242, max: 258 },
+        { key: "attack_err", min: 258, max: 274 },
+        { key: "attack_pct", min: 274, max: 298 },
+        { key: "back_att", min: 298, max: 318 },
+        { key: "back_pts", min: 318, max: 336 },
+        { key: "back_pct", min: 336, max: 365 },
+        { key: "block_pts", min: 365, max: 388 },
+        { key: "serve_pts", min: 388, max: 408 },
+        { key: "serve_eff", min: 408, max: 436 },
+        { key: "serve_att", min: 436, max: 458 },
+        { key: "serve_err", min: 458, max: 478 },
+        { key: "rec_exc", min: 478, max: 498 },
+        { key: "rec_good", min: 498, max: 518 },
+        { key: "rec_att", min: 518, max: 540 },
+        { key: "rec_pct", min: 540, max: 585 }
       ];
 
       function extractPlayersInBand(yMin, yMax) {
@@ -1240,31 +1240,36 @@
             const name = bag.name;
             if (!name || name.includes("出場セット") || name === "セット") continue;
 
-            const backAtt = toNum(bag.back_att) ?? 0;
-            const backPts = toNum(bag.back_pts) ?? 0;
+            const backAtt = Math.abs(toNum(bag.back_att) ?? 0);
+            const backPts = Math.abs(toNum(bag.back_pts) ?? 0);
             let backPct = parseRateSafe(bag.back_pct);
-            if (backPct === null && backAtt > 0) {
+            if ((backPct === null || backPct === 0) && backAtt > 0 && backPts > 0) {
               backPct = Number(((backPts / backAtt) * 100).toFixed(1));
             }
 
+            const serveAtt = Math.abs(toNum(bag.serve_att) ?? 0);
+            const servePts = Math.abs(toNum(bag.serve_pts) ?? 0);
+            const serveErr = Math.abs(toNum(bag.serve_err) ?? 0);
+            const serveEff = parseRateSafe(bag.serve_eff);
+
             const rec = {
-              number: /^\d+$/.test(bag.number) ? parseInt(bag.number, 10) : null,
+              number: /^\d+$/.test(bag.number.replace(/\s+/g, "")) ? parseInt(bag.number.replace(/\s+/g, ""), 10) : null,
               name,
               sets_played: toNum(bag.sets_played) ?? 0,
-              attack_att: toNum(bag.attack_att) ?? 0,
-              attack_pts: toNum(bag.attack_pts) ?? 0,
+              attack_att: Math.abs(toNum(bag.attack_att) ?? 0),
+              attack_pts: Math.abs(toNum(bag.attack_pts) ?? 0),
               attack_pct: parseRateSafe(bag.attack_pct),
               back_att: backAtt,
               back_pts: backPts,
               back_pct: backPct,
-              block_pts: toNum(bag.block_pts) ?? 0,
-              serve_att: toNum(bag.serve_att) ?? 0,
-              serve_pts: toNum(bag.serve_pts) ?? 0,
-              serve_err: toNum(bag.serve_err) ?? 0,
-              serve_eff: parseRateSafe(bag.serve_eff),
-              rec_att: toNum(bag.rec_att) ?? 0,
-              rec_exc: toNum(bag.rec_exc) ?? 0,
-              rec_good: toNum(bag.rec_good) ?? 0,
+              block_pts: Math.abs(toNum(bag.block_pts) ?? 0),
+              serve_att: serveAtt,
+              serve_pts: servePts,
+              serve_err: serveErr,
+              serve_eff: serveEff,
+              rec_att: Math.abs(toNum(bag.rec_att) ?? 0),
+              rec_exc: Math.abs(toNum(bag.rec_exc) ?? 0),
+              rec_good: Math.abs(toNum(bag.rec_good) ?? 0),
               rec_pct: parseRateSafe(bag.rec_pct)
             };
 
