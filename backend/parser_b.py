@@ -37,6 +37,10 @@ def normalize_text(text: str) -> str:
     return unicodedata.normalize("NFKC", text).strip()
 
 
+def normalize_compact_name(name: str) -> str:
+    return re.sub(r"\s+", "", normalize_text(name))
+
+
 def to_number(val: str, is_float: bool = False):
     val = val.replace(" ", "").strip()
     if not val or val == "-":
@@ -118,7 +122,7 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
                 record = {
                     "number": to_number(raw["number"]) if raw["number"].isdigit() else None,
                     "name": name,
-                    "is_libero": name.startswith("L "),
+                    "is_libero": normalize_compact_name(name).startswith("L"),
                     "sets_played": to_number(raw["sets_played"]),
                     "attack_att": to_number(raw["attack_att"]),
                     "attack_pts": to_number(raw["attack_pts"]),
@@ -131,7 +135,7 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
                     "serve_att": to_number(raw["serve_att"]),
                     "serve_pts": to_number(raw["serve_pts"]),
                     "serve_err": to_number(raw["serve_err"]),
-                    "serve_eff": to_number(raw["serve_eff"]),
+                    "serve_eff": to_number(raw["serve_eff"], is_float=True),
                     "serve_pct": to_number(raw["serve_pct"], is_float=True),
                     "rec_att": to_number(raw["rec_att"]),
                     "rec_exc": to_number(raw["rec_exc"]),
@@ -139,7 +143,7 @@ def parse_b_form_from_source(pdf_source: str | bytes) -> dict:
                     "rec_pct": to_number(raw["rec_pct"], is_float=True),
                 }
 
-                if "チーム合計" in name:
+                if "チーム合計" in normalize_compact_name(name):
                     team_total = record
                 elif record["number"] is not None:
                     players.append(record)
