@@ -15,14 +15,6 @@ on:
         description: "Live Score URL（任意）"
         required: false
         default: ""
-      comment_home:
-        description: "ホームチーム コメント"
-        required: false
-        default: ""
-      comment_away:
-        description: "アウェーチーム コメント"
-        required: false
-        default: ""
 
 permissions:
   contents: write
@@ -49,8 +41,6 @@ jobs:
           FORM_B_URL: ${{ inputs.form_b_url }}
           FORM_A_URL: ${{ inputs.form_a_url }}
           LIVE_SCORE_URL: ${{ inputs.live_score_url }}
-          COMMENT_HOME: ${{ inputs.comment_home }}
-          COMMENT_AWAY: ${{ inputs.comment_away }}
         run: |
           python backend/ingest_cli.py
 
