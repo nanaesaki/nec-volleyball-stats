@@ -5,16 +5,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from parser_b import parse_b_form_from_source
+from parser_b import normalize_compact_name, parse_b_form_from_source
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "data" / "matches.json"
+
+TARGET_TEAM = "NECレッドロケッツ川崎"
+TARGET_PLAYER = "廣田あい"
 
 
 def extract_id_from_url(url: str) -> str | None:
     if not url:
         return None
-    # /match/form/?id=37492&sheet=a 形式や ?matchId=... 形式に対応
     qs = parse_qs(urlparse(url).query)
     if "id" in qs and qs["id"]:
         return qs["id"][0]
@@ -24,6 +26,24 @@ def extract_id_from_url(url: str) -> str | None:
     if m:
         return m.group(1)
     return None
+
+
+def detect_target_side(parsed_b: dict) -> str:
+    if not isinstance(parsed_b, dict):
+        return "away"
+    target_player_norm = normalize_compact_name(TARGET_PLAYER)
+    target_team_norm = normalize_compact_name(TARGET_TEAM)
+
+    for side in ("home", "away"):
+        block = parsed_b.get(f"{side}_team", {}) or {}
+        team_name = normalize_compact_name(block.get("team_name") or "")
+        if target_team_norm and target_team_norm in team_name:
+            return side
+        players = block.get("players", []) or []
+        if any(target_player_norm in normalize_compact_name(p.get("name") or "") for p in players):
+            return side
+
+    return "away"
 
 
 def load_matches() -> list[dict]:
@@ -47,11 +67,9 @@ def main() -> None:
     form_b_url = os.environ.get("FORM_B_URL", "").strip()
     form_a_url = os.environ.get("FORM_A_URL", "").strip()
     live_score_url = os.environ.get("LIVE_SCORE_URL", "").strip()
-    comment_home = os.environ.get("COMMENT_HOME", "").strip()
-    comment_away = os.environ.get("COMMENT_AWAY", "").strip()
 
-    if not any([form_b_url, form_a_url, live_score_url, comment_home, comment_away]):
-        raise ValueError("少なくとも1つの入力項目を指定してください。")
+    if not any([form_b_url, form_a_url, live_score_url]):
+        raise ValueError("帳票B・帳票A・Live ScoreのいずれかのURLを指定してください。")
 
     parsed_b = {}
     if form_b_url and not form_b_url.startswith("file://"):
@@ -70,6 +88,8 @@ def main() -> None:
         }
 
     meta = parsed_b.get("meta", {}) if isinstance(parsed_b, dict) else {}
+    target_side = detect_target_side(parsed_b)
+
     match_no = meta.get("match_no")
     url_id = (
         extract_id_from_url(live_score_url)
@@ -82,14 +102,11 @@ def main() -> None:
         "id": record_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "meta": meta,
+        "target_side": target_side,
         "sources": {
             "form_a_url": form_a_url or None,
             "form_b_url": form_b_url or None,
             "live_score_url": live_score_url or None,
-        },
-        "comments": {
-            "home": comment_home,
-            "away": comment_away,
         },
         "parsed_b": parsed_b,
     }
@@ -99,7 +116,7 @@ def main() -> None:
     matches.append(record)
     matches.sort(key=lambda x: (str(x.get("meta", {}).get("date") or ""), str(x.get("id", ""))))
     save_matches(matches)
-    print(f"Saved match_id={record_id}. Total matches={len(matches)}")
+    print(f"Saved match_id={record_id} (side={target_side}). Total matches={len(matches)}")
 
 
 if __name__ == "__main__":
