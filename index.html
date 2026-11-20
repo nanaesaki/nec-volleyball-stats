@@ -964,6 +964,26 @@
       return String(s || "").normalize("NFKC").replace(/\s+/g, " ").trim();
     }
 
+    function isValidVenueName(val) {
+      const v = normalizeStr(val);
+      if (!v) return false;
+      if (/^[\d\s\-–/:：.,()（）]+$/.test(v)) return false;
+      const withoutSuffix = v.replace(/(アリーナ|体育館|総合運動公園|武道館|センター|ドーム|ホール)$/g, "").trim();
+      if (v.length < 3 || withoutSuffix.length < 2) return false;
+      return true;
+    }
+
+    function cleanPlayerName(rawName) {
+      let s = normalizeStr(rawName);
+      if (!s) return "";
+      // 「姓 名」などの不要な半角スペースを整理しつつ、英字や括弧内のスペースは保持
+      s = s.replace(/([\u3000-\u9fff])\s+([\u3000-\u9fff])/g, "$1$2");
+      s = s.replace(/([\u3000-\u9fff])\s+([\u3000-\u9fff])/g, "$1$2");
+      // 末尾や途中に単独の 0 が混入しているケースを除去（例: "選手名 0" や "選手名0"）
+      s = s.replace(/(?:^|\s)0(?=\s|$)/g, " ").replace(/([\u3000-\u9fff)）])0+$/g, "$1");
+      return normalizeStr(s);
+    }
+
     function toNum(v, isFloat = false) {
       const cleaned = normalizeStr(v).replace(/\s+/g, "");
       if (!cleaned || cleaned === "-") return null;
@@ -1044,32 +1064,80 @@
 
       let venueVal = null;
       const venueLabeled = fullText.match(/会場[:：\s]*([^\s\/／|｜]+)/);
-      if (venueLabeled) {
-        venueVal = venueLabeled[1].trim();
+      if (venueLabeled && isValidVenueName(venueLabeled[1])) {
+        venueVal = normalizeStr(venueLabeled[1]);
       } else {
-        const venueGuess = normItems.find(it =>
-          /(アリーナ|体育館|総合運動公園|武道館|センター|ドーム|ホール)$/.test(it.str) &&
-          it.str.length >= 3 && it.str.length <= 28
-        );
-        if (venueGuess) venueVal = venueGuess.str.trim();
+        // 「会場」ラベル要素の近傍（右または下）にある施設名を優先探索
+        const venueAnchor = normItems.find(it => /^会場[:：]?$/.test(it.str.replace(/\s+/g, "")));
+        if (venueAnchor) {
+          const nearbyVenue = normItems
+            .filter(it =>
+              it.page === venueAnchor.page &&
+              it !== venueAnchor &&
+              Math.abs(it.ny - venueAnchor.ny) <= 24 &&
+              it.nx >= venueAnchor.nx - 10 &&
+              isValidVenueName(it.str)
+            )
+            .sort((a, b) => Math.abs(a.ny - venueAnchor.ny) - Math.abs(b.ny - venueAnchor.ny) || a.nx - b.nx);
+          if (nearbyVenue.length > 0) {
+            venueVal = normalizeStr(nearbyVenue[0].str);
+          }
+        }
+        if (!venueVal) {
+          const venueGuess = normItems.find(it =>
+            /(アリーナ|体育館|総合運動公園|武道館|センター|ドーム|ホール)$/.test(it.str) &&
+            isValidVenueName(it.str)
+          );
+          if (venueGuess) venueVal = normalizeStr(venueGuess.str);
+        }
       }
 
       let homeTeamVal = null;
       let awayTeamVal = null;
       const necItem = normItems.find(it => it.str.includes("NECレッドロケッツ"));
+
       if (necItem) {
-        const sameBandTeams = normItems.filter(it =>
+        // まずは同一行帯（±28pt）で相手チームを検索
+        let sameBandTeams = normItems.filter(it =>
           it.page === necItem.page &&
           Math.abs(it.ny - necItem.ny) <= 28 &&
           it !== necItem &&
           TEAM_REGEX.test(it.str) &&
           !it.str.includes("NECレッドロケッツ")
         );
+
+        // 同一行帯で見つからない場合、同一ページ内の他行（y差が小さい順）から相手チームを補完
+        if (sameBandTeams.length === 0) {
+          sameBandTeams = normItems.filter(it =>
+            it.page === necItem.page &&
+            it !== necItem &&
+            TEAM_REGEX.test(it.str) &&
+            !it.str.includes("NECレッドロケッツ")
+          );
+        }
+
         if (sameBandTeams.length > 0) {
           sameBandTeams.sort((a, b) => Math.abs(a.ny - necItem.ny) - Math.abs(b.ny - necItem.ny));
-          const pair = [necItem, sameBandTeams[0]].sort((a, b) => a.nx - b.nx);
-          homeTeamVal = pair[0].str.trim();
-          awayTeamVal = pair[1].str.trim();
+          const oppMatch = sameBandTeams[0].str.match(TEAM_REGEX);
+          const oppTeamStr = oppMatch ? oppMatch[1].trim() : sameBandTeams[0].str.trim();
+          const pair = [
+            { nx: necItem.nx, label: "NECレッドロケッツ川崎" },
+            { nx: sameBandTeams[0].nx, label: oppTeamStr }
+          ].sort((a, b) => a.nx - b.nx);
+          homeTeamVal = pair[0].label;
+          awayTeamVal = pair[1].label;
+        }
+      }
+
+      // ページ要素から相手チームが取れなかった場合のテキスト全体フォールバック
+      if (!awayTeamVal && !homeTeamVal) {
+        const allTeamMatches = [...fullText.matchAll(new RegExp(TEAM_REGEX.source, "gi"))];
+        const oppFound = allTeamMatches
+          .map(m => m[1].trim())
+          .find(name => !name.includes("NECレッドロケッツ"));
+        if (oppFound) {
+          homeTeamVal = "NECレッドロケッツ川崎";
+          awayTeamVal = oppFound;
         }
       }
 
@@ -1143,6 +1211,7 @@
       };
     }
 
+    // 帳票Bの数値トークンを行ごとに抽出し、SV.LEAGUE帳票Bの列構造に基づいてマッピングする
     async function parseFormBPdf(file) {
       const pages = await extractPdfItems(file);
       const p1 = pages[0];
@@ -1161,6 +1230,7 @@
       const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
       const roundMatch = fullText.match(/(第\d+節\s*GAME\d+)/i);
       const venueMatch = fullText.match(/会場[:：\s]*([^\s]+)/);
+      const venueRaw = venueMatch && isValidVenueName(venueMatch[1]) ? normalizeStr(venueMatch[1]) : null;
 
       const rows = [];
       for (const it of [...normItems].sort((a, b) => b.ny - a.ny || a.nx - b.nx)) {
@@ -1182,30 +1252,34 @@
         const leftCells = sorted.filter(c => c.nx < 220);
         const rightCells = sorted.filter(c => c.nx >= 220);
 
+        // 出場セット数（nxが160〜192付近の1桁数字）を先に特定して選手名側への混入を防ぐ
+        let setsPlayed = 0;
+        const setCell = leftCells.find(c => c.nx >= 160 && c.nx <= 194 && /^[0-5]$/.test(c.str.replace(/\s+/g, "")));
+        if (setCell) {
+          setsPlayed = parseInt(setCell.str.replace(/\s+/g, ""), 10);
+        }
+
+        // 背番号と選手名の抽出（出場セット列の手前 nx < 160 までを名前対象とする）
         let number = null;
         const nameParts = [];
         for (const c of leftCells) {
+          if (setCell && c === setCell) continue;
           const compact = c.str.replace(/\s+/g, "");
           if (number === null && c.nx < 68 && /^\d{1,2}$/.test(compact)) {
             number = parseInt(compact, 10);
-          } else if (c.nx >= 50 && c.nx < 172) {
+          } else if (c.nx >= 50 && c.nx < 160) {
             if (!["出場セット", "セット", "出場数", "1", "2", "3", "4", "5"].includes(compact)) {
               nameParts.push(c.str);
             }
           }
         }
-        const name = normalizeStr(nameParts.join(" "));
+        const name = cleanPlayerName(nameParts.join(""));
         const compactName = name.replace(/\s+/g, "");
         if (!compactName || compactName.includes("出場セット") || compactName === "セット") {
           return null;
         }
 
-        let setsPlayed = 0;
-        const setCell = leftCells.find(c => c.nx >= 162 && c.nx <= 192 && /^[0-5]$/.test(c.str.replace(/\s+/g, "")));
-        if (setCell) {
-          setsPlayed = parseInt(setCell.str.replace(/\s+/g, ""), 10);
-        }
-
+        // 右側の数値トークンを左右位置順に分解
         const tokens = [];
         for (const c of rightCells) {
           const pieces = c.str.trim().split(/\s+/);
@@ -1342,7 +1416,7 @@
           match_no: matchNoMatch ? parseInt(matchNoMatch[1], 10) : null,
           date: dateMatch ? dateMatch[1] : null,
           round_label: roundMatch ? roundMatch[1] : null,
-          venue: venueMatch ? venueMatch[1] : null,
+          venue: venueRaw,
           home_team: homeTeamName,
           away_team: awayTeamName
         },
@@ -1793,11 +1867,12 @@
       if (tbodyPlayers) {
         if (players.length > 0) {
           tbodyPlayers.innerHTML = players.map(p => {
-            const isHirota = String(p.name || "").replace(/\s+/g, "").includes("廣田あい");
+            const cleanedName = cleanPlayerName(p.name);
+            const isHirota = cleanedName.replace(/\s+/g, "").includes("廣田あい");
             return `
               <tr class="${isHirota ? "hirota-row" : ""}">
                 <td>${fmtNum(p.number)}</td>
-                <td><strong>${escapeHtml(fmtNum(p.name))}</strong> ${isHirota ? '<span class="badge badge-gold">推し</span>' : ""}</td>
+                <td><strong>${escapeHtml(fmtNum(cleanedName))}</strong> ${isHirota ? '<span class="badge badge-gold">推し</span>' : ""}</td>
                 <td>${fmtNum(p.sets_played, 0)}</td>
                 <td>${fmtNum(p.attack_pts, 0)} / ${fmtNum(p.attack_att, 0)}</td>
                 <td>${fmtPct(p.attack_pct)}</td>
@@ -2169,6 +2244,17 @@
       btn.textContent = shouldOpen ? "▲ 閉じる" : "▼ 開く";
     }
 
+    function resolveOpponentFromDrafts(aMeta, bMeta, targetSide) {
+      const candidates = targetSide === "home"
+        ? [aMeta.away_team, bMeta.away_team, aMeta.home_team, bMeta.home_team]
+        : [aMeta.home_team, bMeta.home_team, aMeta.away_team, bMeta.away_team];
+      for (const c of candidates) {
+        const n = normalizeStr(c);
+        if (n && n !== "対戦相手" && !n.includes("NEC")) return n;
+      }
+      return null;
+    }
+
     function updateAutoExtractStatusBox() {
       const box = document.getElementById("autoExtractPreview");
       if (!box) return;
@@ -2182,9 +2268,7 @@
       const dateVal = bMeta.date || aMeta.date;
       const roundVal = bMeta.round_label || aMeta.round_label;
       const targetSide = parsedDraftB?.target_side || "away";
-      const oppName = targetSide === "home"
-        ? (aMeta.away_team || bMeta.away_team)
-        : (aMeta.home_team || bMeta.home_team);
+      const oppName = resolveOpponentFromDrafts(aMeta, bMeta, targetSide);
       const setsStr = (typeof aMeta.score_home_sets === "number" && typeof aMeta.score_away_sets === "number")
         ? `${targetSide === "home" ? aMeta.score_home_sets : aMeta.score_away_sets}-${targetSide === "home" ? aMeta.score_away_sets : aMeta.score_home_sets}`
         : null;
@@ -2192,7 +2276,7 @@
       const missingItems = [];
       if (!dateVal) missingItems.push("試合日");
       if (!roundVal) missingItems.push("節");
-      if (!oppName || oppName === "対戦相手") missingItems.push("対戦相手");
+      if (!oppName) missingItems.push("対戦相手");
       if (!setsStr) missingItems.push("セットカウント");
 
       box.innerHTML = `
@@ -2214,6 +2298,16 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function findExistingMatchById(matchId) {
+      const target = String(matchId);
+      return (
+        loadLocalSavedMatches().find(m => String(m.id) === target) ||
+        cachedRepoMatches.find(m => String(m.id) === target) ||
+        allMatches.find(m => String(m.id) === target) ||
+        null
+      );
     }
 
     function handleCreateMatchJson() {
@@ -2273,41 +2367,63 @@
       }
 
       const newId = String(matchNo || `match_${Date.now()}`);
-      const resolvedHomeTeam = oppVal
-        ? (targetSide === "home" ? "NECレッドロケッツ川崎" : oppVal)
-        : (aMeta.home_team || bMeta.home_team || (targetSide === "home" ? "NECレッドロケッツ川崎" : "対戦相手"));
-      const resolvedAwayTeam = oppVal
-        ? (targetSide === "away" ? "NECレッドロケッツ川崎" : oppVal)
-        : (aMeta.away_team || bMeta.away_team || (targetSide === "away" ? "NECレッドロケッツ川崎" : "対戦相手"));
+      const existingMatch = findExistingMatchById(newId);
+
+      // 会場名：新しい抽出値が有効なら採用、未検出や1文字等の不自然な値なら既存データを保持
+      const extractedVenue = [bMeta.venue, aMeta.venue].find(v => isValidVenueName(v));
+      const resolvedVenue = extractedVenue
+        ? normalizeStr(extractedVenue)
+        : (existingMatch?.meta?.venue || null);
+
+      const resolvedOpp = oppVal || resolveOpponentFromDrafts(aMeta, bMeta, targetSide);
+      const resolvedHomeTeam = resolvedOpp
+        ? (targetSide === "home" ? "NECレッドロケッツ川崎" : resolvedOpp)
+        : (aMeta.home_team || bMeta.home_team || existingMatch?.meta?.home_team || (targetSide === "home" ? "NECレッドロケッツ川崎" : "対戦相手"));
+      const resolvedAwayTeam = resolvedOpp
+        ? (targetSide === "away" ? "NECレッドロケッツ川崎" : resolvedOpp)
+        : (aMeta.away_team || bMeta.away_team || existingMatch?.meta?.away_team || (targetSide === "away" ? "NECレッドロケッツ川崎" : "対戦相手"));
+
+      const sanitizedPlayers = (list) => (Array.isArray(list) ? list : []).map(p => ({
+        ...p,
+        name: cleanPlayerName(p.name)
+      }));
 
       const newRecord = {
         id: newId,
         meta: {
-          match_no: matchNo,
-          round_label: roundVal,
-          date: dateVal,
-          venue: bMeta.venue || aMeta.venue || null,
+          match_no: matchNo ?? existingMatch?.meta?.match_no ?? null,
+          round_label: roundVal || existingMatch?.meta?.round_label || null,
+          date: dateVal || existingMatch?.meta?.date || null,
+          venue: resolvedVenue,
           home_team: resolvedHomeTeam,
           away_team: resolvedAwayTeam,
-          score_home_sets: scoreHomeSets,
-          score_away_sets: scoreAwaySets,
-          sets_detail: setsDetail
+          score_home_sets: scoreHomeSets ?? existingMatch?.meta?.score_home_sets ?? null,
+          score_away_sets: scoreAwaySets ?? existingMatch?.meta?.score_away_sets ?? null,
+          sets_detail: setsDetail.length > 0 ? setsDetail : (existingMatch?.meta?.sets_detail || [])
         },
         target_side: targetSide,
         sources: {
-          live_score_url: liveUrl || "",
-          form_a_name: parsedDraftA ? "uploaded_form_a.pdf" : null,
-          form_b_name: parsedDraftB ? "uploaded_form_b.pdf" : null
+          live_score_url: liveUrl || existingMatch?.sources?.live_score_url || "",
+          form_a_name: parsedDraftA ? "uploaded_form_a.pdf" : (existingMatch?.sources?.form_a_name || null),
+          form_b_name: parsedDraftB ? "uploaded_form_b.pdf" : (existingMatch?.sources?.form_b_name || null)
         },
         parsed_b: parsedDraftB ? {
           ...parsedDraftB,
-          home_team: { ...(parsedDraftB.home_team || {}), team_name: resolvedHomeTeam },
-          away_team: { ...(parsedDraftB.away_team || {}), team_name: resolvedAwayTeam }
-        } : {
+          home_team: {
+            ...(parsedDraftB.home_team || {}),
+            team_name: resolvedHomeTeam,
+            players: sanitizedPlayers(parsedDraftB.home_team?.players)
+          },
+          away_team: {
+            ...(parsedDraftB.away_team || {}),
+            team_name: resolvedAwayTeam,
+            players: sanitizedPlayers(parsedDraftB.away_team?.players)
+          }
+        } : (existingMatch?.parsed_b || {
           home_team: { team_name: resolvedHomeTeam, team_total: {}, players: [] },
           away_team: { team_name: resolvedAwayTeam, team_total: {}, players: [] }
-        },
-        parsed_a: parsedDraftA || null
+        }),
+        parsed_a: parsedDraftA || existingMatch?.parsed_a || null
       };
 
       const updatedDeleted = loadDeletedMatchIds().filter(id => String(id) !== newId);
